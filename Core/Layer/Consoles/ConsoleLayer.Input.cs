@@ -1,7 +1,6 @@
 using Helion.Graphics;
 using Helion.Util;
 using Helion.Util.Configs.Components;
-using Helion.Util.Consoles;
 using Helion.Util.Consoles.Commands;
 using Helion.Util.Extensions;
 using Helion.Util.Loggers;
@@ -27,6 +26,8 @@ public partial class ConsoleLayer
 
     public void HandleInput(IConsumableInput input)
     {
+        int numMessageLines = (LastRenderHeight - InputToMessagePadding) / (FontSize + BetweenMessagePadding);
+
         if (input.ConsumeKeyPressed(Key.Escape))
         {
             Animation.AnimateOut();
@@ -50,9 +51,14 @@ public partial class ConsoleLayer
         if (input.ConsumePressOrContinuousHold(Key.Down))
             SetToMoreRecentInput();
         if (input.ConsumePressOrContinuousHold(Key.PageUp))
-            GoBackInMessageHistory();
+            ScrollMessageHistory(numMessageLines);
         if (input.ConsumePressOrContinuousHold(Key.PageDown))
-            GoForwardInMessageHistory();
+            ScrollMessageHistory(-numMessageLines);
+
+        int scrollLines = input.ConsumeScroll();
+        if (scrollLines != 0)
+            ScrollMessageHistory(scrollLines);
+
         if (input.ConsumeKeyPressed(Key.Tab))
         {
             ResetMessageHistory();
@@ -69,13 +75,10 @@ public partial class ConsoleLayer
         input.ConsumeAll();
     }
 
-    private void GoBackInMessageHistory() =>
-        m_messageRenderOffset = Math.Min(m_messageRenderOffset + 10, m_console.Messages.Count - 1);
+    private void ScrollMessageHistory(int increment) =>
+        m_messageRenderOffset = Math.Clamp(m_messageRenderOffset + increment, 0, m_console.Messages.Count - 1);
 
-    private void GoForwardInMessageHistory() =>
-        m_messageRenderOffset = Math.Max(0, m_messageRenderOffset - 10);
-
-    private void ResetMessageHistory() => 
+    private void ResetMessageHistory() =>
         m_messageRenderOffset = 0;
 
     private void ApplyAutocomplete()
@@ -84,7 +87,7 @@ public partial class ConsoleLayer
 
         if (m_console.Input.Empty())
         {
-            if (m_console.SubmittedInput.Count > 0 && 
+            if (m_console.SubmittedInput.Count > 0 &&
                 !m_console.SubmittedInput.Last().Equals(Constants.ConsoleCommands.Commands, StringComparison.OrdinalIgnoreCase))
             {
                 m_console.AddInput(Constants.ConsoleCommands.Commands);
@@ -264,7 +267,7 @@ public partial class ConsoleLayer
                 currentCount++;
 
             if (currentCount == pathCount)
-                return path[..(i+1)];
+                return path[..(i + 1)];
         }
 
         return path;

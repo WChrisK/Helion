@@ -14,8 +14,12 @@ public partial class ConsoleLayer
     private const string FontName = "Console";
     private const long FlashSpanNanos = 500 * 1000L * 1000L;
     private const long HalfFlashSpanNanos = FlashSpanNanos / 2;
+    private const int InputToMessagePadding = 8;
+    private const int BetweenMessagePadding = 7;
+
     private static bool IsCursorFlashTime => Ticker.NanoTime() % FlashSpanNanos < HalfFlashSpanNanos;
 
+    public static int LastRenderHeight;
     public static int GetRenderHeight(IHudRenderContext hud) => hud.Height / 2;
 
     public void Render(IRenderableSurfaceContext ctx, IHudRenderContext hud)
@@ -24,6 +28,7 @@ public partial class ConsoleLayer
         ctx.ClearDepth();
 
         var drawArea = GetDrawArea(hud);
+        LastRenderHeight = hud.Height / 2;
 
         RenderBackground(hud, drawArea);
         RenderInput(hud, drawArea, out int inputHeight);
@@ -104,9 +109,6 @@ public partial class ConsoleLayer
 
     private void RenderMessages(IHudRenderContext hud, int inputHeight, HudBox drawArea)
     {
-        const int InputToMessagePadding = 8;
-        const int BetweenMessagePadding = 7;
-
         int bottomY = (drawArea.Bottom) - inputHeight - InputToMessagePadding;
         int offsetCount = 0;
 

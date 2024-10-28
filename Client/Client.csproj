@@ -39,8 +39,8 @@
     <DirectPInvoke Include="glfw3" />
     <DirectPInvoke Condition="'$(RuntimeIdentifier)'=='win-x64'" Include="AL" />
 
-    <NativeLibrary Condition="'$(RuntimeIdentifier)'=='win-x64'" Include="Unmanaged\win-x64\*.lib" />
-    <NativeLibrary Condition="'$(RuntimeIdentifier)'=='linux-x64'" Include="Unmanaged\linux-x64\*.a" />
+    <NativeLibrary Condition="'$(RuntimeIdentifier)'=='win-x64'" Include="Unmanaged\lib\win-x64\*.lib" />
+    <NativeLibrary Condition="'$(RuntimeIdentifier)'=='linux-x64'" Include="Unmanaged\lib\linux-x64\*.a" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -60,9 +60,9 @@
     <Content Include="$(ProjectDir)SoundFonts\*" Link="SoundFonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
 
     <!-- FluidSynth and ZMusic native libs -->
-    <Content Include="$(ProjectDir)Unmanaged\**\*" Link="runtimes\%(RecursiveDir)\native\%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == ''" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="$(ProjectDir)Unmanaged\$(RuntimeIdentifier)\*.dll" Link="%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == 'win-x64'" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="$(ProjectDir)Unmanaged\$(RuntimeIdentifier)\*.so*" Link="%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == 'linux-x64'" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(ProjectDir)Unmanaged\binary\**\*" Link="runtimes\%(RecursiveDir)\native\%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == ''" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(ProjectDir)Unmanaged\binary\$(RuntimeIdentifier)\*.dll" Link="%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == 'win-x64'" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(ProjectDir)Unmanaged\binary\$(RuntimeIdentifier)\*.so*" Link="%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == 'linux-x64'" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

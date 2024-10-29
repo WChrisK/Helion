@@ -58,7 +58,7 @@ public class MainMenu : Menu
         static IMenuComponent CreateMenuOption(string image, int offsetX, int paddingY, Func<Menu?> action)
         {
             const int MenuItemHeight = 16;
-            return new MenuImageComponent(image, offsetX, paddingY, "M_SKULL1", "M_SKULL2", action, imageAlign: Align.TopLeft, overrideY: MenuItemHeight);
+            return new MenuImageComponent(image, offsetX, paddingY, "M_SKULL1", "M_SKULL2", action, imageAlign: Align.TopLeft, overrideY: MenuItemHeight, upscaleWithText: true);
         }
     }
 

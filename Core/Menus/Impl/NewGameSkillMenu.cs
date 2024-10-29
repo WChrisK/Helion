@@ -75,7 +75,7 @@ public class NewGameSkillMenu : Menu
         {
             return new MenuImageComponent(image, offsetX, paddingY, "M_SKULL1", "M_SKULL2", action,
                 imageAlign: Align.TopLeft, paddingBottomY: paddingBottomY, overrideY: overrideY, addToOffsetY: addToOffsetY, 
-                title: title);
+                title: title, upscaleWithText: true);
         }
 
         Func<Menu?> Confirm(SkillDef skillDef)

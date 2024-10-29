@@ -42,7 +42,7 @@ public partial class MenuLayer
             switch (component)
             {
                 case MenuImageComponent imageComponent:
-                    DrawImage(hud, imageComponent, isSelected, ref offsetY, m_config.Hud.FontUpscalingFactor);
+                    DrawImage(hud, imageComponent, isSelected, ref offsetY, imageComponent.UpscaleWithText ? m_config.Hud.FontUpscalingFactor : 1);
                     break;
                 case MenuPaddingComponent paddingComponent:
                     offsetY += paddingComponent.PixelAmount;

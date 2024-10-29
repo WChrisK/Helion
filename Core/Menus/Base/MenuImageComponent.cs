@@ -15,12 +15,14 @@ public class MenuImageComponent : IMenuComponent
     public readonly Align ImageAlign;
     public readonly bool AddToOffsetY;
     public readonly int? OverrideY;
+    public readonly bool UpscaleWithText;
 
     public Func<Menu?>? Action { get; }
 
     public MenuImageComponent(string imageName, int offsetX = 0, int paddingTopY = 0,
         string? activeImage = null, string? inactiveImage = null, Func<Menu?>? action = null,
-        Align imageAlign = Align.TopMiddle, int paddingBottomY = 0, bool addToOffsetY = true, int? overrideY = null, string title = "")
+        Align imageAlign = Align.TopMiddle, int paddingBottomY = 0, bool addToOffsetY = true, 
+        int? overrideY = null, string title = "", bool upscaleWithText = false)
     {
         ImageName = imageName;
         Title = title;
@@ -33,5 +35,6 @@ public class MenuImageComponent : IMenuComponent
         ImageAlign = imageAlign;
         AddToOffsetY = addToOffsetY;
         OverrideY = overrideY;
+        UpscaleWithText = upscaleWithText;
     }
 }

@@ -39,7 +39,7 @@ public class NewGameEpisodeMenu : Menu
             return;
         }
 
-        Components = Components.Add(new MenuImageComponent("M_EPISOD", 54, 6, imageAlign: Align.TopLeft, overrideY: 24));
+        Components = Components.Add(new MenuImageComponent("M_EPISOD", 54, 6, imageAlign: Align.TopLeft, overrideY: 24, upscaleWithText: true));
 
         foreach (EpisodeDef episode in episodes)
         {
@@ -60,12 +60,12 @@ public class NewGameEpisodeMenu : Menu
                 string[] lines = archiveCollection.Definitions.Language.GetMessages("$SWSTRING");
                 return new MenuImageComponent(episode.PicName, OffsetX, 0, "M_SKULL1", "M_SKULL2",
                     () => new MessageMenu(config, Console, soundManager, ArchiveCollection, lines),
-                    imageAlign: Align.TopLeft);
+                    imageAlign: Align.TopLeft, upscaleWithText: true);
             }
 
             return new MenuImageComponent(episode.PicName, OffsetX, 0, "M_SKULL1", "M_SKULL2",
                     () => new NewGameSkillMenu(config, console, soundManager, archiveCollection, episode.StartMap),
-                    imageAlign: Align.TopLeft, title: ArchiveCollection.Language.GetMessage(episode.Name), overrideY: EpisodeHeight);
+                    imageAlign: Align.TopLeft, title: ArchiveCollection.Language.GetMessage(episode.Name), overrideY: EpisodeHeight, upscaleWithText: true);
         }
     }
 }

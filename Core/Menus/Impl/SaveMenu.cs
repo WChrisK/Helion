@@ -90,8 +90,8 @@ public class SaveMenu : Menu
         }
     }
 
-    private readonly MenuImageComponent SaveHeader = new(SaveHeaderImage);
-    private readonly MenuImageComponent LoadHeader = new(LoadHeaderImage);
+    private readonly MenuImageComponent SaveHeader = new(SaveHeaderImage,  upscaleWithText: true);
+    private readonly MenuImageComponent LoadHeader = new(LoadHeaderImage, upscaleWithText: true);
     private readonly MenuPaddingComponent BigPadding = new(8);
     private readonly MenuPaddingComponent SmallPadding = new(4);
     private readonly MenuSmallTextComponent NoSavedGamesComponent = new(NoSavedGamesText);

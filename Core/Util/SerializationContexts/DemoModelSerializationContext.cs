@@ -1,5 +1,6 @@
 ﻿namespace Helion.Util.SerializationContexts
 {
+    using Helion.Maps.Shared;
     using Helion.Models;
     using System.Text.Json.Serialization;
 
@@ -8,6 +9,7 @@
         PropertyNameCaseInsensitive = true,
         IncludeFields = true)]
     [JsonSerializable(typeof(DemoModel), TypeInfoPropertyName = "DemoModel")]
+    [JsonSerializable(typeof(SkillLevel), TypeInfoPropertyName = "SkillLevel")]
     public partial class DemoModelSerializationContext : JsonSerializerContext
     {
     }

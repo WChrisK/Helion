@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -156,7 +155,8 @@ public class ListedConfigSection : IOptionSection
             }
 
             bool mousePress = input.ConsumeKeyPressed(Key.MouseLeft);
-            if (mousePress || input.ConsumeKeyPressed(Key.Enter) || input.ConsumeKeyPressed(Key.Button1))
+            bool controllerButton = input.ConsumeKeyPressed(Key.Button1);
+            if (mousePress || input.ConsumeKeyPressed(Key.Enter) || controllerButton)
             {
                 if (mousePress)
                 {
@@ -184,9 +184,7 @@ public class ListedConfigSection : IOptionSection
                 var lockOptions = LockOptions.None;
                 if (IsColor(configData.CfgValue, out var color))
                 {
-                    lockOptions |= LockOptions.AllowMouse;
                     m_dialog = new ColorDialog(m_config.Window, configData.CfgValue, configData.Attr, color);
-                    m_dialog.OnClose += Dialog_OnClose;
                 }
                 else if (configData.Attr.DialogType != DialogType.Default)
                 {
@@ -204,7 +202,22 @@ public class ListedConfigSection : IOptionSection
                         default:
                             throw new NotImplementedException($"Unimplemented dialog type: {configData.Attr.DialogType}");
                     }
+                }
+                else if (controllerButton)
+                {
+                    // If the user is trying to set a numeric value using a gamepad, give them a slider instead of text input.
+                    if (m_currentEditValue is ConfigValue<int>)
+                    {
+                        m_dialog = new SingleSliderDialog(m_config.Window, configData.CfgValue, configData.Attr, (m_currentEditValue as ConfigValue<int>)!.Value);
+                    }
+                    if (m_currentEditValue is ConfigValue<double>)
+                    {
+                        m_dialog = new SingleSliderDialog(m_config.Window, configData.CfgValue, configData.Attr, (decimal)(m_currentEditValue as ConfigValue<double>)!.Value);
+                    }
+                }
 
+                if (m_dialog != null)
+                {
                     lockOptions |= LockOptions.AllowMouse;
                     m_dialog.OnClose += Dialog_OnClose;
                 }
@@ -254,6 +267,11 @@ public class ListedConfigSection : IOptionSection
             {
                 m_rowEditText.Clear();
                 m_rowEditText.Append(textureDialog.SelectedTexture);
+            }
+            if (sender is SingleSliderDialog sliderDialog)
+            {
+                m_rowEditText.Clear();
+                m_rowEditText.Append(sliderDialog.SliderValue.ToString());
             }
             SubmitEditRow();
         }

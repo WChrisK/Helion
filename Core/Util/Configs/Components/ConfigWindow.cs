@@ -55,13 +55,13 @@ public class ConfigWindow
     public readonly ConfigValue<Dimension> Dimension = new((1024, 768), (_, dim) => dim.Width >= 320 && dim.Height >= 200);
 
     [ConfigInfo("Amount to scale menu text.")]
-    [OptionMenu(OptionSectionType.Video, "Menu Scale", allowReset: false)]
+    [OptionMenu(OptionSectionType.Video, "Menu Scale", allowReset: false, sliderMin: 0, sliderMax: 10, sliderStep: 1)]
     public readonly ConfigValue<double> MenuScale = new(2.0, Greater(0.0));
 
     public readonly ConfigWindowVirtual Virtual = new();
 
     [ConfigInfo("Display number for the window. Use command ListDisplays for display numbers.")]
-    [OptionMenu(OptionSectionType.Video, "Display Number", spacer: true, allowReset: false)]
+    [OptionMenu(OptionSectionType.Video, "Display Number", spacer: true, allowReset: false, sliderMin: 0, sliderMax: 10, sliderStep: 1)]
     public readonly ConfigValue<int> Display = new(0, GreaterOrEqual(0));
 
     [ConfigInfo("Color rendering mode: Palette uses Doom's colormaps and disables texture filtering, producing output that resembles software rendering. True Color interpolates color values. Application restart required.", restartRequired: true)]

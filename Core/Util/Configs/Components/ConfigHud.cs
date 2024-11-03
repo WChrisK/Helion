@@ -38,7 +38,7 @@ public class ConfigHudAutoMap
     public readonly ConfigValue<Vec3I> OverlayBackdropColor = new((0, 0, 0), ClampColor);
 
     [ConfigInfo("Background color transparency when using overlay.")]
-    [OptionMenu(OptionSectionType.Automap, "Backdrop Transparency")]
+    [OptionMenu(OptionSectionType.Automap, "Backdrop Transparency", sliderMin: 0, sliderMax: 1.0, sliderStep: .05)]
     public readonly ConfigValue<double> OverlayBackdropTransparency = new(0.7, ClampNormalized);
 
     [ConfigInfo("Show map title on the automap.")]
@@ -133,22 +133,22 @@ public class ConfigHud
     public readonly ConfigValue<bool> CrosshairHealthIndicator = new(false);
 
     [ConfigInfo("Crosshair transparency.")]
-    [OptionMenu(OptionSectionType.Hud, "Crosshair Transparency")]
+    [OptionMenu(OptionSectionType.Hud, "Crosshair Transparency", sliderMin: 0, sliderMax: 1.0, sliderStep: .05)]
     public readonly ConfigValue<double> CrosshairTransparency = new(0.5, ClampNormalized);
 
     [ConfigInfo("Crosshair scale.")]
-    [OptionMenu(OptionSectionType.Hud, "Crosshair Scale")]
+    [OptionMenu(OptionSectionType.Hud, "Crosshair Scale", sliderMin: 0, sliderMax: 5.0, sliderStep: .1)]
     public readonly ConfigValue<double> CrosshairScale = new(1.0);
 
 
     // Bobbin'
 
     [ConfigInfo("Amount of view bobbing. 0.0 is off, 1.0 is normal.")]
-    [OptionMenu(OptionSectionType.Hud, "View Bob", spacer: true)]
+    [OptionMenu(OptionSectionType.Hud, "View Bob", spacer: true, sliderMin: 0, sliderMax: 1.0, sliderStep: .05)]
     public readonly ConfigValue<double> ViewBob = new(1.0, ClampNormalized);
 
     [ConfigInfo("Amount of weapon bobbing. 0.0 is off, 1.0 is normal.")]
-    [OptionMenu(OptionSectionType.Hud, "Weapon Bob")]
+    [OptionMenu(OptionSectionType.Hud, "Weapon Bob", sliderMin: 0, sliderMax: 1.0, sliderStep: .05)]
     public readonly ConfigValue<double> WeaponBob = new(1.0, ClampNormalized);
 
 
@@ -170,23 +170,23 @@ public class ConfigHud
     public readonly ConfigValue<bool> AutoScale = new(true);
 
     [ConfigInfo("Amount to scale the HUD.")]
-    [OptionMenu(OptionSectionType.Hud, "HUD Scale")]
+    [OptionMenu(OptionSectionType.Hud, "HUD Scale", sliderMin: 0, sliderMax: 5.0, sliderStep: 1)]
     public readonly ConfigValue<double> Scale = new(2.0, Greater(0.0));
 
     [ConfigInfo("Amount of HUD transparency.")]
-    [OptionMenu(OptionSectionType.Hud, "HUD Transparency")]
+    [OptionMenu(OptionSectionType.Hud, "HUD Transparency", sliderMin: 0, sliderMax: 1.0, sliderStep: .05)]
     public readonly ConfigValue<double> Transparency = new(0.0, ClampNormalized);
 
     [ConfigInfo("Max HUD messages.")]
-    [OptionMenu(OptionSectionType.Hud, "Max HUD Messages")]
+    [OptionMenu(OptionSectionType.Hud, "Max HUD Messages", sliderMin: 0, sliderMax: 50, sliderStep: 1)]
     public readonly ConfigValue<int> MaxMessages = new(4, GreaterOrEqual(0));
 
     [ConfigInfo("Horizontal HUD margin percentage  (0.0 - 1.0).")]
-    [OptionMenu(OptionSectionType.Hud, "Horizontal Margin Percent")]
+    [OptionMenu(OptionSectionType.Hud, "Horizontal Margin Percent", sliderMin: 0, sliderMax: 1.0, sliderStep: .05)]
     public readonly ConfigValue<double> HorizontalMargin = new(0, ClampNormalized);
 
     [ConfigInfo("Font upscaling ratio (1 - 5); uses xBRZ algorithm to improve text readability", restartRequired: true)]
-    [OptionMenu(OptionSectionType.Hud, "Font Upscale Ratio")]
+    [OptionMenu(OptionSectionType.Hud, "Font Upscale Ratio", sliderMin: 1, sliderMax: 5, sliderStep: 1)]
     public readonly ConfigValue<int> FontUpscalingFactor = new(1, Clamp(1, 5));
 
     // Stats and diagnostics

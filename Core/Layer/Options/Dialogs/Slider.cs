@@ -10,17 +10,17 @@ using System;
 
 namespace Helion.Layer.Options.Dialogs;
 
-public class Slider(double value, double step, double min, double max, RenderSize? width = null) : IRenderControl
+public class Slider(decimal value, decimal step, decimal min, decimal max, RenderSize? width = null) : IRenderControl
 {
-    public event EventHandler<double>? ValueChanged;
+    public event EventHandler<decimal>? ValueChanged;
 
-    public double MaxOffset;
-    public double Value { get; private set; } = value;
+    public decimal MaxOffset;
+    public decimal Value { get; private set; } = value;
     public RenderSize Width { get; set; } = width ?? new(300, SizeMetric.Pixel);
 
-    private readonly double m_step = step;
-    private readonly double m_min = min;
-    private readonly double m_max = max;
+    private readonly decimal m_step = step;
+    private readonly decimal m_min = min;
+    private readonly decimal m_max = max;
 
     public void HandleInput(IConsumableInput input)
     {

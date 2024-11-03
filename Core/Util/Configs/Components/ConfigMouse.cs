@@ -11,19 +11,19 @@ public class ConfigMouse
     public readonly ConfigValue<bool> Look = new(true);
     
     [ConfigInfo("Forward/backward movement speed when mouse look is disabled.")]
-    [OptionMenu(OptionSectionType.Mouse, "Movement Speed")]
+    [OptionMenu(OptionSectionType.Mouse, "Movement Speed", sliderMin: 0, sliderMax: 10.0, sliderStep: .1)]
     public readonly ConfigValue<double> ForwardBackwardSpeed = new(0, GreaterOrEqual(0.0));
 
     [ConfigInfo("Scale for both the pitch and yaw (affects both axes).")]
-    [OptionMenu(OptionSectionType.Mouse, "Overall Sensitivity", spacer: true)]
+    [OptionMenu(OptionSectionType.Mouse, "Overall Sensitivity", spacer: true, sliderMin: 0, sliderMax: 10.0, sliderStep: .1)]
     public readonly ConfigValue<double> Sensitivity = new(1.0);
 
     [ConfigInfo("Vertical sensitivity. This is multiplied by the overall sensitivity value.")]
-    [OptionMenu(OptionSectionType.Mouse, "Vertical Sensitivity")]
+    [OptionMenu(OptionSectionType.Mouse, "Vertical Sensitivity", sliderMin: 0, sliderMax: 10.0, sliderStep: .1)]
     public readonly ConfigValue<double> Pitch = new(1.0);
 
     [ConfigInfo("Horizontal sensitivity. This is multiplied by the overall sensitivity value.")]
-    [OptionMenu(OptionSectionType.Mouse, "Horizontal Sensitivity")]
+    [OptionMenu(OptionSectionType.Mouse, "Horizontal Sensitivity", sliderMin: 0, sliderMax: 10.0, sliderStep: .1)]
     public readonly ConfigValue<double> Yaw = new(1.0);
     
     [ConfigInfo("Invert mouse Y.")]

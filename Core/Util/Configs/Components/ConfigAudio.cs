@@ -9,11 +9,11 @@ namespace Helion.Util.Configs.Components;
 public class ConfigAudio
 {
     [ConfigInfo("Music volume. 0.0 is Off, 2.0 is Maximum.")]
-    [OptionMenu(OptionSectionType.Audio, "Music Volume")]
+    [OptionMenu(OptionSectionType.Audio, "Music Volume", sliderMin: 0, sliderMax: 2.0, sliderStep: .05)]
     public readonly ConfigValue<double> MusicVolume = new(1.0, Clamp(0, 2.0));
 
     [ConfigInfo("Sound effect volume. 0.0 is Off, 2.0 is Maximum.")]
-    [OptionMenu(OptionSectionType.Audio, "Sound Volume")]
+    [OptionMenu(OptionSectionType.Audio, "Sound Volume", sliderMin: 0, sliderMax: 2.0, sliderStep: .05)]
     public readonly ConfigValue<double> SoundVolume = new(1.0, Clamp(0, 2.0));
 
     [ConfigInfo("Enables sound velocity.")]
@@ -25,11 +25,11 @@ public class ConfigAudio
     public readonly ConfigValue<RandomPitch> RandomizePitch = new(RandomPitch.None);
 
     [ConfigInfo("Randomized pitch scale value.")]
-    [OptionMenu(OptionSectionType.Audio, "Random Pitch Scale")]
+    [OptionMenu(OptionSectionType.Audio, "Random Pitch Scale", sliderMin: 0.1, sliderMax: 10, sliderStep: .1)]
     public readonly ConfigValue<double> RandomPitchScale = new(1, Clamp(0.1, 10));
 
     [ConfigInfo("Scale for sound pitch.")]
-    [OptionMenu(OptionSectionType.Audio, "Pitch Scale")]
+    [OptionMenu(OptionSectionType.Audio, "Pitch Scale", sliderMin: 0.1, sliderMax: 10, sliderStep: .1)]
     public readonly ConfigValue<double> Pitch = new(1, Clamp(0.1, 10));
 
     [ConfigInfo("Log sound errors.")]

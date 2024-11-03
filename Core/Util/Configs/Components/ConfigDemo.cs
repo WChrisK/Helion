@@ -6,6 +6,6 @@ namespace Helion.Util.Configs.Components;
 public class ConfigDemo
 {
     [ConfigInfo("Playback tick multiplier rounded to the nearest tick. (0.5 = half speed, 2 = double speed)", save: true)]
-    [OptionMenu(OptionSectionType.Demo, "Playback Speed")]
+    [OptionMenu(OptionSectionType.Demo, "Playback Speed", sliderMin: .1, sliderMax: 3.0, sliderStep: .05)]
     public readonly ConfigValue<double> PlaybackSpeed = new(1);
 }

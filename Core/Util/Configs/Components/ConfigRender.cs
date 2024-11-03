@@ -48,7 +48,7 @@ public class ConfigRender: ConfigElement<ConfigRender>
     public readonly ConfigValue<RenderVsyncMode> VSync = new(RenderVsyncMode.On);
 
     [ConfigInfo("Maximum frames per second. Zero is equivalent to no cap if vsync is off (or monitor refresh rate if vsync is on/adaptive).")]
-    [OptionMenu(OptionSectionType.Render, "Max FPS")]
+    [OptionMenu(OptionSectionType.Render, "Max FPS", sliderMin: 0, sliderMax: 250, sliderStep: 1)]
     public readonly ConfigValue<int> MaxFPS = new(0, fps =>
     {
         return fps switch
@@ -63,7 +63,7 @@ public class ConfigRender: ConfigElement<ConfigRender>
     // Textures and filtering
 
     [ConfigInfo("Anisotropic filtering amount. A value of 1 is the same as being off. True color required.")]
-    [OptionMenu(OptionSectionType.Render, "Anisotropy", spacer: true)]
+    [OptionMenu(OptionSectionType.Render, "Anisotropy", spacer: true, sliderMin: 0, sliderMax: 16, sliderStep: 1)]
     public readonly ConfigValue<int> Anisotropy = new(8, GreaterOrEqual(1));
     
     public readonly ConfigRenderFilter Filter = new();
@@ -76,11 +76,11 @@ public class ConfigRender: ConfigElement<ConfigRender>
     // Viewport
 
     [ConfigInfo("Field of view.")]
-    [OptionMenu(OptionSectionType.Render, "Field Of View", spacer:true)]
+    [OptionMenu(OptionSectionType.Render, "Field Of View", spacer:true, sliderMin: 60.0, sliderMax: 120.0, sliderStep: .5)]
     public readonly ConfigValue<double> FieldOfView = new(90, Clamp(60.0, 120.0));
 
     [ConfigInfo("Max render distance.")]
-    [OptionMenu(OptionSectionType.Render, "Max Rendering Distance")]
+    [OptionMenu(OptionSectionType.Render, "Max Rendering Distance", sliderMin: 0.0, sliderMax: int.MaxValue, sliderStep: 100)]
     public readonly ConfigValue<int> MaxDistance = new(0);
 
 
@@ -91,7 +91,7 @@ public class ConfigRender: ConfigElement<ConfigRender>
     public readonly ConfigValue<RenderLightMode> LightMode = new(RenderLightMode.Smooth);
 
     [ConfigInfo("Added light level offset.")]
-    [OptionMenu(OptionSectionType.Render, "Extra Lighting")]
+    [OptionMenu(OptionSectionType.Render, "Extra Lighting", sliderMin: 0, sliderMax: 10.0, sliderStep: .1)]
     public readonly ConfigValue<int> ExtraLight = new(0);
 
     [ConfigInfo("Draw everything at full brightness.")]
@@ -102,7 +102,7 @@ public class ConfigRender: ConfigElement<ConfigRender>
     // Misc. Visual effects
 
     [ConfigInfo("Gamma correction level.")]
-    [OptionMenu(OptionSectionType.Render, "Gamma correction", spacer: true)]
+    [OptionMenu(OptionSectionType.Render, "Gamma correction", spacer: true, sliderMin: 1.0, sliderMax: 4.0, sliderStep: .1)]
     public readonly ConfigValue<double> GammaCorrection = new(1, Clamp(1.0, 4.0));
 
     [ConfigInfo("Emulate fake contrast like vanilla Doom.")]
@@ -114,7 +114,7 @@ public class ConfigRender: ConfigElement<ConfigRender>
     public readonly ConfigValue<bool> VanillaRender = new(false);
 
     [ConfigInfo("Fuzz amount for partial invisibility effect.")]
-    [OptionMenu(OptionSectionType.Render, "Fuzz Amount")]
+    [OptionMenu(OptionSectionType.Render, "Fuzz Amount", sliderMin: 0, sliderMax: 5.0, sliderStep: .1)]
     public readonly ConfigValue<double> FuzzAmount = new(1);
 
     [ConfigInfo("Prevent sprites from overlapping and Z-fighting.")]

@@ -14,23 +14,23 @@ public class ConfigController: ConfigElement<ConfigController>
     public readonly ConfigValue<bool> EnableGameController = new(true);
 
     [ConfigInfo("Dead zone for analog inputs.")]
-    [OptionMenu(OptionSectionType.Controller, "Dead Zone")]
+    [OptionMenu(OptionSectionType.Controller, "Dead Zone", sliderMin: 0.1, sliderMax: 0.9, sliderStep: .05)]
     public readonly ConfigValue<double> GameControllerDeadZone = new(0.2, Clamp(0.1, 0.9));
 
     [ConfigInfo("Turn speed scaling factor for analog inputs.")]
-    [OptionMenu(OptionSectionType.Controller, "Turn Sensitivity")]
+    [OptionMenu(OptionSectionType.Controller, "Turn Sensitivity", sliderMin: 0.1, sliderMax: 3.0, sliderStep: .05)]
     public readonly ConfigValue<double> GameControllerTurnScale = new(1.0, Clamp(0.1, 3.0));
 
     [ConfigInfo("Pitch speed scaling factor for analog inputs.")]
-    [OptionMenu(OptionSectionType.Controller, "Pitch Sensitivity")]
+    [OptionMenu(OptionSectionType.Controller, "Pitch Sensitivity", sliderMin: 0.1, sliderMax: 3.0, sliderStep: .05)]
     public readonly ConfigValue<double> GameControllerPitchScale = new(0.5, Clamp(0.1, 3.0));
 
     [ConfigInfo("Run input scaling factor for analog inputs.")]
-    [OptionMenu(OptionSectionType.Controller, "Run Sensitivity")]
+    [OptionMenu(OptionSectionType.Controller, "Run Sensitivity", sliderMin: 0.1, sliderMax: 3.0, sliderStep: .05)]
     public readonly ConfigValue<double> GameControllerRunScale = new(1.0, Clamp(0.1, 3.0));
 
     [ConfigInfo("Strafe input scaling factor for analog inputs.")]
-    [OptionMenu(OptionSectionType.Controller, "Strafe Sensitivity")]
+    [OptionMenu(OptionSectionType.Controller, "Strafe Sensitivity", sliderMin: 0.1, sliderMax: 3.0, sliderStep: .05)]
     public readonly ConfigValue<double> GameControllerStrafeScale = new(1.0, Clamp(0.1, 3.0));
 }
 

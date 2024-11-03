@@ -30,7 +30,7 @@ public class ConfigGame: ConfigElement<ConfigGame>
     // Visual effects
 
     [ConfigInfo("Scale red amount drawn to screen when the player takes damage.")]
-    [OptionMenu(OptionSectionType.General, "Pain Intensity", spacer: true)]
+    [OptionMenu(OptionSectionType.General, "Pain Intensity", spacer: true, sliderMin: 0, sliderMax: 5.0, sliderStep: .1)]
     public readonly ConfigValue<double> PainIntensity = new(1.0);
 
     [ConfigInfo("Transition effect between levels/screens.")]
@@ -52,11 +52,11 @@ public class ConfigGame: ConfigElement<ConfigGame>
     public readonly ConfigValue<bool> AutoSave = new(true);
 
     [ConfigInfo("Number of autosaves before the oldest is replaced. 0 = No limit.")]
-    [OptionMenu(OptionSectionType.General, "Rotating Autosaves")]
+    [OptionMenu(OptionSectionType.General, "Rotating Autosaves", sliderMin: 0, sliderMax: 50, sliderStep: 1)]
     public readonly ConfigValue<int> RotatingAutoSaves = new(4, GreaterOrEqual(0));
 
     [ConfigInfo("Number of quicksaves before the oldest is replaced. 0 = Use regular save slots instead.")]
-    [OptionMenu(OptionSectionType.General, "Rotating Quicksaves")]
+    [OptionMenu(OptionSectionType.General, "Rotating Quicksaves", sliderMin: 0, sliderMax: 50, sliderStep: 1)]
     public readonly ConfigValue<int> RotatingQuickSaves = new(4, GreaterOrEqual(0));
 
     [ConfigInfo("Confirm overwrite when quicksaving to regular save slots.")]

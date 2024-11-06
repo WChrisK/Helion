@@ -12,7 +12,7 @@ public readonly record struct KeyCommandItem(Key Key, string Command);
 /// <summary>
 /// A case insensitive two-way lookup.
 /// </summary>
-public class ConfigKeyMapping : IConfigKeyMapping
+public partial class ConfigKeyMapping : IConfigKeyMapping
 {
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
@@ -84,6 +84,21 @@ public class ConfigKeyMapping : IConfigKeyMapping
 
         Changed = true;
     }
+
+    public void LoadControllerPreset(ControllerPresetType presetType)
+    {
+        if (presetType == ControllerPresetType.Custom)
+            return;
+
+        m_commands.RemoveAll(keyCommand => keyCommand.Key >= Key.Axis1Plus && keyCommand.Key <= Key.Button30);
+
+        foreach (var keyMapping in ControllerPresetMappings[presetType])
+        {
+            m_commands.Add(new KeyCommandItem(keyMapping.key, keyMapping.command));
+        }
+    }
+
+    public bool IsControllerInput(Key key) => key >= Key.Axis1Plus && key <= Key.Button30;
 
     public void EnsureMenuKey()
     {

@@ -215,6 +215,9 @@ public class KeyBindingSection : IOptionSection
                     m_configUpdated = true;
                     m_config.Keys.Add(key, commandKeys.Command);
                     commandKeys.Keys.Add(key);
+                    if (m_config.Keys.IsControllerInput(key))
+                        m_config.Controller.ControllerPreset.Set(ControllerPresetType.Custom);
+
                     m_soundManager.PlayStaticSound(MenuSounds.Choose);
                 }
 
@@ -279,6 +282,9 @@ public class KeyBindingSection : IOptionSection
     {
         m_configUpdated = true;
         var commandKeys = m_commandToKeys[m_currentRow];
+        if (commandKeys.Keys.Any(m_config.Keys.IsControllerInput))
+            m_config.Controller.ControllerPreset.Set(ControllerPresetType.Custom);
+
         foreach (Key key in commandKeys.Keys)
             m_config.Keys.Remove(key, commandKeys.Command);
 
@@ -494,6 +500,7 @@ public class KeyBindingSection : IOptionSection
     private void ResetAllKeyBindings()
     {
         m_config.Keys.SetInitialDefaultKeyBindings();
+        m_config.Keys.LoadControllerPreset(m_config.Controller.ControllerPreset);
         m_configUpdated = true;
         WriteConfigFile();
     }

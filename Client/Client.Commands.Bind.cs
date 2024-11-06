@@ -47,6 +47,11 @@ public partial class Client
         if (removeExisting)
             m_config.Keys.Remove(inputKey.Value);
         m_config.Keys.Add(inputKey.Value, command);
+
+        if (m_config.Keys.IsControllerInput(inputKey.Value))
+        {
+            m_config.Controller.ControllerPreset.Set(Util.Configs.Impl.ControllerPresetType.Custom);
+        }
     }
 
     [ConsoleCommand("unbind", "Unbinds a key with an optional specific command")]
@@ -75,8 +80,14 @@ public partial class Client
         }
 
         string command = args.Args[1];
-        if (!m_config.Keys.Remove(inputKey.Value, command))
+        bool removed = m_config.Keys.Remove(inputKey.Value, command);
+        if (!removed)
             HelionLog.Error($"{inputKey} does not have ${command}");
+
+        if (removed && m_config.Keys.IsControllerInput(inputKey.Value))
+        {
+            m_config.Controller.ControllerPreset.Set(Util.Configs.Impl.ControllerPresetType.Custom);
+        }
     }
 
     [ConsoleCommand("inputkeys", "List all input keys")]

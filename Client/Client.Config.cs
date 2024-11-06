@@ -14,9 +14,10 @@ public partial class Client
         m_config.Audio.MusicVolume.OnChanged += MusicVolume_OnChanged;
         m_config.Audio.SoundVolume.OnChanged += SoundVolume_OnChanged;
         m_config.Audio.SoundFontFile.OnChanged += SoundFont_OnChanged;
-        m_config.Audio.Synthesizer.OnChanged += this.UseOPLEmulation_OnChanged;
+        m_config.Audio.Synthesizer.OnChanged += UseOPLEmulation_OnChanged;
 
         m_config.Mouse.Look.OnChanged += Look_OnChanged;
+        m_config.Controller.ControllerPreset.OnChanged += ControllerPreset_OnChanged;
 
         m_config.Window.State.OnChanged += WindowState_OnChanged;
         m_config.Window.Dimension.OnChanged += WindowDimension_OnChanged;
@@ -27,7 +28,7 @@ public partial class Client
 
         m_config.Hud.AutoScale.OnChanged += AutoScale_OnChanged;
 
-        m_config.Compatibility.SessionCompatLevel.OnChanged += this.SessionCompatLevel_OnChanged;
+        m_config.Compatibility.SessionCompatLevel.OnChanged += SessionCompatLevel_OnChanged;
 
         CalculateHudScale();
     }
@@ -114,5 +115,10 @@ public partial class Client
     {
         m_archiveCollection.Definitions.CompLevelDefinition.CompLevel = e;
         m_archiveCollection.Definitions.CompLevelDefinition.Apply(m_config, true);
+    }
+
+    private void ControllerPreset_OnChanged(object? sender, Util.Configs.Impl.ControllerPresetType e)
+    {
+        m_config.Keys.LoadControllerPreset(e);
     }
 }

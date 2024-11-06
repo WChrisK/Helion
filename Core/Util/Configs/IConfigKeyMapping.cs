@@ -97,4 +97,18 @@ public interface IConfigKeyMapping
     /// Ensures that the user has some way to get back to the menus even if they have unbound all keys.
     /// </summary>
     void EnsureMenuKey();
+
+    /// <summary>
+    /// Loads button mapping presets for the specified controller type.
+    /// If changed to "custom", this will do nothing.
+    /// </summary>
+    /// <param name="presetType">Controller type</param>
+    void LoadControllerPreset(ControllerPresetType presetType);
+
+    /// <summary>
+    /// Determines whether a given input belongs to a game controller.
+    /// </summary>
+    /// <param name="key">Input key</param>
+    /// <returns>True if input belongs to a game controller, false otherwise.</returns>
+    bool IsControllerInput(Key key);
 }

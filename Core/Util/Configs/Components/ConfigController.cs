@@ -13,8 +13,8 @@ public class ConfigController: ConfigElement<ConfigController>
     [OptionMenu(OptionSectionType.Controller, "Enable Game Controller", spacer: true)]
     public readonly ConfigValue<bool> EnableGameController = new(true);
 
-    [ConfigInfo("Preset axis and button mappings for controller.")]
-    [OptionMenu(OptionSectionType.Controller, "Controller Type Preset")]
+    [ConfigInfo("Load preset axis and button mappings for controller.")]
+    [OptionMenu(OptionSectionType.Controller, "Controller Preset")]
     public readonly ConfigValue<ControllerPresetType> ControllerPreset = new(ControllerPresetType.None);
 
     [ConfigInfo("Dead zone for analog inputs.")]

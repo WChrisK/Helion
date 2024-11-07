@@ -17,7 +17,7 @@
 
     public partial class ConfigKeyMapping
     {
-        // These are intended as default mappings for custom controller types.
+        // These are intended as default mappings for common controller types.
 
         public static readonly Dictionary<ControllerPresetType, (Key key, string command)[]> ControllerPresetMappings =
             RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ?

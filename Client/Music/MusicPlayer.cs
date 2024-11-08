@@ -41,6 +41,12 @@ public class MusicPlayer : IMusicPlayer
 
         AudioStreamFactory streamFactory = new AudioStreamFactory();
 
+        // Hook up event handlers
+        m_configAudio.SoundFontFile.OnChanged += SoundFontFile_OnChanged;
+        m_configAudio.EnableChorus.OnChanged += EnableChorus_OnChanged;
+        m_configAudio.EnableReverb.OnChanged += EnableReverb_OnChanged;
+        m_configAudio.Synthesizer.OnChanged += Synthesizer_OnChanged;
+
         m_zMusicPlayer = new ZMusicWrapper.ZMusicPlayer(
             streamFactory,
             configAudio.Synthesizer == Synth.OPL3 ? ZMusicWrapper.MidiDevice.OPL3 : ZMusicWrapper.MidiDevice.FluidSynth,
@@ -50,9 +56,16 @@ public class MusicPlayer : IMusicPlayer
         m_fluidSynthPlayer = new FluidSynthMusicPlayer(
             configAudio.SoundFontFile.Value,
             streamFactory,
-            (float)m_configAudio.MusicVolume);
+            (float)m_configAudio.MusicVolume,
+            m_configAudio.EnableChorus,
+            m_configAudio.EnableReverb);
         SetSynthesizer();
     }
+
+    private void Synthesizer_OnChanged(object? sender, Synth e) => SetSynthesizer();
+    private void EnableReverb_OnChanged(object? sender, bool e) => SetChorusAndReverb();
+    private void EnableChorus_OnChanged(object? sender, bool e) => SetChorusAndReverb();
+    private void SoundFontFile_OnChanged(object? sender, string e) => ChangeSoundFont();
 
     public void OutputChanging()
     {
@@ -113,6 +126,11 @@ public class MusicPlayer : IMusicPlayer
                 this.Play(m_currentTrack?.Data!, newOptions);
             }
         }
+    }
+
+    public void SetChorusAndReverb()
+    {
+        m_fluidSynthPlayer.SetChorusAndReverb(m_configAudio.EnableChorus, m_configAudio.EnableReverb);
     }
 
     private void PlayQueueTask()
@@ -229,6 +247,11 @@ public class MusicPlayer : IMusicPlayer
             return;
 
         Stop();
+
+        m_configAudio.SoundFontFile.OnChanged += SoundFontFile_OnChanged;
+        m_configAudio.EnableChorus.OnChanged += EnableChorus_OnChanged;
+        m_configAudio.EnableReverb.OnChanged += EnableReverb_OnChanged;
+        m_configAudio.Synthesizer.OnChanged += Synthesizer_OnChanged;
 
         m_cancelPlayQueue.Cancel();
         m_playQueueTask.Wait(1000);

@@ -44,9 +44,17 @@ public class ConfigAudio: ConfigElement<ConfigAudio>
     [OptionMenu(OptionSectionType.Audio, "Music Synthesizer")]
     public readonly ConfigValue<Synth> Synthesizer = new(Synth.FluidSynth);
 
-    [ConfigInfo("SoundFont file to use for MIDI/MUS music playback.")]
+    [ConfigInfo("SoundFont file to use for MIDI/MUS music playback (FluidSynth only).")]
     [OptionMenu(OptionSectionType.Audio, "SoundFont File", dialogType: DialogType.SoundFontPicker)]
     public readonly ConfigValue<string> SoundFontFile = new($"SoundFonts{Path.DirectorySeparatorChar}Default.sf2");
+
+    [ConfigInfo("Enable chorus effect in MIDI/MUS playback (FluidSynth only).")]
+    [OptionMenu(OptionSectionType.Audio, "Enable Chorus")]
+    public readonly ConfigValue<bool> EnableChorus = new(true);
+
+    [ConfigInfo("Enable reverb effect in MIDI/MUS playback (FluidSynth only).")]
+    [OptionMenu(OptionSectionType.Audio, "Enable Reverb")]
+    public readonly ConfigValue<bool> EnableReverb = new(true);
 
     // Music volume is treated as a multiple of sound effects volume, because effects volume controls the master gain.
     public double MusicVolumeNormalized => SoundVolume == 0 ? MusicVolume : (MusicVolume / SoundVolume);

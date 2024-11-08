@@ -31,12 +31,14 @@ public class FluidSynthMusicPlayer : IMusicPlayer
     private Player? m_player;
     private bool m_enabled = true;
 
-    public FluidSynthMusicPlayer(string soundFontFile, IOutputStreamFactory streamFactory, float sourceVolume)
+    public FluidSynthMusicPlayer(string soundFontFile, IOutputStreamFactory streamFactory, float sourceVolume, bool enableChorus, bool enableReverb)
     {
         m_volume = sourceVolume;
 
         m_settings = new Settings();
         m_synth = new(m_settings);
+        m_synth.SetChorusOn(enableChorus);
+        m_synth.SetReverbOn(enableReverb);
 
         m_streamFactory = streamFactory;
 
@@ -63,6 +65,12 @@ public class FluidSynthMusicPlayer : IMusicPlayer
                 Stop();
             }
         }
+    }
+
+    public void SetChorusAndReverb(bool enableChorus, bool enableReverb)
+    {
+        m_synth.SetChorusOn(enableChorus);
+        m_synth.SetReverbOn(enableReverb);
     }
 
     public unsafe bool Play(byte[] data, MusicPlayerOptions options)

@@ -18,9 +18,10 @@
 
 ## Linux
 
-1.  While we have included a version of LibFluidSynth that _should_ work on common Linux distributions, if it doesn't work, you may need to use your package manager to install a different one (and possibly delete the ".so" file we've included).  You can also run with `-nomusic` to disable music support.
+1.  We have provided binaries for libzmusic and libfluidsynth, which are used for music playback.  If these are not compatible with the specific version of Linux you are using, you may need to obtain or build your own.  If you choose to do so, you can either install these dependencies and delete the ones provided, or overwrite the provided .so files with your own; either should work.  You can also run with `-nomusic` to disable music support.
 2.  Similar to the Windows ZIP files, the standard `Helion-<version>-linux-x64.zip` file requires a .NET 8.x runtime.  See https://learn.microsoft.com/en-us/dotnet/core/install/linux .  The `Helion-<version>-linux-x64_SelfContained.zip` file provides its own self-contained runtime and does not require this.
 3.  Helion requires OpenGL (GLFW) and OpenAL runtime components.  You must install these if they are not present, otherwise Helion will fail to start.  On a barebones Ubuntu install, OpenAL may need to be installed (`sudo apt-get install libopenal1`)  Additionally, the music library (ZMusic) requires libsndfile and libmpg123.  These are usually already installed by major Linux distributions (including Ubuntu) but may need to be installed manually on less common configurations.
+4.  While we _do_ test with Linux environments, we are limited in how many different distributions we can test.  You are most likely to have success with distributions based on the latest Ubuntu LTS branch (24.04 at the time of this writing); other versions may work if you build your own native libraries.
 
 # Contact Us
 

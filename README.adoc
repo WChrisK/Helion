@@ -76,6 +76,12 @@ sudo dnf install dotnet-sdk-8.0 openal-devel
 
 After installing dependencies, if you have an IDE that supports C# (like Rider), you can open Helion and build/run directly.  You can also build from the command line, as described in the section below.
 
+Note that we have provided copies of various binaries we depend upon, notably including [GLFW](https://github.com/glfw/glfw), [ZMusic](https://github.com/ZDoom/ZMusic), and [FluidSynth](https://github.com/FluidSynth/fluidsynth).  If you experience difficulties using the provided .so files, you may need to build your own.
+
+Helion's native bindings currently require a version of FluidSynth with ABI version 3 (we currently distribute version 2.3.9) and version 1.1.14 of ZMusic.
+
+If you choose to build your own versions of these native libraries, you can either overwrite the .so files in the Helion output directory, or install them on your system (e.g. 'make install') and simply delete the ones provided with Helion.
+
 ### Mac
 
 None of the developers have a Mac to test.

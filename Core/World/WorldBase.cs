@@ -65,13 +65,15 @@ namespace Helion.World;
 
 public abstract partial class WorldBase : IWorld
 {
+    const int BspBlockDimension = 16;
     public const int DefaultLineOfSightDistance = 1024;
     private const double MaxPitch = 80.0 * Math.PI / 180.0;
     private const double MinPitch = -80.0 * Math.PI / 180.0;
 
     private static BlockMap? LastBlockMap;
     private static BlockMap? LastRenderBlockMap;
-    private static BlockMap? LastBspBlockMap;
+    private static uint[]? LastBspBlockmapNodeIndices;
+    private static GridDimensions LastBspBlockmapDimensions;
 
     private static WorldSoundManager? LastWorldSoundManager;
     private static EntityManager? LastEntityManager;
@@ -121,12 +123,11 @@ public abstract partial class WorldBase : IWorld
     public DynamicArray<StructLine> StructLines => LastStructLines;
     public int?[] BspSegLines { get; } = [];
     public IList<HighlightArea> HighlightAreas { get; } = new List<HighlightArea>();
-    public CompactBspTree BspTree => Geometry.CompactBspTree;
+    public CompactBspTree BspTree { get; private set; }
     public EntityManager EntityManager { get; }
     public WorldSoundManager SoundManager { get; }
     public BlockmapTraverser BlockmapTraverser => PhysicsManager.BlockmapTraverser;
     public BlockMap RenderBlockmap { get; private set; }
-    public BlockMap BspBlockmap { get; private set; }
     public SpecialManager SpecialManager { get; private set; }
     public IConfig Config { get; private set; }
     public MapInfoDef MapInfo { get; private set; }
@@ -212,6 +213,7 @@ public abstract partial class WorldBase : IWorld
         Profiler = profiler;
         Geometry = geometry;
         Map = map;
+        BspTree = Geometry.CompactBspTree;
 
         if (Map.Reject != null && Map.Reject.Length > 0)
         {
@@ -310,7 +312,7 @@ public abstract partial class WorldBase : IWorld
             return LastPhysicManager;
         }
 
-        LastPhysicManager = new(this, BspTree, Blockmap, LastBspBlockMap!, Random, Map is DoomMap);
+        LastPhysicManager = new(this, BspTree, Blockmap, Random, Map is DoomMap);
         return LastPhysicManager;
     }
 
@@ -341,7 +343,8 @@ public abstract partial class WorldBase : IWorld
     {
         if (SameAsPreviousMap && LastBlockMap != null)
         {
-            BspBlockmap = LastBspBlockMap!;
+            m_bspBlockmapDimensions = LastBspBlockmapDimensions;
+            m_bspBlockmapNodeIndices = LastBspBlockmapNodeIndices!;            
             LastBlockMap.Clear();
             return LastBlockMap;
         }
@@ -350,52 +353,6 @@ public abstract partial class WorldBase : IWorld
         CreateBspBlockMap(LastBlockMap);
 
         return LastBlockMap;
-    }
-
-    private unsafe void CreateBspBlockMap(BlockMap blockmap)
-    {
-        LastBspBlockMap = new BlockMap(blockmap.Bounds, 64);
-        LastBspBlockMap.SubectorIndices = new uint[LastBspBlockMap.Blocks.Width * LastBspBlockMap.Blocks.Height];
-
-        foreach (var block in LastBspBlockMap.Blocks.Blocks)
-        {
-            double nodeArea = double.MaxValue;
-            uint bspNodeIndex = (uint)BspTree.Nodes.Length - 1;
-            uint blockNodeIndex = bspNodeIndex;
-            fixed (BspNodeCompact* startNode = &BspTree.Nodes[0])
-            {
-                while (true)
-                {
-                    BspNodeCompact* node = startNode + bspNodeIndex;
-
-                    bool onRightMin = CompactBspTree.OnRightNode(block.Box.Min.X, block.Box.Min.Y, node);
-                    bool onRightMax = CompactBspTree.OnRightNode(block.Box.Max.X, block.Box.Max.Y, node);
-
-                    if (onRightMin != onRightMax)
-                        break;
-
-                    var area = node->BoundingBox.Width * node->BoundingBox.Height;
-                    if (area < nodeArea)
-                    {
-                        nodeArea = area;
-                        blockNodeIndex = bspNodeIndex;
-                    }
-
-                    int next = *(int*)&onRightMin;
-                    bspNodeIndex = node->Children[next];
-
-                    if ((bspNodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
-                    {
-                        bspNodeIndex = (bspNodeIndex & BspNodeCompact.SubsectorMask);
-                        break;
-                    }
-                }
-            }
-
-            LastBspBlockMap.SubectorIndices[block.Y * LastBspBlockMap.Blocks.Width + block.X] = blockNodeIndex;
-        }
-
-        BspBlockmap = LastBspBlockMap;
     }
 
     private BlockMap CreateRenderBlockMap()

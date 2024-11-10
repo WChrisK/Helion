@@ -51,7 +51,6 @@ public sealed class PhysicsManager
     private IWorld m_world;
     private CompactBspTree m_bspTree;
     private BlockMap m_blockmap;
-    private BlockMap m_bspBlockmap;
     private UniformGrid<Block> m_blockmapGrid;
     private Block[] m_blockmapBlocks;
     private EntityManager m_entityManager;
@@ -76,14 +75,13 @@ public sealed class PhysicsManager
     private readonly Func<Entity, GridIterationStatus> m_stackEntityTraverseAction;
     private readonly Func<Entity, GridIterationStatus> m_ignoreClampEntityTraverseAction;
 
-    public PhysicsManager(IWorld world, CompactBspTree bspTree, BlockMap blockmap, BlockMap bspBlockmap, IRandom random, bool alwaysStickEntitiesToFloor)
+    public PhysicsManager(IWorld world, CompactBspTree bspTree, BlockMap blockmap, IRandom random, bool alwaysStickEntitiesToFloor)
     {
         m_world = world;
         m_bspTree = bspTree;
         m_blockmap = blockmap;
         m_blockmapGrid = blockmap.Blocks;
         m_blockmapBlocks = m_blockmapGrid.Blocks;
-        m_bspBlockmap = bspBlockmap;
         m_entityManager = world.EntityManager;
         m_random = random;
         BlockmapTraverser = new BlockmapTraverser(world, m_blockmap);
@@ -964,14 +962,9 @@ public sealed class PhysicsManager
         int checkCounter = ++WorldStatic.CheckCounter;
         Subsector centerSubsector;
         if (tryMove != null && tryMove.Subsector != null && tryMove.Success)
-        {
             centerSubsector = tryMove.Subsector;
-        }
         else
-        {
-            var startIndex = m_bspBlockmap.GetSubectorIndex(entity.Position.X, entity.Position.Y);
-            centerSubsector = m_bspTree.Subsectors[m_bspTree.ToSubsectorIndex(startIndex, entity.Position.X, entity.Position.Y)];
-        }
+            centerSubsector = m_world.ToSubsector(entity.Position.X, entity.Position.Y);
 
         Sector centerSector = centerSubsector.Sector;
         centerSector.CheckCount = checkCounter;
@@ -1233,8 +1226,7 @@ doneLinkToSectors:
         }
         else
         {
-            var startIndex = m_bspBlockmap.GetSubectorIndex(x, y);
-            tryMove.Subsector = m_bspTree.Subsectors[m_bspTree.ToSubsectorIndex(startIndex, x, y)];
+            tryMove.Subsector = m_world.ToSubsector(x, y);
             tryMove.HighestFloorZ = tryMove.DropOffZ = tryMove.Subsector.Sector.Floor.Z;
             tryMove.LowestCeilingZ = tryMove.Subsector.Sector.Ceiling.Z;
         }

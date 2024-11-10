@@ -621,7 +621,7 @@ public partial class Renderer : IDisposable
         if (viewport.Width == 0 || viewport.Height == 0 || cmd.World.IsDisposed)
             return;
 
-        var viewSector = cmd.World.BspTree.ToSector(cmd.Camera.PositionInterpolated.Double);
+        var viewSector = cmd.World.ToSubsector(cmd.Camera.PositionInterpolated.X, cmd.Camera.PositionInterpolated.Y).Sector;
         var transferHeightsView = TransferHeights.GetView(viewSector, cmd.Camera.PositionInterpolated.Z);
 
         m_renderInfo.Set(cmd.Camera, cmd.GametickFraction, viewport, cmd.ViewerEntity, cmd.DrawAutomap,
@@ -635,7 +635,7 @@ public partial class Renderer : IDisposable
         if (viewport.Width == 0 || viewport.Height == 0 || cmd.World.IsDisposed)
             return;
 
-        var viewSector = cmd.World.BspTree.ToSector(cmd.Camera.PositionInterpolated.Double);
+        var viewSector = cmd.World.ToSubsector(cmd.Camera.PositionInterpolated.X, cmd.Camera.PositionInterpolated.Y).Sector;
         var transferHeightsView = TransferHeights.GetView(viewSector, cmd.Camera.PositionInterpolated.Z);
 
         m_renderInfo.Set(cmd.Camera, cmd.GametickFraction, viewport, cmd.ViewerEntity, cmd.DrawAutomap,

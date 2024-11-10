@@ -9,9 +9,7 @@ using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Util.Assertion;
 using Helion.Util.Container;
-using Helion.Util.Extensions;
 using Helion.World.Entities;
-using Helion.World.Geometry.Islands;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Sides;
@@ -28,19 +26,14 @@ public class BlockMap
     public readonly Box2D Bounds;
     private readonly UniformGrid<Block> m_blocks;
     public UniformGrid<Block> Blocks => m_blocks;
-    public uint[] SubectorIndices;
     
     public BlockMap(IList<Line> lines, int blockDimension)
     {
         Bounds = FindMapBoundingBox(lines) ?? new Box2D(Vec2D.Zero, Vec2D.One);
         m_blocks = new UniformGrid<Block>(Bounds, blockDimension);
-        SubectorIndices = new uint[m_blocks.Width * m_blocks.Height];
         SetBlockCoordinates();
         AddLinesToBlocks(lines);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public uint GetSubectorIndex(double x, double y) => SubectorIndices[m_blocks.GetBlockIndex(x, y)];
 
     public unsafe void Clear()
     {

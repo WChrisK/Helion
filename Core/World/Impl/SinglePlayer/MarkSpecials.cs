@@ -233,7 +233,7 @@ public class MarkSpecials
             Vec3D end = new((box.Min.X + box.Max.X) / 2, (box.Min.Y + box.Max.Y) / 2, Math.Min(sector.Floor.Z + 8, sector.Ceiling.Z));
 
             // Check if the point is in the sector. The center point of the bounding box may not be in the center if it's a complex concave polygon.
-            if (world.BspTree.ToSector(end).Id != sector.Id)
+            if (world.ToSubsector(end.X, end.Y).Id != sector.Id)
             {
                 var endLine = GetClosestLineCenterFrom(world, island, player.Position.XY);
                 if (endLine != null)

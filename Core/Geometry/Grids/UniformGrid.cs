@@ -22,6 +22,9 @@ public enum GridIterationStatus
 /// </summary>
 /// <typeparam name="T">The block component for each grid element.
 /// </typeparam>
+/// 
+public readonly record struct GridDimensions(int Width, int Height, Box2D Bounds);
+
 public class UniformGrid<T> where T : new()
 {
     public int Dimension;
@@ -58,15 +61,24 @@ public class UniformGrid<T> where T : new()
     public UniformGrid(Box2D bounds, int blockDimension)
     {
         Dimension = blockDimension;
-        Bounds = ToBounds(bounds);
 
-        Vec2D sides = Bounds.Sides;
-        Width = (int)(sides.X / Dimension);
-        Height = (int)(sides.Y / Dimension);
+        var dimensions = CalculateBlockMapDimensions(bounds, blockDimension);
+        Bounds = dimensions.Bounds;
+        Width = dimensions.Width;
+        Height = dimensions.Height;
 
         Blocks = new T[TotalBlocks];
         for (int i = 0; i < TotalBlocks; i++)
             Blocks[i] = new T();
+    }
+
+    public static GridDimensions CalculateBlockMapDimensions(Box2D bounds, int blockDimension)
+    {
+        var blockBounds = ToBounds(bounds, blockDimension);
+        var sides = blockBounds.Sides;
+        int width = (int)(sides.X / blockDimension);
+        int height = (int)(sides.Y / blockDimension);
+        return new(width, height, blockBounds);
     }
 
     /// <summary>
@@ -299,7 +311,7 @@ public class UniformGrid<T> where T : new()
         return index;
     }
 
-    private Box2D ToBounds(Box2D bounds)
+    private static Box2D ToBounds(Box2D bounds, int dimension)
     {
         // Note that we are subtracting 1 from the bottom left even after
         // clamping it to the left. The reason for this is because any
@@ -318,13 +330,13 @@ public class UniformGrid<T> where T : new()
         // the cost of a very small amount of memory in the grid. This is
         // a great trade-off. If we can get the best of both worlds though
         // one day, we should do that.
-        int alignedLeftBlock = (int)Math.Floor(bounds.Min.X / Dimension) - 1;
-        int alignedBottomBlock = (int)Math.Floor(bounds.Min.Y / Dimension) - 1;
-        int alignedRightBlock = (int)Math.Ceiling(bounds.Max.X / Dimension) + 1;
-        int alignedTopBlock = (int)Math.Ceiling(bounds.Max.Y / Dimension) + 1;
+        int alignedLeftBlock = (int)Math.Floor(bounds.Min.X / dimension) - 1;
+        int alignedBottomBlock = (int)Math.Floor(bounds.Min.Y / dimension) - 1;
+        int alignedRightBlock = (int)Math.Ceiling(bounds.Max.X / dimension) + 1;
+        int alignedTopBlock = (int)Math.Ceiling(bounds.Max.Y / dimension) + 1;
 
-        Vec2D origin = new Vec2D(alignedLeftBlock * Dimension, alignedBottomBlock * Dimension);
-        Vec2D topRight = new Vec2D(alignedRightBlock * Dimension, alignedTopBlock * Dimension);
+        Vec2D origin = new(alignedLeftBlock * dimension, alignedBottomBlock * dimension);
+        Vec2D topRight = new(alignedRightBlock * dimension, alignedTopBlock * dimension);
 
         return new Box2D(origin, topRight);
     }

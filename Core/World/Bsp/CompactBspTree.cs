@@ -122,74 +122,40 @@ public class CompactBspTree
         return new CompactBspTree(root, builder);
     }
 
-    public unsafe int ToSubsectorIndex(uint nodeIndex, double x, double y)
+    public unsafe Subsector ToSubsector(uint nodeIndex, double x, double y)
     {
-        fixed (BspNodeCompact* startNode = &Nodes[0])
+        while (true)
         {
-            while (true)
-            {
-                BspNodeCompact* node = startNode + nodeIndex;
+            ref var node = ref Nodes[nodeIndex];
 
-                bool onRight = OnRightNode(x, y, node);
-                int next = *(int*)&onRight;
-                nodeIndex = node->Children[next];
+            bool onRight = OnRightNode(x, y, node);
+            int next = *(int*)&onRight;
+            nodeIndex = node.Children[next];
 
-                if ((nodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
-                    return (int)(nodeIndex & BspNodeCompact.SubsectorMask);
-            }
-        }
+            if ((nodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
+                return Subsectors[(int)(nodeIndex & BspNodeCompact.SubsectorMask)];
+        }        
     }
 
-    public unsafe int ToSubsectorIndex(double x, double y)
-    {
-        uint nodeIndex = (uint)Nodes.Length - 1;
-        fixed (BspNodeCompact* startNode = &Nodes[0])
-        {
-            while (true)
-            {
-                BspNodeCompact* node = startNode + nodeIndex;
-
-                bool onRight = OnRightNode(x, y, node);
-                int next = *(int*)&onRight;
-                nodeIndex = node->Children[next];
-
-                if ((nodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
-                    return (int)(nodeIndex & BspNodeCompact.SubsectorMask);
-            }
-        }
-    }
-
-    public static unsafe bool OnRightNode(double x, double y, BspNodeCompact* node)
+    public static unsafe bool OnRightNode(double x, double y, in BspNodeCompact node)
     {
         // These checks are required to match dooms behavior for returning different results when exactly on lines w/o deltas
-        if (node->SplitDelta.X == 0)
+        if (node.SplitDelta.X == 0)
         {
-            if (x <= node->SplitStart.X)
-                return node->SplitDelta.Y < 0;
-            return node->SplitDelta.Y > 0;
+            if (x <= node.SplitStart.X)
+                return node.SplitDelta.Y < 0;
+            return node.SplitDelta.Y > 0;
         }
 
-        if (node->SplitDelta.Y == 0)
+        if (node.SplitDelta.Y == 0)
         {
-            if (y <= node->SplitStart.Y)
-                return node->SplitDelta.X > 0;
-            return node->SplitDelta.X < 0;
+            if (y <= node.SplitStart.Y)
+                return node.SplitDelta.X > 0;
+            return node.SplitDelta.X < 0;
         }
 
-        double dot = (node->SplitDelta.X * (y - node->SplitStart.Y)) - (node->SplitDelta.Y * (x - node->SplitStart.X));
+        double dot = (node.SplitDelta.X * (y - node.SplitStart.Y)) - (node.SplitDelta.Y * (x - node.SplitStart.X));
         return dot < 0;
-    }
-
-    public unsafe Sector ToSector(uint nodeIndex, double x, double y)
-    {
-        int index = ToSubsectorIndex(nodeIndex, x, y);
-        return Subsectors[index].Sector;
-    }
-
-    public unsafe Sector ToSector(in Vec3D point)
-    {
-        int index = ToSubsectorIndex(point.X, point.Y);
-        return Subsectors[index].Sector;
     }
 
     private static Side? GetSideFromEdge(SubsectorEdge edge, GeometryBuilder builder)

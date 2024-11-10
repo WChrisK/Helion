@@ -97,8 +97,7 @@ public class EntityManager : IDisposable
     public Entity Create(EntityDefinition definition, Vec3D position, double zHeight, double angle, int tid, bool init = false)
     {
         int id = m_id++;
-        var startIndex = World.BspBlockmap.GetSubectorIndex(position.X, position.Y);
-        var sector = World.BspTree.Subsectors[World.BspTree.ToSubsectorIndex(startIndex, position.X, position.Y)].Sector;
+        var sector = World.ToSubsector(position.X, position.Y).Sector;
 
         position.Z = GetPositionZ(sector, in position, zHeight);
         Entity entity = World.DataCache.GetEntity(id, tid, definition, position, angle, sector);
@@ -175,7 +174,7 @@ public class EntityManager : IDisposable
         }
 
         Vec3D position = spawnSpot.Position;
-        Sector sector = World.BspTree.ToSector(position);
+        Sector sector = World.ToSubsector(position.X, position.Y).Sector;
         CameraPlayer player = new(short.MaxValue, 0, playerDefinition, position, spawnSpot.AngleRadians, sector, World);
         //player.EntityListNode.Previous = player.EntityListNode;
         return player;
@@ -491,7 +490,7 @@ public class EntityManager : IDisposable
     private Player CreatePlayerEntity(int playerNumber, EntityDefinition definition, Vec3D position, double zHeight, double angle)
     {
         int id = m_id++;
-        Sector sector = World.BspTree.ToSector(position);
+        Sector sector = World.ToSubsector(position.X, position.Y).Sector;
         position.Z = GetPositionZ(sector, position, zHeight);
         Player player = new(id, 0, definition, position, angle, sector, World, playerNumber);
 

@@ -60,6 +60,7 @@ using Helion.Maps.Specials.Vanilla;
 using Helion.Util.Loggers;
 using Helion.Graphics.Palettes;
 using Helion.Maps.Shared;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Helion.World;
 
@@ -334,7 +335,7 @@ public abstract partial class WorldBase : IWorld
         return LastWorldSoundManager;
     }
 
-    private BlockMap CreateBlockMap()
+    private unsafe BlockMap CreateBlockMap()
     {
         if (SameAsPreviousMap && LastBlockMap != null)
         {
@@ -343,6 +344,45 @@ public abstract partial class WorldBase : IWorld
         }
 
         LastBlockMap = new BlockMap(Lines, 128);
+
+        foreach (var block in LastBlockMap.Blocks.Blocks)
+        {
+            double nodeArea = double.MaxValue;
+            uint bspNodeIndex = (uint)BspTree.Nodes.Length - 1;
+            uint blockNodeIndex = bspNodeIndex;
+            fixed (BspNodeCompact* startNode = &BspTree.Nodes[0])
+            {
+                while (true)
+                {
+                    BspNodeCompact* node = startNode + bspNodeIndex;
+
+                    bool onRightMin = CompactBspTree.OnRightNode(block.Box.Min.X, block.Box.Min.Y, node);
+                    bool onRightMax = CompactBspTree.OnRightNode(block.Box.Max.X, block.Box.Max.Y, node);
+
+                    if (onRightMin != onRightMax)
+                        break;
+
+                    var area = node->BoundingBox.Width * node->BoundingBox.Height;
+                    if (area < nodeArea)
+                    {
+                        nodeArea = area;
+                        blockNodeIndex = bspNodeIndex;
+                    }
+
+                    int next = Convert.ToInt32(onRightMin);
+                    bspNodeIndex = node->Children[next];
+
+                    if ((bspNodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
+                    {
+                        bspNodeIndex = (bspNodeIndex & BspNodeCompact.SubsectorMask);
+                        break;
+                    }
+                }
+            }
+
+            LastBlockMap.SubectorIndices[block.Y * LastBlockMap.Blocks.Width + block.X] = blockNodeIndex;
+        }
+
         return LastBlockMap;
     }
 

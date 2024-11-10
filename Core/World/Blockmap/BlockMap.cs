@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Grids;
@@ -27,14 +28,19 @@ public class BlockMap
     public readonly Box2D Bounds;
     private readonly UniformGrid<Block> m_blocks;
     public UniformGrid<Block> Blocks => m_blocks;
+    public uint[] SubectorIndices;
     
     public BlockMap(IList<Line> lines, int blockDimension)
     {
         Bounds = FindMapBoundingBox(lines) ?? new Box2D(Vec2D.Zero, Vec2D.One);
         m_blocks = new UniformGrid<Block>(Bounds, blockDimension);
+        SubectorIndices = new uint[m_blocks.Width * m_blocks.Height];
         SetBlockCoordinates();
         AddLinesToBlocks(lines);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public uint GetSubectorIndex(double x, double y) => SubectorIndices[m_blocks.GetBlockIndex(x, y)];
 
     public unsafe void Clear()
     {

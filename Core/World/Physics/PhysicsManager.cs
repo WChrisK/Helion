@@ -959,13 +959,17 @@ public sealed class PhysicsManager
     private unsafe void LinkToSectors(Entity entity, TryMoveData? tryMove)
     {
         Precondition(entity.SectorNodes.Empty(), "Forgot to unlink entity from blockmap");
-
         int checkCounter = ++WorldStatic.CheckCounter;
         Subsector centerSubsector;
         if (tryMove != null && tryMove.Subsector != null && tryMove.Success)
+        {
             centerSubsector = tryMove.Subsector;
+        }
         else
-            centerSubsector = m_bspTree.Subsectors[m_bspTree.ToSubsectorIndex(entity.Position.X, entity.Position.Y)];
+        {
+            var startIndex = m_blockmap.GetSubectorIndex(entity.Position.X, entity.Position.Y);
+            centerSubsector = m_bspTree.Subsectors[m_bspTree.ToSubsectorIndex(startIndex, entity.Position.X, entity.Position.Y)];
+        }
 
         Sector centerSector = centerSubsector.Sector;
         centerSector.CheckCount = checkCounter;
@@ -1227,7 +1231,8 @@ doneLinkToSectors:
         }
         else
         {
-            tryMove.Subsector = m_bspTree.ToSubsector(x, y);
+            var startIndex = m_blockmap.GetSubectorIndex(x, y);
+            tryMove.Subsector = m_bspTree.Subsectors[m_bspTree.ToSubsectorIndex(startIndex, x, y)];
             tryMove.HighestFloorZ = tryMove.DropOffZ = tryMove.Subsector.Sector.Floor.Z;
             tryMove.LowestCeilingZ = tryMove.Subsector.Sector.Ceiling.Z;
         }

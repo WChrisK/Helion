@@ -122,6 +122,24 @@ public class CompactBspTree
         return new CompactBspTree(root, builder);
     }
 
+    public unsafe int ToSubsectorIndex(uint nodeIndex, double x, double y)
+    {
+        fixed (BspNodeCompact* startNode = &Nodes[0])
+        {
+            while (true)
+            {
+                BspNodeCompact* node = startNode + nodeIndex;
+
+                bool onRight = OnRightNode(x, y, node);
+                int next = Convert.ToInt32(onRight);
+                nodeIndex = node->Children[next];
+
+                if ((nodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
+                    return (int)(nodeIndex & BspNodeCompact.SubsectorMask);
+            }
+        }
+    }
+
     public unsafe int ToSubsectorIndex(double x, double y)
     {
         uint nodeIndex = (uint)Nodes.Length - 1;
@@ -141,7 +159,7 @@ public class CompactBspTree
         }
     }
 
-    private unsafe bool OnRightNode(double x, double y, BspNodeCompact* node)
+    public static unsafe bool OnRightNode(double x, double y, BspNodeCompact* node)
     {
         // These checks are required to match dooms behavior for returning different results when exactly on lines w/o deltas
         if (node->SplitDelta.X == 0)

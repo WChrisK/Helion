@@ -288,6 +288,17 @@ public class UniformGrid<T> where T : new()
         return Blocks[index];
     }
 
+    public int GetBlockIndex(double xPos, double yPos)
+    {
+        int x = (int)((xPos - Origin.X) / Dimension);
+        int y = (int)((yPos - Origin.Y) / Dimension);
+        int index = y * Width + x;
+        if (index < 0 || index >= Blocks.Length)
+            return 0;
+
+        return index;
+    }
+
     private Box2D ToBounds(Box2D bounds)
     {
         // Note that we are subtracting 1 from the bottom left even after

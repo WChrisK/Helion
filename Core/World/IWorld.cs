@@ -80,7 +80,9 @@ public interface IWorld : IDisposable
     EntityManager EntityManager { get; }
     WorldSoundManager SoundManager { get; }
     BlockmapTraverser BlockmapTraverser { get; }
+    BlockMap Blockmap { get; }
     BlockMap RenderBlockmap { get; }
+    BlockMap BspBlockmap { get; }
     SpecialManager SpecialManager { get; }
     TextureManager TextureManager { get; }
     IConfig Config { get; }

@@ -60,7 +60,6 @@ using Helion.Maps.Specials.Vanilla;
 using Helion.Util.Loggers;
 using Helion.Graphics.Palettes;
 using Helion.Maps.Shared;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Helion.World;
 
@@ -72,6 +71,8 @@ public abstract partial class WorldBase : IWorld
 
     private static BlockMap? LastBlockMap;
     private static BlockMap? LastRenderBlockMap;
+    private static BlockMap? LastBspBlockMap;
+
     private static WorldSoundManager? LastWorldSoundManager;
     private static EntityManager? LastEntityManager;
     private static PhysicsManager? LastPhysicManager;
@@ -101,7 +102,7 @@ public abstract partial class WorldBase : IWorld
 
     public readonly long CreationTimeNanos;
     public string MapName { get; protected set; }
-    public readonly BlockMap Blockmap;
+    public BlockMap Blockmap { get; private set; }
     public WorldState WorldState { get; protected set; } = WorldState.Normal;
     public int Gametick { get; private set; }
     public int GameTicker { get; private set; }
@@ -125,6 +126,7 @@ public abstract partial class WorldBase : IWorld
     public WorldSoundManager SoundManager { get; }
     public BlockmapTraverser BlockmapTraverser => PhysicsManager.BlockmapTraverser;
     public BlockMap RenderBlockmap { get; private set; }
+    public BlockMap BspBlockmap { get; private set; }
     public SpecialManager SpecialManager { get; private set; }
     public IConfig Config { get; private set; }
     public MapInfoDef MapInfo { get; private set; }
@@ -308,7 +310,7 @@ public abstract partial class WorldBase : IWorld
             return LastPhysicManager;
         }
 
-        LastPhysicManager = new(this, BspTree, Blockmap, Random, Map is DoomMap);
+        LastPhysicManager = new(this, BspTree, Blockmap, LastBspBlockMap!, Random, Map is DoomMap);
         return LastPhysicManager;
     }
 
@@ -339,13 +341,23 @@ public abstract partial class WorldBase : IWorld
     {
         if (SameAsPreviousMap && LastBlockMap != null)
         {
+            BspBlockmap = LastBspBlockMap!;
             LastBlockMap.Clear();
             return LastBlockMap;
         }
 
         LastBlockMap = new BlockMap(Lines, 128);
+        CreateBspBlockMap(LastBlockMap);
 
-        foreach (var block in LastBlockMap.Blocks.Blocks)
+        return LastBlockMap;
+    }
+
+    private unsafe void CreateBspBlockMap(BlockMap blockmap)
+    {
+        LastBspBlockMap = new BlockMap(blockmap.Bounds, 64);
+        LastBspBlockMap.SubectorIndices = new uint[LastBspBlockMap.Blocks.Width * LastBspBlockMap.Blocks.Height];
+
+        foreach (var block in LastBspBlockMap.Blocks.Blocks)
         {
             double nodeArea = double.MaxValue;
             uint bspNodeIndex = (uint)BspTree.Nodes.Length - 1;
@@ -369,7 +381,7 @@ public abstract partial class WorldBase : IWorld
                         blockNodeIndex = bspNodeIndex;
                     }
 
-                    int next = Convert.ToInt32(onRightMin);
+                    int next = *(int*)&onRightMin;
                     bspNodeIndex = node->Children[next];
 
                     if ((bspNodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
@@ -380,10 +392,10 @@ public abstract partial class WorldBase : IWorld
                 }
             }
 
-            LastBlockMap.SubectorIndices[block.Y * LastBlockMap.Blocks.Width + block.X] = blockNodeIndex;
+            LastBspBlockMap.SubectorIndices[block.Y * LastBspBlockMap.Blocks.Width + block.X] = blockNodeIndex;
         }
 
-        return LastBlockMap;
+        BspBlockmap = LastBspBlockMap;
     }
 
     private BlockMap CreateRenderBlockMap()

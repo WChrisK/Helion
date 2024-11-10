@@ -1,4 +1,5 @@
 using Helion.Geometry;
+using Helion.Geometry.Grids;
 using Helion.Geometry.Vectors;
 using Helion.Maps;
 using Helion.Maps.Components;
@@ -7,6 +8,7 @@ using Helion.Models;
 using Helion.Util;
 using Helion.Util.Container;
 using Helion.Util.Extensions;
+using Helion.World.Blockmap;
 using Helion.World.Entities.Definition;
 using Helion.World.Entities.Definition.Composer;
 using Helion.World.Entities.Inventories;
@@ -18,6 +20,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace Helion.World.Entities;
 
@@ -51,6 +54,7 @@ public class EntityManager : IDisposable
     public List<Entity> MusicChangers = new();
     private LookupArray<Player?> RealPlayersByNumber = new();
     private readonly Dictionary<int, ISet<Entity>> TidToEntity = new();
+    private readonly UniformGrid<Block> m_blocks;
 
     private int m_id;
 
@@ -59,6 +63,7 @@ public class EntityManager : IDisposable
         World = world;
         SpawnLocations = new SpawnLocations(world);
         DefinitionComposer = world.ArchiveCollection.EntityDefinitionComposer;
+        m_blocks = world.Blockmap.Blocks;
     }
 
     private static bool ZHeightSet(double z)
@@ -92,7 +97,9 @@ public class EntityManager : IDisposable
     public Entity Create(EntityDefinition definition, Vec3D position, double zHeight, double angle, int tid, bool init = false)
     {
         int id = m_id++;
-        Sector sector = World.BspTree.ToSector(position);
+        var startIndex = World.BspBlockmap.GetSubectorIndex(position.X, position.Y);
+        var sector = World.BspTree.Subsectors[World.BspTree.ToSubsectorIndex(startIndex, position.X, position.Y)].Sector;
+
         position.Z = GetPositionZ(sector, in position, zHeight);
         Entity entity = World.DataCache.GetEntity(id, tid, definition, position, angle, sector);
 

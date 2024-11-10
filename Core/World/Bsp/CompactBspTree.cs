@@ -131,7 +131,7 @@ public class CompactBspTree
                 BspNodeCompact* node = startNode + nodeIndex;
 
                 bool onRight = OnRightNode(x, y, node);
-                int next = Convert.ToInt32(onRight);
+                int next = *(int*)&onRight;
                 nodeIndex = node->Children[next];
 
                 if ((nodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
@@ -150,7 +150,7 @@ public class CompactBspTree
                 BspNodeCompact* node = startNode + nodeIndex;
 
                 bool onRight = OnRightNode(x, y, node);
-                int next = Convert.ToInt32(onRight);
+                int next = *(int*)&onRight;
                 nodeIndex = node->Children[next];
 
                 if ((nodeIndex & BspNodeCompact.IsSubsectorBit) != 0)
@@ -180,10 +180,10 @@ public class CompactBspTree
         return dot < 0;
     }
 
-    public unsafe Subsector ToSubsector(double x, double y)
+    public unsafe Sector ToSector(uint nodeIndex, double x, double y)
     {
-        int index = ToSubsectorIndex(x, y);
-        return Subsectors[index];
+        int index = ToSubsectorIndex(nodeIndex, x, y);
+        return Subsectors[index].Sector;
     }
 
     public unsafe Sector ToSector(in Vec3D point)

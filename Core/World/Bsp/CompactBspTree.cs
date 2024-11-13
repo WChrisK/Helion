@@ -129,7 +129,7 @@ public class CompactBspTree
             ref var node = ref Nodes[nodeIndex];
 
             bool onRight = OnRightNode(x, y, node);
-            int next = *(int*)&onRight;
+            int next = *(byte*)&onRight;
             nodeIndex = node.Children[next];
 
             if ((nodeIndex & BspNodeCompact.IsSubsectorBit) != 0)

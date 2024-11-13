@@ -1,4 +1,6 @@
-﻿namespace Helion.Util.Container;
+﻿using System;
+
+namespace Helion.Util.Container;
 
 public static class DynamicArrayExtensions
 {

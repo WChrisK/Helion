@@ -307,6 +307,13 @@ namespace Helion.Tests.Unit.GameAction
             world.PhysicsManager.EnableMaxMoveXY = true;
         }
 
+        public static void MoveEntityZ(WorldBase world, Entity entity, double amount)
+        {     
+            entity.Velocity.Z = amount;
+            world.Tick();
+            entity.Velocity = Vec3D.Zero;
+        }
+
         public static void MoveEntity(WorldBase world, Entity entity, Vec2D pos)
         {
             double distance = entity.Position.XY.Distance(pos);

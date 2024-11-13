@@ -19,7 +19,7 @@ public partial class Physics
     public void EnemyMoveSamePosition()
     {
         var monster = GameActions.CreateEntity(World, "BaronOfHell", new Vec3D(-1492, 216, int.MinValue), frozen: false, init: true);
-        monster.Properties.MonsterMovementSpeed = 0;
+        monster.MonsterMovementSpeed = 0;
         monster.Position.Z.Should().Be(0);
         monster.SetEnemyDirection(Entity.MoveDir.North);
         monster.MoveEnemy(out _).Should().Be(true);

@@ -203,7 +203,8 @@ public partial class Client
         var playerDef = newLayer.World.EntityManager.DefinitionComposer.GetByName(newLayer.World.Player.Definition.Name);
         if (demoMap.PlayerModel != null && playerDef != null)
         {
-            var copyPlayer = new Player(demoMap.PlayerModel, new(), playerDef, newLayer.World);
+            var copyPlayer = new Player();
+            copyPlayer.Set(0, demoMap.PlayerModel, [], playerDef, newLayer.World);
             newLayer.World.Player.Inventory.Clear();
             newLayer.World.Player.Inventory.ClearKeys();
             newLayer.World.Player.CopyProperties(copyPlayer);          

@@ -56,8 +56,6 @@ public class EntityManager : IDisposable
     private readonly Dictionary<int, ISet<Entity>> TidToEntity = new();
     private readonly UniformGrid<Block> m_blocks;
 
-    private int m_id;
-
     public EntityManager(IWorld world)
     {
         World = world;
@@ -96,11 +94,10 @@ public class EntityManager : IDisposable
 
     public Entity Create(EntityDefinition definition, Vec3D position, double zHeight, double angle, int tid, bool init = false)
     {
-        int id = m_id++;
         var sector = World.ToSubsector(position.X, position.Y).Sector;
 
         position.Z = GetPositionZ(sector, in position, zHeight);
-        Entity entity = World.DataCache.GetEntity(id, tid, definition, position, angle, sector);
+        Entity entity = World.DataCache.GetEntity(tid, definition, position, angle, sector, World);
 
         if (entity.Definition.Properties.FastSpeed > 0 && World.IsFastMonsters)
             entity.Properties.MonsterMovementSpeed = entity.Definition.Properties.FastSpeed;
@@ -175,8 +172,7 @@ public class EntityManager : IDisposable
 
         Vec3D position = spawnSpot.Position;
         Sector sector = World.ToSubsector(position.X, position.Y).Sector;
-        CameraPlayer player = new(short.MaxValue, 0, playerDefinition, position, spawnSpot.AngleRadians, sector, World);
-        //player.EntityListNode.Previous = player.EntityListNode;
+        CameraPlayer player = new(0, playerDefinition, position, spawnSpot.AngleRadians, sector, World);
         return player;
     }
 
@@ -188,9 +184,11 @@ public class EntityManager : IDisposable
 
     public void PopulateFrom(IMap map, LevelStats levelStats)
     {
-        List<Entity> relinkEntities = new();
+        List<Entity> relinkEntities = [];
+        var things = map.GetThings();
+        World.DataCache.SetEntitiesForMapLoad(things.Count);
 
-        foreach (IThing mapThing in map.GetThings())
+        foreach (IThing mapThing in things)
         {
             if (!ShouldSpawn(mapThing))
                 continue;
@@ -251,8 +249,13 @@ public class EntityManager : IDisposable
 
     public WorldModelPopulateResult PopulateFrom(WorldModel worldModel)
     {
-        List<Player> players = new();
-        Dictionary<int, EntityModelPair> entities = new();
+        List<Player> players = [];
+        Dictionary<int, EntityModelPair> entities = [];
+
+        var maxEntityId = worldModel.Entities.Max(x => x.Id);
+        var maxPlayerId = worldModel.Players.Max(x => x.Id);
+        World.DataCache.SetEntitiesForMapLoad(worldModel.Entities.Count + worldModel.Players.Count);
+
         // Entities are serialized backwards because of the linked list implementation
         for (int i = worldModel.Entities.Count - 1; i >= 0; i--)
         {
@@ -264,7 +267,9 @@ public class EntityManager : IDisposable
                 continue;
             }
 
-            var entity = World.DataCache.GetEntity(entityModel, definition, World);
+            int index = World.DataCache.EntityLength++;
+            var entity = World.DataCache.Entities[index];
+            entity.Set(index, entityModel, definition, World);
             AddEntityToList(entity);
 
             entities.Add(entityModel.Id, new(entityModel, entity));
@@ -282,8 +287,6 @@ public class EntityManager : IDisposable
 
             players.Add(player);
         }
-
-        m_id = entities.Keys.Max() + 1;
 
         for (int i = 0; i < worldModel.Entities.Count; i++)
         {
@@ -313,6 +316,7 @@ public class EntityManager : IDisposable
             }
         }
 
+        World.DataCache.EntityId = Math.Max(maxEntityId, maxPlayerId) + 1;
         return new WorldModelPopulateResult(players, entities);
     }
 
@@ -386,7 +390,10 @@ public class EntityManager : IDisposable
         var playerDefinition = DefinitionComposer.GetByName(playerModel.Name);
         if (playerDefinition != null)
         {
-            Player player = new(playerModel, entities, playerDefinition, World);
+            var player = new Player();
+            int index = World.DataCache.EntityLength++;
+            World.DataCache.Entities[index] = player;
+            player.Set(index, playerModel, entities, playerDefinition, World);
             player.IsVooDooDoll = isVoodooDoll;
 
             AddEntityToList(player);
@@ -489,10 +496,9 @@ public class EntityManager : IDisposable
 
     private Player CreatePlayerEntity(int playerNumber, EntityDefinition definition, Vec3D position, double zHeight, double angle)
     {
-        int id = m_id++;
         Sector sector = World.ToSubsector(position.X, position.Y).Sector;
         position.Z = GetPositionZ(sector, position, zHeight);
-        Player player = new(id, 0, definition, position, angle, sector, World, playerNumber);
+        var player = World.DataCache.GetPlayer(0, definition, position, angle, sector, World, playerNumber);
 
         var armor = DefinitionComposer.GetByName(Inventory.ArmorClassName);
         if (armor != null)
@@ -511,7 +517,6 @@ public class EntityManager : IDisposable
     public void UpdateTo(IWorld world)
     {
         World = world;
-        m_id = 0;
         ClearEntities();
         SpawnLocations.Clear();
         TidToEntity.Clear();

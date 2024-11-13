@@ -1,4 +1,5 @@
-﻿using Helion.Util.Assertion;
+﻿using Helion.Util;
+using Helion.Util.Assertion;
 using System;
 
 namespace Helion.World.Entities;
@@ -24,18 +25,18 @@ public class WeakEntity
             return Default;
 
         var dataCache = WorldStatic.DataCache;
-        if (entity.Id >= dataCache.WeakEntities.Length)
+        if (entity.Index >= dataCache.WeakEntities.Length)
         {
-            WeakEntity?[] newEntities = new WeakEntity?[Math.Max(dataCache.WeakEntities.Length * 2, entity.Id * 2)];
+            WeakEntity?[] newEntities = new WeakEntity?[Math.Max(dataCache.WeakEntities.Length * 2, entity.Index * 2)];
             Array.Copy(dataCache.WeakEntities, newEntities, dataCache.WeakEntities.Length);
             dataCache.WeakEntities = newEntities;
         }
 
-        var weakEntity = dataCache.WeakEntities[entity.Id];
+        var weakEntity = dataCache.WeakEntities[entity.Index];
         if (weakEntity == null)
         {
             weakEntity = new WeakEntity(entity);
-            dataCache.WeakEntities[entity.Id] = weakEntity;
+            dataCache.WeakEntities[entity.Index] = weakEntity;
             return weakEntity;
         }
 
@@ -46,12 +47,12 @@ public class WeakEntity
         return weakEntity;
     }
 
-    public static void DisposeEntity(Entity entity)
+    public static void DisposeEntity(Entity entity, DataCache dataCache)
     {
-        if (entity.Id >= WorldStatic.DataCache.WeakEntities.Length)
+        if (entity.Index >= dataCache.WeakEntities.Length)
             return;
 
-        var weakEntity = WorldStatic.DataCache.WeakEntities[entity.Id];
+        var weakEntity = dataCache.WeakEntities[entity.Index];
         if (weakEntity == null)
             return;
 

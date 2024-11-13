@@ -41,7 +41,7 @@ public partial class WorldBase
 
                     blockNodeIndex = bspNodeIndex;
 
-                    int next = *(int*)&onRightMin;
+                    int next = *(byte*)&onRightMin;
                     bspNodeIndex = node.Children[next];
 
                     if ((bspNodeIndex & BspNodeCompact.IsSubsectorBit) != 0)

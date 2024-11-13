@@ -7,7 +7,12 @@ public struct EntityFlags
     public const int SpecialFlag = FlagValue.Flag1;
     public const int SolidFlag = FlagValue.Flag2;
     public const int ShootableFlag = FlagValue.Flag3;
+    public const int DropOffFlag = FlagValue.Flag8;
     public const int TouchyFlag = FlagValue.Flag24;
+    public const int FloatFlag = FlagValue.Flag12;
+    public const int MissileFlag = FlagValue.Flag14;
+    public const int SkullFlyFlag = FlagValue.Flag22;
+    public const int ActsLikeBridgeFlag = FlagValue.Flag24;
 
     public const int Translation1Flag = FlagValue.Flag12;
     public const int Translation2Flag = FlagValue.Flag13;

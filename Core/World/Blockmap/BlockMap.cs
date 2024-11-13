@@ -83,17 +83,24 @@ public class BlockMap
     /// </param>
     public void Link(Entity entity)
     {
-        Assert.Precondition(entity.BlockmapNodes.Empty(), "Forgot to unlink entity from blockmap");
+        Assert.Precondition(entity.BlocksLength == 0, "Forgot to unlink entity from blockmap");
 
-        var it = m_blocks.CreateBoxIteration(entity.GetBox2D());
+        var it = m_blocks.CreateBoxIteration(entity.Position.X, entity.Position.Y, entity.Radius);
         for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
         {
             for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
             {
                 Block block = m_blocks[by * it.Width + bx];
-                LinkableNode<Entity> blockEntityNode = WorldStatic.DataCache.GetLinkableNodeEntity(entity);
-                block.Entities.Add(blockEntityNode);
-                entity.BlockmapNodes.Add(blockEntityNode);
+
+                if (block.EntityIndicesLength == block.EntityIndices.Length)                
+                    Array.Resize(ref block.EntityIndices, block.EntityIndices.Length * 2);
+
+                block.EntityIndices[block.EntityIndicesLength++] = entity.Index;
+
+                if (entity.BlocksLength == entity.Blocks.Length)
+                    Array.Resize(ref entity.Blocks, entity.Blocks.Length * 2);
+
+                entity.Blocks[entity.BlocksLength++] = block;
             }
         }
     }

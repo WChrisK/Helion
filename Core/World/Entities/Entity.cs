@@ -24,6 +24,7 @@ using Helion.World.Blockmap;
 using Helion.World.Geometry.Subsectors;
 using Helion.Graphics.Palettes;
 using System.Runtime.CompilerServices;
+using Helion.World.Special.Specials;
 
 namespace Helion.World.Entities;
 
@@ -38,6 +39,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     private const int DefaultClosetChaseSpeed = 40;
     public const double FloatSpeed = 4.0;
 
+    public int Index;
+    public IWorld World;
     public Entity? Next;
     public Entity? Previous;
 
@@ -90,6 +93,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     public Entity? BlockingEntity;
     public SectorPlane? BlockingSectorPlane;
     public Player? PickupPlayer;
+    public SectorDamageSpecial? SectorDamageSpecial;
 
     // Values that are modified from EntityProperties
     public int Threshold;
@@ -111,7 +115,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     public virtual int ProjectileKickBack => Properties.ProjectileKickBack;
 
     public bool IsBlocked() => BlockingEntity != null || BlockingLine != null || BlockingSectorPlane != null;
-    public readonly DynamicArray<LinkableNode<Entity>> BlockmapNodes = new();
+    public Block[] Blocks = new Block[4];
+    public int BlocksLength;
     public readonly DynamicArray<LinkableNode<Entity>> SectorNodes = new();
     public bool IsDisposed;
 
@@ -131,22 +136,26 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
 
     public Entity()
     {
+        World = null!;
         Definition = null!;
         HighestFloorObject = null!;
         HighestFloorSector = null!;
         LowestCeilingObject = null!;
         LowestCeilingSector = null!;
+        SectorDamageSpecial = null;
         Sector = Sector.Default;
         Subsector = Subsector.Default;
         Properties = null!;
     }
 
-    public void Set(int id, int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
-        Sector sector)
+    public void Set(int index, int id, int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
+        Sector sector, IWorld world)
     {
         IsDisposed = false;
         Health = definition.Properties.Health;
 
+        World = world;
+        Index = index;
         Id = id;
         ThingId = thingId;
         Definition = definition;
@@ -166,17 +175,21 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
         HighestFloorObject = sector;
         LowestCeilingSector = sector;
         LowestCeilingObject = sector;
+        SectorDamageSpecial = sector.SectorDamageSpecial;
         CheckOnGround();
 
         Properties.Threshold = 0;
 
         Alpha = (float)Properties.Alpha;
+        MonsterMovementSpeed = Properties.MonsterMovementSpeed;
 
         FrameState = new(this, definition);
     }
 
-    public void Set(EntityModel entityModel, EntityDefinition definition, IWorld world)
+    public void Set(int index, EntityModel entityModel, EntityDefinition definition, IWorld world)
     {
+        World = world;
+        Index = index;
         IsDisposed = false;
         Id = entityModel.Id;
         ThingId = entityModel.ThingId;
@@ -199,6 +212,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
         Velocity = entityModel.GetVelocity();
         SpawnPoint = entityModel.GetSpawnPoint();
         Sector = world.Sectors[entityModel.Sector];
+        SectorDamageSpecial = Sector.SectorDamageSpecial;
                 
         MoveLinked = entityModel.MoveLinked;
         Respawn = entityModel.Respawn;
@@ -217,6 +231,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
             ArmorDefinition = WorldStatic.EntityManager.DefinitionComposer.GetByName(entityModel.ArmorDefinition);
 
         Alpha = (float)Properties.Alpha;
+        MonsterMovementSpeed = Properties.MonsterMovementSpeed;
 
         FrameState = new(this, definition, entityModel.Frame);
 
@@ -335,17 +350,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     /// everything except the entity list (which should be unlinked from
     /// when the entity is fully removed from the world).
     /// </remarks>
-    public void UnlinkFromWorld()
+    public unsafe void UnlinkFromWorld()
     {
-        // We need max speed for stuff like this because of how frequently
-        // it is called. As of 2017, there is a 61% performance loss by
-        // doing foreach instead of for. We can do foreach one day when the
-        // compiler does this for us. This may need revisiting since the
-        // JIT probably is pretty smart now though.
-        //
-        // Also maybe doing Clear() is overkill, but then again not doing
-        // clearing may cause garbage collection to not be run for any
-        // lingering elements in the list.
         for (int i = 0; i < SectorNodes.Length; i++)
         {
             LinkableNode<Entity> node = SectorNodes[i];
@@ -355,14 +361,24 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
         }
         SectorNodes.Clear();
 
-        for (int i = 0; i < BlockmapNodes.Length; i++)
+        for (int blockIndex = 0; blockIndex < BlocksLength; blockIndex++)
         {
-            LinkableNode<Entity> node = BlockmapNodes[i];
-            node.Unlink();
-            WorldStatic.DataCache.FreeLinkableNodeEntity(node);
-            BlockmapNodes.Data[i] = null!;
+            var block = Blocks[blockIndex];
+            var data = block.EntityIndices;
+            for (int index = block.EntityIndicesLength - 1; index >= 0; index--)
+            {
+                if (data[index] == Index)
+                {
+                    block.EntityIndicesLength--;
+                    if (index < block.EntityIndicesLength)
+                        Array.Copy(data, index + 1, data, index, block.EntityIndicesLength - index);
+                    break;
+                }
+            }
+            
+            Blocks[blockIndex] = null!;
         }
-        BlockmapNodes.Clear();
+        BlocksLength = 0;
 
         if (RenderBlock != null)
         {
@@ -374,6 +390,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
         BlockingLine = null;
         BlockingEntity = null;
         BlockingSectorPlane = null;
+        SectorDamageSpecial = null;
     }
 
     public virtual void Tick()
@@ -783,9 +800,11 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
         return false;
     }
 
+    const int DropOffFlags = EntityFlags.FloatFlag | EntityFlags.DropOffFlag;
+
     public bool ShouldCheckDropOff()
     {
-        if (Flags.Float || Flags.Dropoff)
+        if ((Flags.Flags1 & DropOffFlags) != 0)
             return false;
 
         if (!WorldStatic.AllowItemDropoff)
@@ -915,7 +934,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
 
         FrameState.SetFrameIndex(Constants.NullFrameIndex);
 
-        BlockmapNodes.Clear();
+        BlocksLength = 0;
         SectorNodes.Clear();
         IntersectSectors.Clear();
 
@@ -926,9 +945,9 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
         Owner = WeakEntity.Default;
         PickupPlayer = null;
 
-        WeakEntity.DisposeEntity(this);
+        WeakEntity.DisposeEntity(this, World.DataCache);
 
-        if (WorldStatic.DataCache.FreeEntity(this))
+        if (World.DataCache.FreeEntity(this))
             Definition = null!;
 
         Velocity = Vec3D.Zero;

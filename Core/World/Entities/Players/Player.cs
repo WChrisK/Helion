@@ -56,7 +56,7 @@ public class Player : Entity
     public double ViewAngleRadians;
     public double ViewPitchRadians;
 
-    public readonly int PlayerNumber;
+    public int PlayerNumber;
     public double PitchRadians;
     public double PrevAngle;
     public int DamageCount;
@@ -140,11 +140,17 @@ public class Player : Entity
     public override bool IsInvulnerable => Flags.Invulnerable || Inventory.IsPowerupActive(PowerupType.Invulnerable);
     public override bool CanMakeSound() => !IsVooDooDoll;
 
-    public Player(int id, int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
+    public Player()
+    {
+        Inventory = null!;
+        StatusBar = null!;
+    }
+
+    public void Set(int index, int id, int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
         Sector sector, IWorld world, int playerNumber)
     {
         Precondition(playerNumber >= 0, "Player number should not be negative");
-        Set(id, thingId, definition, position, angleRadians, sector);
+        Set(index, id, thingId, definition, position, angleRadians, sector, world);
 
         PlayerNumber = playerNumber;
         // Going to default to true for players, otherwise jumping without moving X/Y can allow for clipping through ceilings
@@ -164,10 +170,10 @@ public class Player : Entity
         SetupEvents();
     }
 
-    public Player(PlayerModel playerModel, Dictionary<int, EntityModelPair> entities, EntityDefinition definition, IWorld world)
+    public void Set(int index, PlayerModel playerModel, Dictionary<int, EntityModelPair> entities, EntityDefinition definition, IWorld world)
     {
         Precondition(playerModel.Number >= 0, "Player number should not be negative");
-        Set(playerModel, definition, world);
+        Set(index, playerModel, definition, world);
 
         PlayerNumber = playerModel.Number;
         AngleRadians = playerModel.AngleRadians;

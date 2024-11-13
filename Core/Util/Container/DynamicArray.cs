@@ -136,7 +136,6 @@ public class DynamicArray<T>
 
         for (int i = 0; i < elements.Length; i++)
             Data[Length + i] = elements[i];
-
         Length += elements.Length;
     }
 

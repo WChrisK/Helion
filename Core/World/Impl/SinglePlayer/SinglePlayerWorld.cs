@@ -398,7 +398,7 @@ public class SinglePlayerWorld : WorldBase
     {
         player.TickCommand = tickCommand;
 
-        if (PlayingDemo && player.PlayerNumber != short.MaxValue)
+        if (PlayingDemo && player.PlayerNumber != CameraPlayer.CameraPlayerId)
             return;
 
         tickCommand.MouseAngle += player.ViewAngleRadians;

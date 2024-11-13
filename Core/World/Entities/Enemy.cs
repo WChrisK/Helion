@@ -2,6 +2,7 @@ using System;
 using Helion.Geometry.Vectors;
 using Helion.Util;
 using Helion.Util.Assertion;
+using Helion.World.Entities.Definition.Flags;
 using Helion.World.Physics;
 
 namespace Helion.World.Entities;
@@ -33,6 +34,7 @@ public partial class Entity
     private MoveDir m_direction = MoveDir.None;
 
     public bool BlockFloating;
+    public double MonsterMovementSpeed;
 
     public void SetEnemyDirection(MoveDir direction) =>
         m_direction = direction;
@@ -317,13 +319,13 @@ public partial class Entity
             ChaseFailureSkipCount = WorldStatic.SlowTickChaseFailureSkipCount + (ChaseFailureCount++ & 1);
 
         // Need to try to use the monster's normal movement speed if stuck. Otherwise they may never move or correctly cross teleport lines.
-        ClosetChaseSpeed = Properties.MonsterMovementSpeed;
+        ClosetChaseSpeed = MonsterMovementSpeed;
         m_direction = MoveDir.None;
     }
 
     public void GetEnemySpeed(out double speedX, out double speedY)
     {
-        if (m_direction == MoveDir.None || (!Flags.Float && !OnGround))
+        if (m_direction == MoveDir.None || ((Flags.Flags1 & EntityFlags.FloatFlag) == 0 && !OnGround))
         {
             speedX = 0;
             speedY = 0;
@@ -331,14 +333,15 @@ public partial class Entity
         }
 
         double speed = (ClosetFlags & ClosetFlags.ClosetChase) != 0 ? ClosetChaseSpeed :
-            Math.Clamp(Properties.MonsterMovementSpeed * SlowTickMultiplier, -128, 128);
+            Math.Clamp(MonsterMovementSpeed * SlowTickMultiplier, -128, 128);
         speedX = Speeds[(int)m_direction] * speed;
         speedY = Speeds[(int)m_direction + 8] * speed;
     }
 
     public bool MoveEnemy(out TryMoveData? tryMove)
     {
-        if (m_direction == MoveDir.None || (!Flags.Float && !OnGround) || IsFrozen)
+        bool floatFlag = (Flags.Flags1 & EntityFlags.FloatFlag) != 0;
+        if (m_direction == MoveDir.None || (!floatFlag && !OnGround) || IsFrozen)
         {
             tryMove = null;
             return false;
@@ -352,7 +355,7 @@ public partial class Entity
         if (Flags.Teleported)
             return true;
 
-        if (!tryMove.Success && Flags.Float && tryMove.CanFloat)
+        if (!tryMove.Success && floatFlag && tryMove.CanFloat)
         {
             BlockFloating = true;
             Position.Z += Position.Z < tryMove.HighestFloorZ ? FloatSpeed : -FloatSpeed;
@@ -363,7 +366,7 @@ public partial class Entity
             BlockFloating = false;
         }
 
-        if (tryMove.Success && !Flags.Float && isMoving)
+        if (tryMove.Success && !floatFlag && isMoving)
             Position.Z = tryMove.HighestFloorZ;
 
         // With increased speeds using the TickMultiplier TryMove will iterate and can have partial successes.

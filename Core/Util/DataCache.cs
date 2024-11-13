@@ -10,7 +10,6 @@ using Helion.Render.OpenGL.Texture.Legacy;
 using Helion.World.Entities.Definition;
 using Helion.Models;
 using Helion.Geometry.Vectors;
-using NLog;
 using Helion.Render.OpenGL.Texture.Fonts;
 using Helion.Render.OpenGL.Renderers.Legacy.Hud;
 using Helion.Render.OpenGL.Shared.World.ViewClipping;
@@ -27,18 +26,22 @@ using Helion.Util.Consoles;
 using Helion.Render.OpenGL.Renderers.Legacy.World;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Sky.Sphere;
 using Helion.World.Geometry.Islands;
-using System.Diagnostics;
+using Helion.World.Entities.Players;
 
 namespace Helion.Util;
 
 public class DataCache
 {
+    private static int StaticId;
+    public int Id;
     private const int DefaultLength = 1024;
-    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    private readonly DynamicArray<Entity> m_entities = new(DefaultLength);
+    public int EntityLength;
+    public int EntityId;
+    public Entity[] Entities = new Entity[DefaultLength];
+
+    private readonly DynamicArray<int> m_entities = new(DefaultLength);
     private readonly DynamicArray<LinkableNode<Entity>> m_entityNodes = new(DefaultLength);
-    private readonly DynamicArray<LinkableNode<Sector>> m_sectorNodes = new(DefaultLength);
     private readonly DynamicArray<LinkableNode<Island>> m_islandNodes = new(DefaultLength);
     private readonly DynamicArray<IAudioSource> m_audioSources = new();
     private readonly DynamicArray<DynamicArray<Entity>> m_entityLists = new();
@@ -64,10 +67,21 @@ public class DataCache
 
     public DataCache()
     {
+        Id = StaticId++;
+
         for (int i = 0; i < 256; i++)
         {
             m_consoleMessages.Add(new ConsoleMessage());
             m_consoleMessageNodes.Add(new LinkedListNode<ConsoleMessage>(null!));
+        }
+
+        // Index zero is reserved for null
+        for (int i = 1; i < Entities.Length; i++)
+        {
+            var entity = new Entity();
+            Entities[i] = entity;
+            entity.Index = i;
+            entity.Id = i;
         }
     }
 
@@ -76,7 +90,7 @@ public class DataCache
     {
         for (int i = 0; i < m_entities.Capacity; i++)
         {
-            Entity? entity = m_entities[i];
+            Entity? entity = Entities[m_entities[i]];
             if (entity == null!)
                 continue;
             entity.IntersectSectors.FlushReferences();
@@ -90,33 +104,33 @@ public class DataCache
         }
     }
 
-    public Entity GetEntity(int id, int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
-        Sector sector)
+    public Entity GetEntity(int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
+        Sector sector, IWorld world)
     {
+        int id = EntityId++;
         if (m_entities.Length > 0)
         {
-            var entity = m_entities.RemoveLast();
-            entity.Set(id, thingId, definition, position, angleRadians, sector);
+            int entityIndex = m_entities.RemoveLast();
+            var entity = Entities[entityIndex];
+            entity.Set(entity.Index, id, thingId, definition, position, angleRadians, sector, world);
             return entity;
         }
 
-        Entity newEnity = new();
-        newEnity.Set(id, thingId, definition, position, angleRadians, sector);
-        return newEnity;
-    }
+        int index = EntityLength++;
+        if (index >= Entities.Length)
+            EnsureEntityCount(Entities.Length * 2);
 
-    public Entity GetEntity(EntityModel entityModel, EntityDefinition definition, IWorld world)
-    {
-        if (m_entities.Length > 0)
+        if (Entities[index] != null)
         {
-            var entity = m_entities.RemoveLast();
-            entity.Set(entityModel, definition, world);
+            var entity = Entities[index];
+            entity.Set(index, id, thingId, definition, position, angleRadians, sector, world);
             return entity;
         }
 
-        Entity newEnity = new();
-        newEnity.Set(entityModel, definition, world);
-        return newEnity;
+        var newEntity = new Entity();
+        Entities[index] = newEntity;
+        newEntity.Set(index, id, thingId, definition, position, angleRadians, sector, world);
+        return newEntity;
     }
 
     public bool FreeEntity(Entity entity)
@@ -124,8 +138,55 @@ public class DataCache
         if (!CacheEntities || entity.IsPlayer)
             return false;
 
-        m_entities.Add(entity);
+        m_entities.Add(entity.Index);
         return true;
+    }
+
+    public void SetEntitiesForMapLoad(int count)
+    {
+        EnsureEntityCount((int)(count * 1.2));
+        m_entities.Clear();
+                
+        for (int i = 1; i < EntityLength; i++)
+        {
+            var entity = Entities[i];
+            if (entity != null && entity.IsPlayer)
+                Entities[i] = new Entity();
+        }
+
+        EntityId = 0;
+        EntityLength = 1;
+    }
+
+    private void EnsureEntityCount(int count)
+    {
+        if (count < Entities.Length)
+            return;
+
+        int oldLength = Entities.Length;
+        Array.Resize(ref Entities, count);
+
+        for (int i = oldLength; i < count; i++)
+        {
+            var entity = new Entity();
+            Entities[i] = entity;
+            entity.Id = EntityId++;
+            entity.Index = i;
+        }
+    }
+
+    public Player GetPlayer(int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
+        Sector sector, IWorld world, int playerNumber)
+    {
+        int id = EntityId++;
+        int index = EntityLength++;
+        if (index >= EntityLength)
+            Array.Resize(ref Entities, Entities.Length * 2);
+
+        Player newPlayer = new();
+        Entities[index] = newPlayer;
+        newPlayer.Set(index, id, thingId, definition, position, angleRadians, sector, world, playerNumber);
+        return newPlayer;
     }
 
     public LinkableNode<Entity> GetLinkableNodeEntity(Entity entity)
@@ -146,26 +207,6 @@ public class DataCache
         //node.Next = null;
         node.Value = null!;
         m_entityNodes.Add(node);
-    }
-
-    public LinkableNode<Sector> GetLinkableNodeSector(Sector sector)
-    {
-        if (m_sectorNodes.Length > 0)
-        {
-            var node = m_sectorNodes.RemoveLast();
-            node.Value = sector;
-            return node;
-        }
-
-        return new LinkableNode<Sector> { Value = sector };
-    }
-
-    public void FreeLinkableNodeSector(LinkableNode<Sector> node)
-    {
-        node.Previous = null!;
-        node.Next = null;
-        node.Value = null!;
-        m_sectorNodes.Add(node);
     }
 
     public LinkableNode<Island> GetLinkableNodeIsland(Island island)

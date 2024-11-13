@@ -56,6 +56,50 @@ namespace Helion.Tests.Unit.GameAction
             top.Velocity.Z.Should().NotBe(0);
         }
 
+        [Fact(DisplayName = "OnEntity/OverEntity with two stack change when entity dies")]
+        public void StackEntityChangeKillDouble()
+        {
+            var bottom = GameActions.CreateEntity(World, "BaronOfHell", StackPos1.To3D(0));
+            var top1 = GameActions.CreateEntity(World, "BaronOfHell", StackPos1.To3D(64));
+            var top2 = GameActions.CreateEntity(World, "BaronOfHell", StackPos1.To3D(64));
+
+            top1.OnEntity.Entity.Should().Be(bottom);
+            bottom.OverEntity.Entity!.Should().Be(top2);
+
+            bottom.Kill(null);
+
+            top1.OnEntity.Entity.Should().BeNull();
+            bottom.OverEntity.Entity!.Should().BeNull();
+
+            World.Tick();
+
+            top1.Velocity.Z.Should().NotBe(0);
+            top2.Velocity.Z.Should().NotBe(0);
+        }
+
+        [Fact(DisplayName = "OnEntity/OverEntity with three stack change when entity dies")]
+        public void StackEntityChangeKillTriple()
+        {
+            var bottom = GameActions.CreateEntity(World, "BaronOfHell", StackPos1.To3D(0));
+            var middle = GameActions.CreateEntity(World, "BaronOfHell", StackPos1.To3D(64));
+            var top = GameActions.CreateEntity(World, "BaronOfHell", StackPos1.To3D(128));
+
+            middle.OnEntity.Entity.Should().Be(bottom);
+            bottom.OverEntity.Entity!.Should().Be(middle);
+
+            top.OnEntity.Entity.Should().Be(middle);
+            middle.OverEntity.Entity!.Should().Be(top);
+
+            middle.Kill(null);
+
+            top.OnEntity.Entity.Should().BeNull();
+            middle.OverEntity.Entity!.Should().BeNull();
+
+            World.Tick();
+
+            top.Velocity.Z.Should().NotBe(0);
+        }
+
         [Fact(DisplayName = "OnEntity/OverEntity simple stack change when entity moves")]
         public void StackEntityChangeMove()
         {
@@ -127,6 +171,34 @@ namespace Helion.Tests.Unit.GameAction
 
             GameActions.TickWorld(World, 35);
             top.Position.Z.Should().Be(bottom.Position.Z);
+        }
+
+        [Fact(DisplayName = "Stacked entity checks with no gravity enemy moving up/down")]
+        public void StackEntityNoGravity()
+        {
+            var bottom = GameActions.CreateEntity(World, "CacoDemon", StackPos2.To3D(64));
+            var top = GameActions.CreateEntity(World, "CacoDemon", StackPos1.To3D(120));
+            bottom.OverEntity.Should().NotBeNull();
+            top.OnEntity.Should().NotBeNull();
+            top.Position.Z.Should().Be(bottom.Position.Z + bottom.Height);
+            top.Kill(null);
+
+            GameActions.TickWorld(World, 35);
+
+            GameActions.MoveEntityZ(World, bottom, -8);
+            GameActions.TickWorld(World, 35);
+            // Fall back on top of bottom caco
+            top.Position.Z.Should().Be(112);
+
+            GameActions.MoveEntityZ(World, bottom, 16);
+            GameActions.TickWorld(World, 35);
+            // Fall back on top of bottom caco
+            top.Position.Z.Should().Be(128);
+
+            GameActions.MoveEntity(World, bottom, 64);
+            GameActions.TickWorld(World, 35);
+            // Falls to floor
+            top.Position.Z.Should().Be(0);
         }
 
         [Fact(DisplayName = "Entity can move partially clipped")]
@@ -309,7 +381,7 @@ namespace Helion.Tests.Unit.GameAction
             def.Flags.NoBlockmap = false;
 
             var monster = GameActions.CreateEntity(World, Zombieman, LiftCenter1.To3D(0));
-            monster.BlockmapNodes.Length.Should().Be(1);
+            monster.BlocksLength.Should().Be(1);
             monster.SectorNodes.Length.Should().Be(1);
             monster.Sector.Entities.Contains(monster).Should().BeTrue();
 

@@ -600,6 +600,9 @@ public abstract partial class WorldBase : IWorld
         if (worldModel == null)
             SpecialManager.StartInitSpecials(LevelStats);
 
+        for (var entity = EntityManager.Head; entity != null; entity = entity.Next)
+            entity.SectorDamageSpecial = entity.Sector.SectorDamageSpecial;
+
         StaticDataApplier.DetermineStaticData(this);
         SpecialManager.SectorSpecialDestroyed += SpecialManager_SectorSpecialDestroyed;
     }
@@ -737,13 +740,13 @@ public abstract partial class WorldBase : IWorld
 
     public void Link(Entity entity)
     {
-        Precondition(entity.SectorNodes.Empty() && entity.BlockmapNodes.Empty(), "Forgot to unlink entity before linking");
+        Precondition(entity.SectorNodes.Empty() && entity.BlocksLength == 0, "Forgot to unlink entity before linking");
         PhysicsManager.LinkToWorld(entity, null, false);
     }
 
     public void LinkClamped(Entity entity)
     {
-        Precondition(entity.SectorNodes.Empty() && entity.BlockmapNodes.Empty(), "Forgot to unlink entity before linking");
+        Precondition(entity.SectorNodes.Empty() && entity.BlocksLength == 0, "Forgot to unlink entity before linking");
         PhysicsManager.LinkToWorld(entity, null, true);
     }
 
@@ -866,8 +869,7 @@ public abstract partial class WorldBase : IWorld
                 if (entity.Respawn)
                     HandleRespawn(entity);
 
-                if (entity.Sector.SectorDamageSpecial != null)
-                    entity.Sector.SectorDamageSpecial.Tick(entity);
+                entity.SectorDamageSpecial?.Tick(entity);
             }
 
             entity = nextEntity;

@@ -100,6 +100,12 @@ public static class PaletteReaders
         {
             using ByteReader reader = new(data);
 
+            if (data.Length < 16)
+            {
+                paletteImage = default;
+                return false;
+            }
+
             int width = reader.ReadInt16();
             int height = reader.ReadInt16();
             Vec2I imageOffsets = (reader.ReadInt16(), reader.ReadInt16());

@@ -154,14 +154,14 @@ namespace Helion.Tests.Unit.GameAction
             // Force everything to retaliate immediately
             entity.Flags.QuickToRetaliate = true;
             entity.Properties.MissileMovementSpeed = 0;
-            entity.Properties.MonsterMovementSpeed = 0;
+            entity.MonsterMovementSpeed = 0;
             entity.Threshold = 0;
         }
 
         private static void EntityCreateSetSpeeds(Entity entity)
         {
             entity.Properties.MissileMovementSpeed = 0;
-            entity.Properties.MonsterMovementSpeed = 0;
+            entity.MonsterMovementSpeed = 0;
         }
 
         [Fact(DisplayName = "Monster projectile")]

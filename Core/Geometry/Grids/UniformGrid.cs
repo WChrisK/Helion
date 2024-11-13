@@ -354,6 +354,24 @@ public class UniformGrid<T> where T : new()
         return new(start, end, Width);
     }
 
+    public BlockmapBoxIteration CreateBoxIteration(double x, double y, double radius)
+    {
+        double minX = x - radius;
+        double minY = y - radius;
+        double maxX = x + radius;
+        double maxY = y + radius;
+
+        Vec2I start = new((int)((minX - Origin.X) / Dimension), (int)((minY - Origin.Y) / Dimension));
+        start.X = Math.Max(0, start.X);
+        start.Y = Math.Max(0, start.Y);
+
+        Vec2I end = new((int)((maxX - Origin.X) / Dimension), (int)((maxY - Origin.Y) / Dimension));
+        end.X = Math.Min(Width - 1, end.X);
+        end.Y = Math.Min(Height - 1, end.Y);
+
+        return new(start, end, Width);
+    }
+
     internal int IndexFromBlockCoordinate(Vec2I coordinate) => coordinate.X + (coordinate.Y * Width);
     
     public BlockmapSegIterator<T> Iterate(in Seg2D seg) => new(this, seg);

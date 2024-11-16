@@ -61,30 +61,7 @@ public class BlockmapTraverser
             }
         }
     }
-
-    public void GetEntityIntersections2D(Entity sourceEntity, DynamicArray<Entity> entities)
-    {
-        int m_checkCounter = ++WorldStatic.CheckCounter;
-        var box = sourceEntity.GetBox2D();
-        var it = BlockmapGrid.CreateBoxIteration(box);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
-        {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
-            {
-                Block block = m_blocks[by * it.Width + bx];
-                for (int i = 0; i < block.EntityIndicesLength; i++)
-                {
-                    var entity = m_dataCache.Entities[block.EntityIndices[i]];
-                    if (sourceEntity == entity || entity.BlockmapCount == m_checkCounter)
-                        continue;
-
-                    entity.BlockmapCount = m_checkCounter;
-                    if (entity.Overlaps2D(box))
-                        entities.Add(entity);
-                }
-            }
-        }
-    }
+       
 
     public unsafe void SightTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections, out bool hitOneSidedLine)
     {

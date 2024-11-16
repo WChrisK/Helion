@@ -606,12 +606,6 @@ public sealed class PhysicsManager
         }
     }
 
-    public void HandleEntityDeath(Entity deathEntity)
-    {
-        //if (deathEntity.OnEntity.Entity != null || deathEntity.OverEntity.Entity != null)
-        //    StackedEntityMoveZ(deathEntity, deathEntity.Position.Z, deathEntity.Properties.Height);
-    }
-
     private static void ApplyFriction(Entity entity)
     {
         double sectorFriction = GetFrictionFromSectors(entity);
@@ -1734,8 +1728,5 @@ doneLinkToSectors:
 
         if (entity.IsBlocked())
             m_world.HandleEntityHit(entity, previousVelocity, null);
-
-        //if (stacked)
-        //    StackedEntityMoveZ(entity, oldZ, entity.Height);
     }
 }

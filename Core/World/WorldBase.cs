@@ -2049,7 +2049,6 @@ public abstract partial class WorldBase : IWorld
 
     public virtual void HandleEntityDeath(Entity deathEntity, Entity? deathSource, bool gibbed)
     {
-        PhysicsManager.HandleEntityDeath(deathEntity);
         CheckDropItem(deathEntity);
 
         if (deathEntity.Flags.CountKill && !deathEntity.Flags.Friendly)

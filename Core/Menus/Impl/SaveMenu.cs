@@ -150,8 +150,7 @@ public class SaveMenu : Menu
             }
             var saveRowComponents = GetCurrentPageSaveGames().Select(save =>
             {
-                //string displayName = save.Model?.Text ?? UnknownSavedGameName;
-                string displayName = save.FileName;
+                string displayName = save.Model?.Text ?? UnknownSavedGameName;
                 string mapName = save.Model?.MapName ?? UnknownSavedGameName;
                 MenuSaveRowComponent saveRow = new(displayName, mapName, save.IsAutoSave || save.IsQuickSave,
                     null, CreateDeleteCommand(save));
@@ -176,8 +175,7 @@ public class SaveMenu : Menu
         {
             var saveRowComponents = GetCurrentPageSaveGames().Select(save =>
             {
-                //string displayName = save.Model?.Text ?? UnknownSavedGameName;
-                string displayName = save.FileName;
+                string displayName = save.Model?.Text ?? UnknownSavedGameName;
                 string fileName = System.IO.Path.GetFileName(save.FileName);
                 return new MenuSaveRowComponent(displayName, string.Empty, save.IsAutoSave || save.IsQuickSave,
                     CreateConsoleCommand($"load \"{fileName}\""), CreateDeleteCommand(save), save);

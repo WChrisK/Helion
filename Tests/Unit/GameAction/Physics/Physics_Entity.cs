@@ -48,6 +48,8 @@ namespace Helion.Tests.Unit.GameAction
 
             bottom.Kill(null);
 
+            World.Tick();
+
             top.OnEntity.Entity.Should().BeNull();
             bottom.OverEntity.Entity!.Should().BeNull();
 
@@ -67,6 +69,7 @@ namespace Helion.Tests.Unit.GameAction
             bottom.OverEntity.Entity!.Should().Be(top2);
 
             bottom.Kill(null);
+            World.Tick();
 
             top1.OnEntity.Entity.Should().BeNull();
             bottom.OverEntity.Entity!.Should().BeNull();
@@ -91,6 +94,7 @@ namespace Helion.Tests.Unit.GameAction
             middle.OverEntity.Entity!.Should().Be(top);
 
             middle.Kill(null);
+            World.Tick();
 
             top.OnEntity.Entity.Should().BeNull();
             middle.OverEntity.Entity!.Should().BeNull();
@@ -132,6 +136,7 @@ namespace Helion.Tests.Unit.GameAction
             top2.OnEntity.Entity.Should().Be(bottom);
 
             bottom.Kill(null);
+            World.Tick();
 
             top1.OnEntity.Entity.Should().BeNull();
             top2.OnEntity.Entity.Should().BeNull();

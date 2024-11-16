@@ -174,6 +174,7 @@ public abstract partial class WorldBase : IWorld
     private readonly Func<DamageFuncParams, int> m_defaultDamageAction;
     private readonly EntityDefinition? m_teleportFogDef;
     private readonly Dictionary<int, MusInfoDef> m_sectorToMusicChange = new();
+    private readonly DynamicArray<Entity> m_fallCheckEntities = new(32);
     private MusInfoDef? m_lastMusicChange;
     private int m_changeMusicTicks = 0;
     private int m_losDistance = DefaultLineOfSightDistance;
@@ -870,11 +871,21 @@ public abstract partial class WorldBase : IWorld
                     HandleRespawn(entity);
 
                 entity.SectorDamageSpecial?.Tick(entity);
+                                
+                if (!WorldStatic.InfinitelyTallThings && !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&
+                    entity.Velocity.Z == 0 && entity.Position.Z > entity.HighestFloorSector.Floor.Z)
+                {
+                    m_fallCheckEntities.Add(entity);
+                }
             }
 
             entity = nextEntity;
         }
-
+        
+        // Check entities that are subject to falling and may have been on top of another entity that is no longer valid.
+        // This often happens with cacodemon clusters where a dead one is on top of many and needs to fall.
+        PhysicsManager.EntityFallCheck(m_fallCheckEntities);
+        m_fallCheckEntities.Clear();
         Profiler.World.TickEntity.Stop();
     }
 

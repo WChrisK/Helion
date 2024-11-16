@@ -102,6 +102,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     public bool OnGround;
     public bool MoveLinked;
     public bool Respawn;
+    public bool HadOnEntity;
     public float Alpha;
 
     public int LastRenderGametick;
@@ -293,18 +294,26 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
         ArmorDefinition = entity.ArmorDefinition;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetTarget(Entity? entity) =>
         Target = WeakEntity.GetReference(entity);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetTracer(Entity? entity) =>
         Tracer = WeakEntity.GetReference(entity);
 
-    public void SetOnEntity(Entity? entity) =>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetOnEntity(Entity? entity)
+    {
+        HadOnEntity = HadOnEntity || OnEntity != WeakEntity.Default;
         OnEntity = WeakEntity.GetReference(entity);
+    }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetOverEntity(Entity? entity) =>
         OverEntity = WeakEntity.GetReference(entity);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetOwner(Entity? entity) =>
         Owner = WeakEntity.GetReference(entity);
 
@@ -957,6 +966,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
         FrozenTics = 0;
         MoveLinked = false;
         Respawn = false;
+        HadOnEntity = false;
         ClosetFlags = ClosetFlags.None;
         BlockingLine = null;
         BlockingEntity = null;

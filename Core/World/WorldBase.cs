@@ -872,7 +872,9 @@ public abstract partial class WorldBase : IWorld
 
                 entity.SectorDamageSpecial?.Tick(entity);
                                 
-                if (!WorldStatic.InfinitelyTallThings && !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&
+                if (!WorldStatic.InfinitelyTallThings &&
+                    (entity.HadOnEntity || entity.OnEntity != WeakEntity.Default) &&
+                    !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&                    
                     entity.Velocity.Z == 0 && entity.Position.Z > entity.HighestFloorSector.Floor.Z)
                 {
                     m_fallCheckEntities.Add(entity);

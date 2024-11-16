@@ -162,8 +162,15 @@ public sealed class PhysicsManager
         for (int i = 0; i < entities.Length; i++)
         {
             var entity = entities[i];
+            bool hasOnEntity = entity.OnEntity != WeakEntity.Default;
+            if (!hasOnEntity && entity.HadOnEntity)
+            {
+                ClampBetweenFloorAndCeiling(entity, entity.IntersectSectors, smoothZ: false, clampToLinkedSectors: true);
+                continue;
+            }
+
             var onEntity = entity.OnEntity.Entity;
-            if (onEntity == null || onEntity != null && (onEntity.Position.Z + onEntity.Height < entity.Position.Z || !onEntity.Overlaps2D(entity)))
+            if (onEntity!.Position.Z + onEntity.Height < entity.Position.Z || !onEntity.Overlaps2D(entity))
                 ClampBetweenFloorAndCeiling(entity, entity.IntersectSectors, smoothZ: false, clampToLinkedSectors: true);
         }
     }
@@ -1106,7 +1113,6 @@ doneLinkToSectors:
 
         bool success = true;
         Vec3D saveVelocity = entity.Velocity;
-        bool stacked = !WorldStatic.InfinitelyTallThings && (entity.OnEntity.Entity != null || entity.OverEntity.Entity != null);
         Line? slideBlockLine = null;
         Entity? slideBlockEntity = null;
 
@@ -1705,7 +1711,7 @@ doneLinkToSectors:
         // Adds z velocity on the first tick, then adds -2 on the second instead of -1 on the first and -1 on the second.
         bool noVelocity = entity.Velocity.Z == 0;
         bool shouldApplyGravity = entity.ShouldApplyGravity();
-        if (noVelocity && !shouldApplyGravity && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && entity.OnEntity.Entity == null)
+        if (noVelocity && !shouldApplyGravity && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && entity.OnEntity == WeakEntity.Default)
             return;
 
         if (entity.Flags.NoGravity && entity.ShouldApplyFriction())
@@ -1715,7 +1721,7 @@ doneLinkToSectors:
 
         double floatZ = entity.GetEnemyFloatMove();
         // Only return if OnEntity is null. Need to apply clamping to prevent issues with this entity floating when the entity beneath is no longer blocking.
-        if (noVelocity && floatZ == 0 && entity.OnEntity.Entity == null)
+        if (noVelocity && floatZ == 0 && entity.OnEntity == WeakEntity.Default)
             return;
 
         Vec3D previousVelocity = entity.Velocity;

@@ -1,13 +1,12 @@
 ﻿using Helion.Geometry.Vectors;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Helion.Graphics;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct Color
+public struct Color : IEquatable<Color>
 {
     public static readonly Color Transparent = (0, 0, 0, 0);
 
@@ -45,6 +44,8 @@ public struct Color
     public byte R => (byte)((m_value & 0x00FF0000) >> 16);
     public byte G => (byte)((m_value & 0x0000FF00) >> 8);
     public byte B => (byte)(m_value & 0x000000FF);
+
+    public uint Value => m_value;
 
     public Color(byte a, byte r, byte g, byte b)
     {
@@ -177,30 +178,15 @@ public struct Color
         };
     }
 
-    public override bool Equals([NotNullWhen(true)] object? obj)
-    {
-        if (obj is Color c)
-            return c.m_value == m_value;
-        return false;
-    }
-
-    public override int GetHashCode()
-    {
-        return (int)m_value;
-    }
-
-    public static bool operator ==(Color left, Color right)
-    {
-        return left.Equals(right);
-    }
-
-    public static bool operator !=(Color left, Color right)
-    {
-        return !(left == right);
-    }
+    public override readonly int GetHashCode() => (int)m_value;
 
     public override string ToString()
     {
         return $"{R} {G} {B} [{A}]";
+    }
+
+    public bool Equals(Color other)
+    {
+        return m_value == other.m_value;
     }
 }

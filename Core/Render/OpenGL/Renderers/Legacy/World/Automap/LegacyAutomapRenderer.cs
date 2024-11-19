@@ -34,8 +34,9 @@ public class LegacyAutomapRenderer : IDisposable
     private readonly List<(int start, Vec3F color)> m_vboRanges = [];
     private readonly DynamicArray<vec2> m_points = new();
     private readonly AutomapColorPoints m_colorPoints = new();
-    private readonly HashSet<int> m_teleportLines = new();
-    private readonly HashSet<int> m_exitLines = new();
+    private readonly HashSet<int> m_teleportLines = [];
+    private readonly HashSet<int> m_exitLines = [];
+    private readonly List<Color> m_transferColors = [];
     private float m_offsetX;
     private float m_offsetY;
     private int m_lastOffsetX;
@@ -44,7 +45,8 @@ public class LegacyAutomapRenderer : IDisposable
     private bool m_rotate;
     private Box2D m_boundingBox = default;
 
-    private readonly Dictionary<string, Color> m_keys = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Color> m_keysByName = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<int, Color> m_keysByNumber = [];
 
     private Color m_wallColor;
     private Color m_twoSidedWallColor;
@@ -89,8 +91,11 @@ public class LegacyAutomapRenderer : IDisposable
         Attributes.BindAndApply(m_vbo, m_vao, m_shader.Attributes);
 
         foreach (var lockDef in m_archiveCollection.Definitions.LockDefinitions.LockDefs)
+        {
+            m_keysByNumber[lockDef.KeyNumber] = lockDef.MapColor;
             foreach (var item in lockDef.KeyDefinitionNames)
-                m_keys[item] = lockDef.MapColor;
+                m_keysByName[item] = lockDef.MapColor;
+        }
     }
 
     ~LegacyAutomapRenderer()
@@ -398,10 +403,9 @@ public class LegacyAutomapRenderer : IDisposable
         if (keyNumber == 0)
             return false;
 
-        LockDef? lockDef = m_archiveCollection.Definitions.LockDefinitions.GetLockDef(keyNumber);
-        if (lockDef != null)
+        if (m_keysByNumber.TryGetValue(keyNumber, out var color))
         {
-            AddLine(lockDef.MapColor, start, end);
+            AddLine(color, start, end);
             return true;
         }
 
@@ -440,7 +444,7 @@ public class LegacyAutomapRenderer : IDisposable
         Color color = m_thingColor;
         bool flash = false;
 
-        if (m_keys.TryGetValue(entity.Definition.Name, out Color keyColor))
+        if (m_keysByName.TryGetValue(entity.Definition.Name, out Color keyColor))
         {
             flash = true;
             color = keyColor;
@@ -534,8 +538,6 @@ public class LegacyAutomapRenderer : IDisposable
         m_points.Add(s.xy);
         m_points.Add(e.xy);
     }
-
-    private readonly List<Color> m_transferColors = [];
 
     private void TransferLineDataIntoBuffer(out Box2F box2F)
     {

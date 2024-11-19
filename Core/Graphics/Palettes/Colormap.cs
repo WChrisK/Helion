@@ -100,7 +100,7 @@ public class Colormap
                 if (layer > 0 && layer < 32)
                 {
                     var previousColor = colormapLayers[layer - 1][i];
-                    if (previousColor != currentColor)
+                    if (previousColor.Uint != currentColor.Uint)
                         fullBright[i] = false;
                 }
 

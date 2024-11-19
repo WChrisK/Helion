@@ -20,6 +20,10 @@ public record struct StructLine
     public Seg2D Segment;
     public Sector FrontSector;
     public Sector? BackSector;
+    public SectorPlane FrontFloorPlane;
+    public SectorPlane FrontCeilingPlane;
+    public SectorPlane? BackFloorPlane;
+    public SectorPlane? BackCeilingPlane;
     public Line Line;
     public int LockKey;
     public StructLineFlags Flags;
@@ -36,6 +40,10 @@ public record struct StructLine
         Segment = line.Segment;
         FrontSector = line.Front.Sector;
         BackSector = line.Back?.Sector;
+        FrontFloorPlane = line.Front.Sector.Floor;
+        BackFloorPlane = line.Back?.Sector.Floor;
+        FrontCeilingPlane = line.Front.Sector.Ceiling;
+        BackCeilingPlane = line.Back?.Sector.Ceiling;
         Line = line;
 
         if (line.SeenForAutomap)

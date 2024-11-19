@@ -323,7 +323,12 @@ public class LegacyAutomapRenderer : IDisposable
                 continue;
             }
 
-            AddLine(GetTwoSidedColor(world, ref line, forceDraw, markedLine), start, end);
+            var color = GetTwoSidedColor(world, ref line, forceDraw, markedLine, out var specialColor);
+            if (!allMap && !specialColor && line.BackFloorPlane != null && line.BackCeilingPlane != null &&
+                line.FrontFloorPlane.Z == line.BackFloorPlane.Z && line.FrontCeilingPlane.Z == line.BackCeilingPlane.Z)
+                continue;
+
+            AddLine(color, start, end);
         }
     }
 
@@ -341,17 +346,28 @@ public class LegacyAutomapRenderer : IDisposable
         return m_unseenWallColor;
     }
 
-    private Color GetTwoSidedColor(IWorld world, ref StructLine line, bool forceDraw, bool marked)
+    private Color GetTwoSidedColor(IWorld world, ref StructLine line, bool forceDraw, bool marked, out bool specialColor)
     {
+        specialColor = false;
+
         if (marked)
+        {
+            specialColor = true;
             return GetMarkedColor(world);
+        }
 
         if (line.SeenForAutomap || forceDraw)
         {
             if (m_teleportLines.Contains(line.Id))
+            {
+                specialColor = true;
                 return m_teleportLineColor;
+            }
             if (m_exitLines.Contains(line.Id))
+            {
+                specialColor = true;
                 return m_exitLineColor;
+            }
 
             return m_twoSidedWallColor;
         }

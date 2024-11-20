@@ -15,3 +15,5 @@
   - Fix generalized crushers to not slow down with fast and turbo speeds to match boom behavior
   - Fix two-sided lines drawing in the automap when back and front sector ceiling and floor values match
   - Fix allocation issue with automap rendering that could cause slowdown
+  - Fix friendly enemies in closets not setting target to player even when not in sight
+  - Fix monsters teleporting from monster closets playing sight sound

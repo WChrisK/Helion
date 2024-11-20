@@ -10,7 +10,7 @@ using Helion.Util.Extensions;
 namespace Helion.Geometry.Vectors
 {
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct Vec3D(double x, double y, double z)
+    public struct Vec3D(double x, double y, double z) : IEquatable<Vec3D>
     {
         public static readonly Vec3D Zero = new(0, 0, 0);
         public static readonly Vec3D One = new(1, 1, 1);
@@ -108,7 +108,8 @@ namespace Helion.Geometry.Vectors
         }
 
         public override readonly string ToString() => $"{X}, {Y}, {Z}";
-        public override readonly bool Equals(object? obj) => obj is Vec3D v && X == v.X && Y == v.Y && Z == v.Z;
         public override readonly int GetHashCode() => HashCode.Combine(X, Y, Z);
+        public readonly bool Equals(Vec3D other) => X == other.X && Y == other.Y && Z == other.Z;
+        public readonly override bool Equals(object? obj) => obj is not null && obj is Vec3D v && Equals(v);
     }
 }

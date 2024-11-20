@@ -12,7 +12,7 @@ using Helion.Util.Extensions;
 namespace Helion.Geometry.Segments
 {
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct Seg2D 
+    public struct Seg2D : IEquatable<Seg2D>
     {
         public Vec2D Start;
         public Vec2D End;
@@ -442,11 +442,11 @@ namespace Helion.Geometry.Segments
         {
             return ((aX - cX) * (bY - cY)) - ((aY - cY) * (bX - cX));
         }
-        public override string ToString() => $"({Start}), ({End})";
-        public override bool Equals(object? obj) => obj is Seg2D seg && Start == seg.Start && End == seg.End;
-        public override int GetHashCode() => HashCode.Combine(Start.GetHashCode(), End.GetHashCode());
+        public readonly override string ToString() => $"({Start}), ({End})";
+        public readonly override int GetHashCode() => HashCode.Combine(Start.GetHashCode(), End.GetHashCode());
+        public readonly bool Equals(Seg2D other) => Start.X == other.Start.X && Start.Y == other.Start.Y && End.X == other.End.X && End.Y == other.End.Y;
 
-        private IEnumerable<Vec2D> GetVertices()
+        private readonly IEnumerable<Vec2D> GetVertices()
         {
             yield return Start;
             yield return End;

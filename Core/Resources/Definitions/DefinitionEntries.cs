@@ -291,7 +291,7 @@ public class DefinitionEntries
         }
 
         for (int i = 0; i < Colormaps.Count; i++)
-            Colormaps[i].Index = i + 1;
+            Colormaps[i].Index = i;
 
         SetGameConfTranslations();
 
@@ -413,8 +413,8 @@ public class DefinitionEntries
 
             m_processedTranslationColormaps[entryName] = colormap;
 
-            Colormaps.Add(colormap);
             colormap.Index = Colormaps.Count;
+            Colormaps.Add(colormap);
 
             if (!translationDefinitions.TryGetValue(entryName, out var list))
                 continue;
@@ -441,8 +441,8 @@ public class DefinitionEntries
 
         if (addToColorMaps)
         {
-            Colormaps.Add(colormap);
             colormap.Index = Colormaps.Count;
+            Colormaps.Add(colormap);
         }
 
         return true;

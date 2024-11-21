@@ -110,7 +110,7 @@ public partial class Renderer : IDisposable
         if (!ShaderVars.PaletteColorMode)
             return;
 
-        var colorMapData = ColorMapBuffer.Create(m_archiveCollection.Palette, m_archiveCollection.Colormap, m_archiveCollection.Definitions.Colormaps);
+        var colorMapData = ColorMapBuffer.Create(m_archiveCollection.Palette, m_archiveCollection.Definitions.Colormaps);
         m_colorMapBuffer = new("Colormap buffer", colorMapData, SizedInternalFormat.Rgb32f, GLInfo.MapPersistentBitSupported);
 
         m_colorMapBuffer.Map(data =>

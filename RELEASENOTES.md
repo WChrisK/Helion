@@ -17,3 +17,4 @@
   - Fix allocation issue with automap rendering that could cause slowdown
   - Fix friendly enemies in closets not setting target to player even when not in sight
   - Fix monsters teleporting from monster closets playing sight sound
+  - Fix translation flags using incorrect colormap indices (fixes kdikdizd)

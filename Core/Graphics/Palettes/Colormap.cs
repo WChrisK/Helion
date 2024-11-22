@@ -20,7 +20,7 @@ public class Colormap
     public readonly bool[] FullBright = new bool[NumColors];
 
     public int Index;
-    public readonly Vec3F ColorMix;
+    public Vec3F ColorMix;
     public readonly Entry? Entry;
 
     public int Count => m_layers.Count;

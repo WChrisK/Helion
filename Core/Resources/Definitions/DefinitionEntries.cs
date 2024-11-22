@@ -488,6 +488,9 @@ public class DefinitionEntries
         var colormap = Colormap.From(m_archiveCollection.Data.Palette, entry.ReadData(), entry);
         if (colormap != null)
         {
+            if (entry.Parent.ArchiveType == ArchiveType.Assets && entry.Path.Name.EqualsIgnoreCase("WATERMAP"))
+                colormap.ColorMix = (0, 4, 165); //ZDoom uses 0004FA5. This is for true color rendering only.
+
             colormap.Index = Colormaps.Count;
             Colormaps.Add(colormap);
             ColormapsLookup[entry.Path.Name] = colormap;

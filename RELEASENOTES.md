@@ -20,3 +20,4 @@
   - Fix monsters teleporting from monster closets playing sight sound
   - Fix translation flags using incorrect colormap indices (fixes kdikdizd)
   - Fix issues with automap line marker that was marking lines as seen that were incorrect
+  - Fix colormaps for transfer heights not setting on two-sided lines

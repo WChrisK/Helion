@@ -86,17 +86,16 @@ public static class DoomGeometryBuilder
         Side front = new(nextSideId, doomSide.Offset, upper, middle, lower, sector);
         builder.Sides.Add(front);
 
-        SetColorMaps(doomLine, textureManager, doomSide, front, true);
+        SetColorMaps(doomLine, textureManager, doomSide, front);
 
         nextSideId++;
 
         return (front, null);
     }
 
-    private static void SetColorMaps(DoomLine doomLine, TextureManager textureManager, DoomSide doomSide, Side front, bool oneSided)
+    private static void SetColorMaps(DoomLine doomLine, TextureManager textureManager, DoomSide doomSide, Side front)
     {
-        // Boom only allows transfer heights colormaps for one-sided lines?
-        if (oneSided && doomLine.LineType == VanillaLineSpecialType.TransferHeights)
+        if (doomLine.LineType == VanillaLineSpecialType.TransferHeights)
         {
             textureManager.TryGetColormap(doomSide.UpperTexture, out var upperColormap);
             textureManager.TryGetColormap(doomSide.MiddleTexture, out var middleColormap);
@@ -146,7 +145,7 @@ public static class DoomGeometryBuilder
         Side side = new(nextSideId, facingSide.Offset, upper, middle, lower, facingSector);
         builder.Sides.Add(side);
 
-        SetColorMaps(line, textureManager, facingSide, side, false);
+        SetColorMaps(line, textureManager, facingSide, side);
 
         nextSideId++;
         return side;

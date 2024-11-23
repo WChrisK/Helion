@@ -19,3 +19,4 @@
   - Fix friendly enemies in closets not setting target to player even when not in sight
   - Fix monsters teleporting from monster closets playing sight sound
   - Fix translation flags using incorrect colormap indices (fixes kdikdizd)
+  - Fix issues with automap line marker that was marking lines as seen that were incorrect

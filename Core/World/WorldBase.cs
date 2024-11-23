@@ -364,7 +364,7 @@ public abstract partial class WorldBase : IWorld
             return LastRenderBlockMap;
         }
 
-        LastRenderBlockMap = new BlockMap(Blockmap.Bounds, 512);
+        LastRenderBlockMap = new BlockMap(Blockmap.Bounds, 1024);
         return LastRenderBlockMap;
     }
 

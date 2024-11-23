@@ -7,7 +7,6 @@ namespace Helion.Render.OpenGL.Renderers.Legacy.World
     struct RenderBlockMapData
     {
         public Entity ViewerEntity;
-        public Vec2D? OccludePos;
         public Vec2D ViewPosInterpolated;
         public Vec2D ViewDirection;
         public Vec3D ViewPosInterpolated3D;

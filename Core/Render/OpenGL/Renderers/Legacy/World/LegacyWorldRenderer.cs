@@ -1,8 +1,14 @@
 using System;
+using System.Diagnostics.Metrics;
+using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
+using GlmSharp;
 using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
+using Helion.Render.Common.Shared;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Data;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Entities;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry;
@@ -37,8 +43,6 @@ public class LegacyWorldRenderer : WorldRenderer
     private readonly ArchiveCollection m_archiveCollection;
     private readonly LegacyGLTextureManager m_textureManager;
     private Sector m_viewSector;
-    private Vec2D m_occludeViewPos;
-    private bool m_occlude;
     private bool m_spriteTransparency;
     private bool m_vanillaRender;
     private int m_lastTicker = -1;
@@ -47,6 +51,9 @@ public class LegacyWorldRenderer : WorldRenderer
     private Entity? m_viewerEntity;
     private IWorld? m_previousWorld;
     private RenderBlockMapData m_renderData;
+    private FrustumPlanes m_frustumPlanes = new();
+
+    public static bool LockFrustum;
 
     public LegacyWorldRenderer(IConfig config, ArchiveCollection archiveCollection, LegacyGLTextureManager textureManager)
     {
@@ -135,11 +142,7 @@ public class LegacyWorldRenderer : WorldRenderer
         m_renderData.MaxDistance = renderInfo.Uniforms.MaxDistance;
 
         m_renderData.MaxDistanceSquared = m_renderData.MaxDistance * m_renderData.MaxDistance;
-        m_renderData.OccludePos = m_occlude ? m_occludeViewPos : null;
         Box2D box = new(m_renderData.ViewPosInterpolated.X, m_renderData.ViewPosInterpolated.Y, m_renderData.MaxDistance);
-
-        Vec2D occluder = m_renderData.OccludePos ?? Vec2D.Zero;
-        bool occlude = m_renderData.OccludePos.HasValue;
 
         var renderBlocks = world.RenderBlockmap.Blocks;
         var it = renderBlocks.CreateBoxIteration(box);
@@ -148,7 +151,7 @@ public class LegacyWorldRenderer : WorldRenderer
             for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
             {
                 Block block = renderBlocks[by * it.Width + bx];
-                if (occlude && !block.Box.InView(occluder, m_renderData.ViewDirection))
+                if (!m_frustumPlanes.BoxInFrustum(block.Box))
                     continue;
 
                 for (var islandNode = block.DynamicSectors.Head; islandNode != null; islandNode = islandNode.Next)
@@ -217,14 +220,6 @@ public class LegacyWorldRenderer : WorldRenderer
         if (entity.Frame.IsInvisible || entity.Flags.Invisible || entity.Flags.NoSector || entity == m_viewerEntity)
             return;
 
-        // Not in front 180 FOV
-        if (m_renderData.OccludePos.HasValue)
-        {
-            Vec2D entityToTarget = new(entity.Position.X - m_renderData.OccludePos.Value.X, entity.Position.Y - m_renderData.OccludePos.Value.Y);
-            if (entityToTarget.Dot(m_renderData.ViewDirection) < 0)
-                return;
-        }
-
         double dx = Math.Max(entity.Position.X - m_renderData.ViewPosInterpolated.X, Math.Max(0, m_renderData.ViewPosInterpolated.X - entity.Position.X));
         double dy = Math.Max(entity.Position.Y - m_renderData.ViewPosInterpolated.Y, Math.Max(0, m_renderData.ViewPosInterpolated.Y - entity.Position.Y));
         entity.RenderDistanceSquared = dx * dx + dy * dy;
@@ -238,7 +233,16 @@ public class LegacyWorldRenderer : WorldRenderer
             return;
         }
 
-        m_entityRenderer.RenderEntity(entity, m_renderData.ViewPosInterpolated);     
+        m_entityRenderer.RenderEntity(entity, m_renderData.ViewPosInterpolated, ref m_frustumPlanes);     
+    }
+
+    private void SetFrustum(RenderInfo renderInfo)
+    {
+        if (LockFrustum)
+            return;
+
+        ref var mvp = ref renderInfo.Uniforms.Mvp;
+        Frustum.SetFrustumPlanes(ref renderInfo.Uniforms.Mvp, ref m_frustumPlanes);
     }
 
     protected override void PerformRender(IWorld world, RenderInfo renderInfo)
@@ -250,8 +254,7 @@ public class LegacyWorldRenderer : WorldRenderer
         if (m_lastTicker != world.GameTicker)
             m_entityRenderer.Start(renderInfo);
 
-        SetOccludePosition(renderInfo.Camera.PositionInterpolated.Double, renderInfo.Camera.YawRadians, renderInfo.Camera.PitchRadians,
-            ref m_occlude, ref m_occludeViewPos);
+        SetFrustum(renderInfo);
         IterateBlockmap(world, renderInfo);
         PopulatePrimitives(world);
 
@@ -363,22 +366,6 @@ public class LegacyWorldRenderer : WorldRenderer
         m_entityRenderer.ResetInterpolation(world);
     }
 
-    public static void SetOccludePosition(in Vec3D position, double angleRadians, double pitchRadians, 
-        ref bool occlude, ref Vec2D occludeViewPos)
-    {
-        // This is a hack until frustum culling exists.
-        // Push the position back to stop occluding things that are straight up/down
-        if (Math.Abs(pitchRadians) > MathHelper.QuarterPi)
-        {
-            occlude = false;
-            return;
-        }
-
-        occlude = true;
-        Vec2D unit = Vec2D.UnitCircle(angleRadians + MathHelper.Pi);
-        occludeViewPos = position.XY + (unit * 32);
-    }
-
     private void Clear(IWorld world, RenderInfo renderInfo)
     {
         bool newTick = world.GameTicker != m_lastTicker;
@@ -407,7 +394,7 @@ public class LegacyWorldRenderer : WorldRenderer
             if (renderObject.Type == RenderObjectType.Entity)
             {
                 Entity entity = (Entity)renderObject;
-                m_entityRenderer.RenderEntity(entity, m_renderData.ViewPosInterpolated);
+                m_entityRenderer.RenderEntity(entity, m_renderData.ViewPosInterpolated, ref m_frustumPlanes);
             }
             else if (renderObject.Type == RenderObjectType.Side)
             {

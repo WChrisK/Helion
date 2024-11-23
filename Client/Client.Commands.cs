@@ -6,6 +6,7 @@ using Helion.Layer.Worlds;
 using Helion.Maps;
 using Helion.Maps.Bsp.Zdbsp;
 using Helion.Models;
+using Helion.Render.OpenGL.Renderers.Legacy.World;
 using Helion.Render.OpenGL.Shared;
 using Helion.Resources.Definitions;
 using Helion.Resources.Definitions.MapInfo;
@@ -43,6 +44,13 @@ public partial class Client
     private readonly Zdbsp m_zdbsp = new();
     private WorldModel? m_lastWorldModel;
     private bool m_isSecretExit;
+
+    [ConsoleCommand("lockfrustum", "Lock frustum test")]
+    private void LockFrustum(ConsoleCommandEventArgs args)
+    {
+        LegacyWorldRenderer.LockFrustum = !LegacyWorldRenderer.LockFrustum;
+        Log.Info($"Frustum {(LegacyWorldRenderer.LockFrustum ? "locked" : "unlocked")}");
+    }
 
     [ConsoleCommand("setpos", "Sets the player's position (x y z). Ex setpos 100 100 0")]
     private void SetPosition(ConsoleCommandEventArgs args)

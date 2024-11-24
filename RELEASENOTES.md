@@ -4,7 +4,8 @@
   - Enable trimming (reduces file size of release artifacts)
   - Allow interpolation to finish when game is paused and on level exit for smooth transitions
   - Fade sprites into max distance
-  - Autosave timer. Automatically write quicksave every x seconds.
+  - Autosave timer that automatically write a quicksave every x seconds
+  - Frustum culling for the automap
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch
@@ -19,3 +20,4 @@
   - Fix monsters teleporting from monster closets playing sight sound
   - Fix translation flags using incorrect colormap indices (fixes kdikdizd)
   - Fix colormaps for transfer heights not setting on two-sided lines
+  - Fix cases where lines were being marked for automap when they weren't visible

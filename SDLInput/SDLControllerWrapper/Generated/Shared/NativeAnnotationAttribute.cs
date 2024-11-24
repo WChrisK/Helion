@@ -1,0 +1,22 @@
+namespace SDLControllerWrapper.Generated.Shared
+{
+    using System;
+    using System.Diagnostics;
+
+    /// <summary>Defines the annotation found in a native declaration.</summary>
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Enum | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.ReturnValue, AllowMultiple = true, Inherited = false)]
+    [Conditional("DEBUG")]
+    internal sealed partial class NativeAnnotationAttribute : Attribute
+    {
+
+        /// <summary>Initializes a new instance of the <see cref="NativeAnnotationAttribute" /> class.</summary>
+        /// <param name="annotation">The annotation that was used in the native declaration.</param>
+        public NativeAnnotationAttribute(string annotation)
+        {
+            this.Annotation = annotation;
+        }
+
+        /// <summary>Gets the annotation that was used in the native declaration.</summary>
+        public string Annotation { get; }
+    }
+}

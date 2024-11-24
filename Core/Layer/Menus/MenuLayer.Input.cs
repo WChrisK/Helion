@@ -53,20 +53,20 @@ public partial class MenuLayer
 
     private void HandleInputForMenu(Menu menu, IConsumableInput input)
     {
-        if (input.ConsumeKeyPressed(Key.Up) || input.ConsumeKeyPressed(Key.DPad1Up))
+        if (input.ConsumeKeyPressed(Key.Up) || input.ConsumeKeyPressed(Key.DPadUp))
             menu.MoveToPreviousComponent();
-        if (input.ConsumeKeyPressed(Key.Down) || input.ConsumeKeyPressed(Key.DPad1Down))
+        if (input.ConsumeKeyPressed(Key.Down) || input.ConsumeKeyPressed(Key.DPadDown))
             menu.MoveToNextComponent();
 
         if (menu.CurrentComponent is MenuOptionListComponent options)
         {
-            if (input.ConsumeKeyPressed(Key.Left) || input.ConsumeKeyPressed(Key.DPad1Left))
+            if (input.ConsumeKeyPressed(Key.Left) || input.ConsumeKeyPressed(Key.DPadLeft))
                 options.MoveToPrevious();
-            else if (input.ConsumeKeyPressed(Key.Right) || input.ConsumeKeyPressed(Key.DPad1Right))
+            else if (input.ConsumeKeyPressed(Key.Right) || input.ConsumeKeyPressed(Key.DPadRight))
                 options.MoveToNext();
         }
 
-        if ((input.ConsumeKeyPressed(Key.Enter) || input.ConsumeKeyPressed(Key.Button1)) && menu.CurrentComponent?.Action != null)
+        if ((input.ConsumeKeyPressed(Key.Enter) || input.ConsumeKeyPressed(Key.ButtonA)) && menu.CurrentComponent?.Action != null)
         {
             if (menu.CurrentComponent.PlaySelectedSound)
             {
@@ -80,7 +80,7 @@ public partial class MenuLayer
         if (input.ConsumeKeyPressed(Key.Delete) && menu.CurrentComponent?.DeleteAction != null)
             InvokeAndPushMenu(menu.CurrentComponent.DeleteAction);
 
-        if (input.ConsumeKeyPressed(Key.Escape) || input.ConsumeKeyPressed(Key.Button2))
+        if (input.ConsumeKeyPressed(Key.Escape) || input.ConsumeKeyPressed(Key.ButtonB))
         {
             Menu? poppedMenu = null;
             bool clear = false;

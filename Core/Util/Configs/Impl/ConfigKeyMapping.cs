@@ -90,7 +90,7 @@ public partial class ConfigKeyMapping : IConfigKeyMapping
         if (presetType == ControllerPresetType.Custom)
             return;
 
-        m_commands.RemoveAll(keyCommand => keyCommand.Key >= Key.Axis1Plus && keyCommand.Key <= Key.Button30);
+        m_commands.RemoveAll(keyCommand => keyCommand.Key >= Key.LeftXPlus && keyCommand.Key <= Key.DPadRight);
 
         foreach (var keyMapping in ControllerPresetMappings[presetType])
         {
@@ -98,7 +98,7 @@ public partial class ConfigKeyMapping : IConfigKeyMapping
         }
     }
 
-    public bool IsControllerInput(Key key) => key >= Key.Axis1Plus && key <= Key.Button30;
+    public bool IsControllerInput(Key key) => key >= Key.LeftXPlus && key <= Key.DPadRight;
 
     public void EnsureMenuKey()
     {

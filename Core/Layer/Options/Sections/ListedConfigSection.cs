@@ -141,9 +141,9 @@ public class ListedConfigSection : IOptionSection
                     m_currentRowIndex = rowIndex;
             }
 
-            if (input.ConsumePressOrContinuousHold(Key.Up) || input.ConsumePressOrContinuousHold(Key.DPad1Up))
+            if (input.ConsumePressOrContinuousHold(Key.Up) || input.ConsumePressOrContinuousHold(Key.DPadUp))
                 AdvanceToValidRow(-1);
-            if (input.ConsumePressOrContinuousHold(Key.Down) || input.ConsumePressOrContinuousHold(Key.DPad1Down))
+            if (input.ConsumePressOrContinuousHold(Key.Down) || input.ConsumePressOrContinuousHold(Key.DPadDown))
                 AdvanceToValidRow(1);
 
             if (input.ConsumeKeyPressed(Key.R) && m_currentRowIndex < m_configValues.Count)
@@ -153,7 +153,7 @@ public class ListedConfigSection : IOptionSection
             }
 
             bool mousePress = input.ConsumeKeyPressed(Key.MouseLeft);
-            bool controllerButton = input.ConsumeKeyPressed(Key.Button1);
+            bool controllerButton = input.ConsumeKeyPressed(Key.ButtonA);
             if (mousePress || input.ConsumeKeyPressed(Key.Enter) || controllerButton)
             {
                 if (mousePress)
@@ -295,7 +295,7 @@ public class ListedConfigSection : IOptionSection
     {
         int scroll = input.ConsumeScroll();
         if (!force && !input.ConsumeKeyPressed(Key.Left) && !input.ConsumeKeyPressed(Key.Right)
-            && !input.ConsumeKeyPressed(Key.DPad1Left) && !input.ConsumeKeyPressed(Key.DPad1Right) && scroll == 0)
+            && !input.ConsumeKeyPressed(Key.DPadLeft) && !input.ConsumeKeyPressed(Key.DPadRight) && scroll == 0)
             return;
 
         m_soundManager.PlayStaticSound(MenuSounds.Change);
@@ -307,8 +307,8 @@ public class ListedConfigSection : IOptionSection
 
     private void UpdateEnumOption(IConsumableInput input, IConfigValue cfgValue)
     {
-        bool left = input.ConsumeKeyPressed(Key.Left) || input.ConsumeKeyPressed(Key.DPad1Left);
-        bool right = input.ConsumeKeyPressed(Key.Right) || input.ConsumeKeyPressed(Key.DPad1Right);
+        bool left = input.ConsumeKeyPressed(Key.Left) || input.ConsumeKeyPressed(Key.DPadLeft);
+        bool right = input.ConsumeKeyPressed(Key.Right) || input.ConsumeKeyPressed(Key.DPadRight);
         int scroll = input.ConsumeScroll();
         if (m_currentEnumIndex.HasValue && !left && !right && scroll == 0)
             return;
@@ -439,10 +439,10 @@ public class ListedConfigSection : IOptionSection
             UpdateTextEditableOption(input);
 
         bool mousePress = input.ConsumeKeyPressed(Key.MouseLeft);
-        if (mousePress || input.ConsumeKeyPressed(Key.Enter) || input.ConsumeKeyPressed(Key.Button1))
+        if (mousePress || input.ConsumeKeyPressed(Key.Enter) || input.ConsumeKeyPressed(Key.ButtonA))
             SubmitEditRow();
 
-        if (input.ConsumeKeyPressed(Key.Escape) || input.ConsumeKeyPressed(Key.MouseRight) || input.ConsumeKeyPressed(Key.Button2))
+        if (input.ConsumeKeyPressed(Key.Escape) || input.ConsumeKeyPressed(Key.MouseRight) || input.ConsumeKeyPressed(Key.ButtonB))
             ReleaseEditRow();
 
         // Everything should be consumed by the row.

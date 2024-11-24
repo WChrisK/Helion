@@ -77,11 +77,11 @@ public class GameLayerInput
         World.Config.Keys.Add(Key.Backtick, Constants.Input.Console);
         World.Config.Keys.Add(Key.Escape, Constants.Input.Menu);
 
-        World.Config.Keys.Add(Key.Axis1Minus, Constants.Input.Forward);
-        World.Config.Keys.Add(Key.Axis1Plus, Constants.Input.Backward);
-        World.Config.Keys.Add(Key.Axis2Plus, Constants.Input.Right);
-        World.Config.Keys.Add(Key.Axis2Minus, Constants.Input.Left);
-        World.Config.Keys.Add(Key.Axis3Plus, Constants.Input.Attack);
+        World.Config.Keys.Add(Key.LeftYMinus, Constants.Input.Forward);
+        World.Config.Keys.Add(Key.LeftYPlus, Constants.Input.Backward);
+        World.Config.Keys.Add(Key.LeftXPlus, Constants.Input.Right);
+        World.Config.Keys.Add(Key.LeftXMinus, Constants.Input.Left);
+        World.Config.Keys.Add(Key.RightTriggerPlus, Constants.Input.Attack);
 
         World.Config.Keys.Add(Key.F10, "mouselook");
         World.Config.Keys.Add(Key.F10, "autoaim");
@@ -335,10 +335,10 @@ public class GameLayerInput
         GameLayerManager.RunLogic(SingleTick);
         Player.Velocity.Should().Be(Vec3D.Zero);
 
-        AnalogAdapter.AxisValues.Add((Key.Axis1Minus, 0.5f));
-        AnalogAdapter.AxisValues.Add((Key.Axis2Plus, 0.5f));
-        InputManager.SetKeyDown(Key.Axis1Minus);
-        InputManager.SetKeyDown(Key.Axis2Plus);
+        AnalogAdapter.AxisValues.Add((Key.LeftYMinus, 0.5f));
+        AnalogAdapter.AxisValues.Add((Key.LeftXPlus, 0.5f));
+        InputManager.SetKeyDown(Key.LeftYMinus);
+        InputManager.SetKeyDown(Key.LeftXPlus);
 
         // These inputs are _scaled_, so we should enter velocity values rather than on/off commands.
         GameLayerManager.RunLogic(SingleTick);
@@ -349,10 +349,10 @@ public class GameLayerInput
         // It should also be truly analog--larger displacements should produce larger accelerations.
         ResetPlayer();
         AnalogAdapter.AxisValues.Clear();
-        AnalogAdapter.AxisValues.Add((Key.Axis1Minus, 1.0f));
-        AnalogAdapter.AxisValues.Add((Key.Axis2Plus, 1.0f));
-        InputManager.SetKeyDown(Key.Axis1Minus);
-        InputManager.SetKeyDown(Key.Axis2Plus);
+        AnalogAdapter.AxisValues.Add((Key.LeftYMinus, 1.0f));
+        AnalogAdapter.AxisValues.Add((Key.LeftXPlus, 1.0f));
+        InputManager.SetKeyDown(Key.LeftYMinus);
+        InputManager.SetKeyDown(Key.LeftXPlus);
         GameLayerManager.RunLogic(SingleTick);
         Vec3D velocityFullInput = Player.Velocity;
 
@@ -374,10 +374,10 @@ public class GameLayerInput
 
         // Since the inputs are scaled, setting zeroes should result in no velocity
         // This should help handle any possible cases where a virtual key input gets "stuck".
-        AnalogAdapter.AxisValues.Add((Key.Axis1Minus, 0));
-        AnalogAdapter.AxisValues.Add((Key.Axis2Plus, 0));
-        InputManager.SetKeyDown(Key.Axis1Minus);
-        InputManager.SetKeyDown(Key.Axis2Plus);
+        AnalogAdapter.AxisValues.Add((Key.LeftYMinus, 0));
+        AnalogAdapter.AxisValues.Add((Key.LeftXPlus, 0));
+        InputManager.SetKeyDown(Key.LeftYMinus);
+        InputManager.SetKeyDown(Key.LeftXPlus);
 
         GameLayerManager.RunLogic(SingleTick);
         Player.Velocity.Should().Be(Vec3D.Zero);
@@ -393,8 +393,8 @@ public class GameLayerInput
         Player.Velocity.Should().Be(Vec3D.Zero);
 
         // This input is mapped to "attack", so it shouldn't directly affect velocity
-        AnalogAdapter.AxisValues.Add((Key.Axis3Plus, 1.0f));
-        InputManager.SetKeyDown(Key.Axis3Plus);
+        AnalogAdapter.AxisValues.Add((Key.RightTriggerPlus, 1.0f));
+        InputManager.SetKeyDown(Key.RightTriggerPlus);
 
         GameLayerManager.RunLogic(SingleTick);
         Player.Velocity.Should().Be(Vec3D.Zero);

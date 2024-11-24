@@ -69,7 +69,7 @@ public class QuitGameMenu : Menu
 
     public override void HandleInput(IConsumableInput input)
     {
-        if (input.ConsumeKeyPressed(Key.Y) || input.ConsumeKeyPressed(Key.Button1))
+        if (input.ConsumeKeyPressed(Key.Y) || input.ConsumeKeyPressed(Key.ButtonA))
             m_quitAction();
 
         base.HandleInput(input);

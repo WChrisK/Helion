@@ -35,8 +35,8 @@ public class Slider(decimal value, decimal step, decimal min, decimal max, Rende
         else
         {
             amount = 1;
-            add = input.ConsumePressOrContinuousHold(Key.Right) || input.ConsumePressOrContinuousHold(Key.DPad1Right);
-            sub = input.ConsumePressOrContinuousHold(Key.Left) || input.ConsumePressOrContinuousHold(Key.DPad1Left);
+            add = input.ConsumePressOrContinuousHold(Key.Right) || input.ConsumePressOrContinuousHold(Key.DPadRight);
+            sub = input.ConsumePressOrContinuousHold(Key.Left) || input.ConsumePressOrContinuousHold(Key.DPadLeft);
         }
 
         if (!add && !sub)

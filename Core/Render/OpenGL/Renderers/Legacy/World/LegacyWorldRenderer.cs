@@ -41,6 +41,7 @@ public class LegacyWorldRenderer : WorldRenderer
     private bool m_occlude;
     private bool m_spriteTransparency;
     private bool m_vanillaRender;
+    private bool m_renderStatic;
     private int m_lastTicker = -1;
     private int m_renderCount;
     private int m_maxDistance;
@@ -140,6 +141,7 @@ public class LegacyWorldRenderer : WorldRenderer
 
         Vec2D occluder = m_renderData.OccludePos ?? Vec2D.Zero;
         bool occlude = m_renderData.OccludePos.HasValue;
+        m_geometryRenderer.SetRenderMode(m_renderStatic ? GeometryRenderMode.Dynamic : GeometryRenderMode.All);
 
         var renderBlocks = world.RenderBlockmap.Blocks;
         var it = renderBlocks.CreateBoxIteration(box);
@@ -151,55 +153,10 @@ public class LegacyWorldRenderer : WorldRenderer
                 if (occlude && !block.Box.InView(occluder, m_renderData.ViewDirection))
                     continue;
 
-                for (var islandNode = block.DynamicSectors.Head; islandNode != null; islandNode = islandNode.Next)
-                {
-                    var sectorIsland = islandNode.Value;
+                RenderSectors(world, block);
 
-                    if (sectorIsland.BlockmapCount == m_renderData.CheckCount)
-                        continue;
-
-                    sectorIsland.BlockmapCount = m_renderData.CheckCount;
-                    if (sectorIsland.ParentIsland != null && sectorIsland.ParentIsland != m_renderData.ViewIsland)
-                        continue;
-
-                    var sector = world.Sectors[sectorIsland.SectorId];
-                    if (sector.CheckCount == m_renderData.CheckCount)
-                        continue;
-
-                    var transfer = sector.TransferHeights;
-                    const SectorDynamic MovementFlags = SectorDynamic.Movement | SectorDynamic.Scroll;
-                    // Middle view is in the static renderer. If it's not moving then we don't need to dynamically draw.
-                    if (transfer != null && renderInfo.TransferHeightView == TransferHeightView.Middle &&
-                        (sector.Floor.Dynamic & MovementFlags) == 0 &&
-                        (sector.Ceiling.Dynamic & MovementFlags) == 0 &&
-                        (transfer.ControlSector.Floor.Dynamic & MovementFlags) == 0 &&
-                        (transfer.ControlSector.Ceiling.Dynamic & MovementFlags) == 0)
-                        continue;
-
-                    double dx1 = Math.Max(sectorIsland.Box.Min.X - m_renderData.ViewPosInterpolated.X, Math.Max(0, m_renderData.ViewPosInterpolated.X - sectorIsland.Box.Max.X));
-                    double dy1 = Math.Max(sectorIsland.Box.Min.Y - m_renderData.ViewPosInterpolated.Y, Math.Max(0, m_renderData.ViewPosInterpolated.Y - sectorIsland.Box.Max.Y));
-                    if (dx1 * dx1 + dy1 * dy1 <= m_renderData.MaxDistanceSquared)
-                    {                        
-                        m_geometryRenderer.RenderSector(m_viewSector, sector, m_renderData.ViewPos3D, m_renderData.ViewPosInterpolated3D);
-                        sector.CheckCount = m_renderData.CheckCount;
-                    }
-                }
-
-                // DynamicSides are either scrolling textures or alpha, neither should setup cover walls.
-                m_geometryRenderer.SetBufferCoverWall(false);
-                for (int i = 0; i < block.DynamicSides.Length; i++)
-                {
-                    var side = block.DynamicSides.Data[i];
-                    if (side.BlockmapCount == m_renderData.CheckCount)
-                        continue;
-                    if (side.Sector.IsMoving || (side.PartnerSide != null && side.PartnerSide.Sector.IsMoving))
-                        continue;
-
-                    side.BlockmapCount = m_renderData.CheckCount;
-                    m_geometryRenderer.RenderSectorWall(m_viewSector, side.Sector, side.Line,
-                        m_renderData.ViewPos3D, m_renderData.ViewPosInterpolated3D);
-                }
-                m_geometryRenderer.SetBufferCoverWall(true);
+                if (m_renderStatic)
+                    RenderSides(block);
 
                 for (var entity = block.HeadEntity; entity != null; entity = entity.RenderBlockNext)
                     RenderEntity(world, entity);
@@ -210,6 +167,52 @@ public class LegacyWorldRenderer : WorldRenderer
 
         RenderAlphaObjects(m_alphaEntities);
         m_alphaEntities.Clear();
+    }
+
+    private void RenderSectors(IWorld world, Block block)
+    {
+        var sectorList = m_renderStatic ? block.DynamicSectors : block.Sectors;
+        for (var islandNode = sectorList.Head; islandNode != null; islandNode = islandNode.Next)
+        {
+            var sectorIsland = islandNode.Value;
+            if (sectorIsland.BlockmapCount == m_renderData.CheckCount)
+                continue;
+
+            sectorIsland.BlockmapCount = m_renderData.CheckCount;
+            if (sectorIsland.ParentIsland != null && sectorIsland.ParentIsland != m_renderData.ViewIsland)
+                continue;
+
+            var sector = world.Sectors[sectorIsland.SectorId];
+            if (sector.CheckCount == m_renderData.CheckCount)
+                continue;
+
+            double dx1 = Math.Max(sectorIsland.Box.Min.X - m_renderData.ViewPosInterpolated.X, Math.Max(0, m_renderData.ViewPosInterpolated.X - sectorIsland.Box.Max.X));
+            double dy1 = Math.Max(sectorIsland.Box.Min.Y - m_renderData.ViewPosInterpolated.Y, Math.Max(0, m_renderData.ViewPosInterpolated.Y - sectorIsland.Box.Max.Y));
+            if (dx1 * dx1 + dy1 * dy1 <= m_renderData.MaxDistanceSquared)
+            {
+                m_geometryRenderer.RenderSector(m_viewSector, sector, m_renderData.ViewPos3D, m_renderData.ViewPosInterpolated3D);
+                sector.CheckCount = m_renderData.CheckCount;
+            }
+        }
+    }
+
+    private void RenderSides(Block block)
+    {
+        // DynamicSides are either scrolling textures or alpha, neither should setup cover walls.
+        m_geometryRenderer.SetBufferCoverWall(false);
+        for (int i = 0; i < block.DynamicSides.Length; i++)
+        {
+            var side = block.DynamicSides.Data[i];
+            if (side.BlockmapCount == m_renderData.CheckCount)
+                continue;
+            if (side.Sector.IsMoving || (side.PartnerSide != null && side.PartnerSide.Sector.IsMoving))
+                continue;
+
+            side.BlockmapCount = m_renderData.CheckCount;
+            m_geometryRenderer.RenderSectorWall(m_viewSector, side.Sector, side.Line,
+                m_renderData.ViewPos3D, m_renderData.ViewPosInterpolated3D);
+        }
+        m_geometryRenderer.SetBufferCoverWall(true);
     }
 
     void RenderEntity(IWorld world, Entity entity)
@@ -242,10 +245,14 @@ public class LegacyWorldRenderer : WorldRenderer
     }
 
     protected override void PerformRender(IWorld world, RenderInfo renderInfo)
-    {
+    {   // If the transfer height view is not the middle then the cached static geometry cannot be used.
+        // Render all sectors dynamically instead.
+        m_renderStatic = renderInfo.TransferHeightView == TransferHeightView.Middle;
         m_spriteTransparency = m_config.Render.SpriteTransparency;
         m_maxDistance = m_config.Render.MaxDistance;
         Clear(world, renderInfo);
+
+        m_geometryRenderer.SetTransferHeightView(renderInfo.TransferHeightView);
 
         if (m_lastTicker != world.GameTicker)
             m_entityRenderer.Start(renderInfo);
@@ -255,7 +262,11 @@ public class LegacyWorldRenderer : WorldRenderer
         IterateBlockmap(world, renderInfo);
         PopulatePrimitives(world);
 
-        m_geometryRenderer.RenderPortalsAndSkies(renderInfo);
+        m_geometryRenderer.RenderSkies(renderInfo);
+        m_geometryRenderer.RenderPortals(renderInfo);
+
+        if (m_renderStatic)
+            m_geometryRenderer.RenderStaticSkies(renderInfo);
 
         if (!m_vanillaRender)
         {
@@ -265,11 +276,14 @@ public class LegacyWorldRenderer : WorldRenderer
             m_worldDataManager.RenderWalls();
             m_worldDataManager.RenderFlats();
 
-            m_staticProgram.Bind();
-            GL.ActiveTexture(TextureUnit.Texture0);
-            SetStaticUniforms(renderInfo);
-            m_geometryRenderer.RenderStaticGeometryWalls();
-            m_geometryRenderer.RenderStaticGeometryFlats();
+            if (m_renderStatic)
+            {
+                m_staticProgram.Bind();
+                GL.ActiveTexture(TextureUnit.Texture0);
+                SetStaticUniforms(renderInfo);
+                m_geometryRenderer.RenderStaticGeometryWalls();
+                m_geometryRenderer.RenderStaticGeometryFlats();
+            }
 
             RenderTwoSidedMiddleWalls(renderInfo);
 
@@ -290,27 +304,41 @@ public class LegacyWorldRenderer : WorldRenderer
         m_worldDataManager.RenderWalls();
         m_worldDataManager.RenderFlats();
 
-        m_staticProgram.Bind();
-        GL.ActiveTexture(TextureUnit.Texture0);
-        SetStaticUniforms(renderInfo);
-        m_geometryRenderer.RenderStaticGeometryWalls();
-        m_geometryRenderer.RenderStaticGeometryFlats();
+        if (m_renderStatic)
+        {
+            m_staticProgram.Bind();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            SetStaticUniforms(renderInfo);
+            m_geometryRenderer.RenderStaticGeometryWalls();
+            m_geometryRenderer.RenderStaticGeometryFlats();
+        }
+
         RenderTwoSidedMiddleWalls(renderInfo);
 
         GL.Clear(ClearBufferMask.DepthBufferBit);
         GL.ColorMask(false, false, false, false);
         GL.Disable(EnableCap.CullFace);
-        m_staticProgram.Bind();
-        GL.ActiveTexture(TextureUnit.Texture0);
-        m_geometryRenderer.RenderStaticCoverWalls();
+
+        if (m_renderStatic)
+        {
+            m_staticProgram.Bind();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            m_geometryRenderer.RenderStaticCoverWalls();
+        }
+
         m_interpolationProgram.Bind();
         m_worldDataManager.RenderCoverWalls();
         // Need to render flood fill again. Sprites need to be blocked by flood filling if visible.
         m_geometryRenderer.Portals.Render(renderInfo);
         GL.Enable(EnableCap.CullFace);
-        m_staticProgram.Bind();
-        GL.ActiveTexture(TextureUnit.Texture0);
-        m_geometryRenderer.RenderStaticOneSidedCoverWalls();
+
+        if (m_renderStatic)
+        {
+            m_staticProgram.Bind();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            m_geometryRenderer.RenderStaticOneSidedCoverWalls();
+        }
+
         RenderTwoSidedMiddleWalls(renderInfo);
         GL.ColorMask(true, true, true, true);
 
@@ -352,10 +380,13 @@ public class LegacyWorldRenderer : WorldRenderer
         GL.ActiveTexture(TextureUnit.Texture0);
         m_worldDataManager.RenderTwoSidedMiddleWalls();
 
-        m_staticProgram.Bind();
-        GL.ActiveTexture(TextureUnit.Texture0);
-        SetStaticUniforms(renderInfo);
-        m_geometryRenderer.RenderStaticTwoSidedWalls();
+        if (m_renderStatic)
+        {
+            m_staticProgram.Bind();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            SetStaticUniforms(renderInfo);
+            m_geometryRenderer.RenderStaticTwoSidedWalls();
+        }
     }
 
     public override void ResetInterpolation(IWorld world)

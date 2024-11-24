@@ -49,20 +49,9 @@ public class StaticDataApplier
         }
 
         for (int i = 0; i < world.Sectors.Count; i++)
-            DetermineStaticSector(world, world.Sectors[i], world.TextureManager);
+            world.RenderBlockmap.Link(world, world.Sectors[i]);
 
         IsLoading = false;
-    }
-
-    private static void DetermineStaticSector(WorldBase world, Sector sector, TextureManager textureManager)
-    {
-        if (sector.TransferHeights == null)
-            return;
-
-        bool save = IsLoading;
-        IsLoading = false;
-        SetSectorDynamic(world, sector, SectorPlanes.Floor | SectorPlanes.Ceiling, SectorDynamic.TransferHeights);
-        IsLoading = save;
     }
 
     private static void DetermineStaticSectorLine(WorldBase world, Line line)
@@ -137,8 +126,8 @@ public class StaticDataApplier
         if ((face & SectorPlanes.Ceiling) != 0)
             sector.Ceiling.Dynamic |= sectorDynamic;
 
-        if (sector.BlockmapNodes.Length == 0 && (sectorDynamic == SectorDynamic.TransferHeights || sectorDynamic == SectorDynamic.Movement || sectorDynamic == SectorDynamic.Scroll))
-            world.RenderBlockmap.Link(world, sector);
+        if (sector.BlockmapNodes.Length == 0 && (sectorDynamic == SectorDynamic.Movement || sectorDynamic == SectorDynamic.Scroll))
+            world.RenderBlockmap.LinkDynamic(world, sector);
 
         if (sectorDynamic == SectorDynamic.Movement)
             SetSectorDynamicMovement(world, sector);

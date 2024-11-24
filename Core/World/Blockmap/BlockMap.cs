@@ -115,7 +115,7 @@ public class BlockMap
         entity.RenderBlock.AddLink(entity);
     }
 
-    public void Link(IWorld world, Sector sector)
+    public void LinkDynamic(IWorld world, Sector sector)
     {
         Assert.Precondition(sector.BlockmapNodes.Empty(), "Forgot to unlink sector from blockmap");
 
@@ -133,6 +133,25 @@ public class BlockMap
                     var node = world.DataCache.GetLinkableNodeIsland(sectorIsland);
                     block.DynamicSectors.Add(node);
                     sector.BlockmapNodes.Add(node);
+                }
+            }
+        }
+    }
+
+    public void Link(IWorld world, Sector sector)
+    {
+        var islands = world.Geometry.IslandGeometry.SectorIslands[sector.Id];
+        foreach (var sectorIsland in islands)
+        {
+            if (sectorIsland.IsVooDooCloset || sectorIsland.IsMonsterCloset)
+                continue;
+            var it = m_blocks.CreateBoxIteration(sectorIsland.Box);
+            for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+            {
+                for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+                {
+                    Block block = m_blocks[by * it.Width + bx];
+                    block.Sectors.Add(new() { Value = sectorIsland });
                 }
             }
         }

@@ -47,6 +47,7 @@ public class Block
     public int BlockLineCount;
 
 
+    public readonly LinkableList<Island> Sectors = new();
     public readonly LinkableList<Island> DynamicSectors = new();
     public readonly DynamicArray<Side> DynamicSides = new();
     public int[] EntityIndices = new int[8];

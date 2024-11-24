@@ -26,6 +26,7 @@ public class PortalRenderer : IDisposable
     private readonly SectorPlane m_fakeFloor = new(SectorPlaneFace.Floor, 0, 0, 0);
     private readonly SectorPlane m_fakeCeiling = new(SectorPlaneFace.Floor, 0, 0, 0);
     private readonly double m_pushSegAmount;
+    private TransferHeightView m_transferHeightView;
     private bool m_disposed;
 
     public PortalRenderer(ArchiveCollection archiveCollection, LegacyGLTextureManager glTextureManager)
@@ -34,6 +35,7 @@ public class PortalRenderer : IDisposable
         m_floodFillRenderer = new(glTextureManager);
         // ReversedZ allows for a much smaller push amount
         m_pushSegAmount = ShaderVars.ReversedZ ? 0.005 : 0.05;
+        m_transferHeightView = TransferHeightView.Middle;
     }
 
     ~PortalRenderer()
@@ -41,10 +43,8 @@ public class PortalRenderer : IDisposable
         Dispose(false);
     }
 
-    public void Clear()
-    {
-        // Nothing to clear yet.
-    }
+
+    public void SetTransferHeightView(TransferHeightView view) => m_transferHeightView = view;
 
     public void UpdateTo(IWorld world)
     {
@@ -68,6 +68,9 @@ public class PortalRenderer : IDisposable
 
     private void HandleFloodFillPlane(Side facingSide, Sector floodSector, SectorPlanes planes, SectorPlaneFace face, bool isFront, bool update)
     {
+        if (m_transferHeightView != TransferHeightView.Middle)
+            return;
+
         var line = facingSide.Line;
         var saveStart = line.Segment.Start;
         var saveEnd = line.Segment.End;
@@ -112,9 +115,13 @@ public class PortalRenderer : IDisposable
 
     private void HandleStaticFloodFillSide(Side facingSide, Side otherSide, Sector floodSector, SideTexture sideTexture, bool isFront, bool update)
     {
+        // TODO this only has a single buffer. Needs to be able to handle different transfer height views.
+        if (m_transferHeightView != TransferHeightView.Middle)
+            return;
+
         WallVertices wall = default;
-        Sector facingSector = facingSide.Sector.GetRenderSector(TransferHeightView.Middle);
-        Sector otherSector = otherSide.Sector.GetRenderSector(TransferHeightView.Middle);
+        Sector facingSector = facingSide.Sector.GetRenderSector(m_transferHeightView);
+        Sector otherSector = otherSide.Sector.GetRenderSector(m_transferHeightView);
 
         var line = facingSide.Line;
         var saveStart = line.Segment.Start;

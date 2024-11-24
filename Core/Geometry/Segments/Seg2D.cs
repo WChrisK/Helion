@@ -445,6 +445,7 @@ namespace Helion.Geometry.Segments
         public readonly override string ToString() => $"({Start}), ({End})";
         public readonly override int GetHashCode() => HashCode.Combine(Start.GetHashCode(), End.GetHashCode());
         public readonly bool Equals(Seg2D other) => Start.X == other.Start.X && Start.Y == other.Start.Y && End.X == other.End.X && End.Y == other.End.Y;
+        public readonly override bool Equals(object? obj) => obj is Seg2D && Equals((Seg2D)obj);
 
         private readonly IEnumerable<Vec2D> GetVertices()
         {

@@ -141,7 +141,7 @@ public class EntityRenderer : IDisposable
         return m_textureManager.GetSpriteRotation(spriteDefinition, frame, rotation, colorMapIndex);
     }
 
-    public unsafe void RenderEntity(Entity entity, in Vec2D position)
+    public void RenderEntity(Entity entity, in Vec2D position)
     {
         const double NudgeFactor = 0.0001;
         
@@ -174,7 +174,6 @@ public class EntityRenderer : IDisposable
             uint entityAngle = ViewClipper.DiamondAngleFromRadians(entity.AngleRadians);
             rotation = CalculateRotation(viewAngle, entityAngle);
         }
-
         
         if (m_spriteZCheck)
         {
@@ -201,7 +200,6 @@ public class EntityRenderer : IDisposable
         GLLegacyTexture texture = (spriteRotation.RenderStore as GLLegacyTexture) ?? m_textureManager.NullTexture;
         Sector sector = entity.Sector.GetRenderSector(m_transferHeightView);
 
-        int halfTexWidth = texture.Dimension.Width / 2;
         float offsetZ = GetOffsetZ(entity, texture);
 
         bool useAlpha = entity.Flags.Shadow || (m_spriteAlpha && entity.Alpha < 1.0f);
@@ -219,23 +217,22 @@ public class EntityRenderer : IDisposable
         if (arrayData.Capacity < length + 1)
             arrayData.EnsureCapacity(length + 1);
 
-        fixed (EntityVertex* vertex = &arrayData.Data[length])
-        {
-            // Multiply the X offset by the rightNormal X/Y to move the sprite according to the player's view
-            // Doom graphics are drawn left to right and not centered
-            vertex->Pos = new Vec3F(
-                (float)(entity.Position.X - nudgeAmount.X) - (m_viewRightNormal.X * texture.Offset.X) + (m_viewRightNormal.X * halfTexWidth),
-                (float)(entity.Position.Y - nudgeAmount.Y) - (m_viewRightNormal.Y * texture.Offset.X) + (m_viewRightNormal.Y * halfTexWidth),
-                (float)entity.Position.Z + offsetZ);
-            vertex->PrevPos = new Vec3F(
-                (float)(entity.PrevPosition.X - nudgeAmount.X) - (m_prevViewRightNormal.X * texture.Offset.X) + (m_prevViewRightNormal.X * halfTexWidth),
-                (float)(entity.PrevPosition.Y - nudgeAmount.Y) - (m_prevViewRightNormal.Y * texture.Offset.X) + (m_prevViewRightNormal.Y * halfTexWidth),
-                (float)entity.PrevPosition.Z + offsetZ);
-            vertex->LightLevel = entity.Flags.Bright || entity.Frame.Properties.Bright ? 255 :
-                ((sector.TransferFloorLightSector.LightLevel + sector.TransferCeilingLightSector.LightLevel) / 2);
-            vertex->Options = VertexOptions.Entity(alpha, fuzz, spriteRotation.FlipU, colorMapIndex);
-            vertex->SectorIndex = Renderer.GetColorMapBufferIndex(sector, LightBufferType.Floor);
-        }
+        ref var vertex = ref arrayData.Data[length];
+        // Multiply the X offset by the rightNormal X/Y to move the sprite according to the player's view
+        // Doom graphics are drawn left to right and not centered
+        vertex.Pos = new Vec3F(
+            (float)(entity.Position.X - nudgeAmount.X) - (m_viewRightNormal.X * texture.Offset.X),
+            (float)(entity.Position.Y - nudgeAmount.Y) - (m_viewRightNormal.Y * texture.Offset.X),
+            (float)entity.Position.Z + offsetZ);
+        vertex.PrevPos = new Vec3F(
+            (float)(entity.PrevPosition.X - nudgeAmount.X) - (m_prevViewRightNormal.X * texture.Offset.X),
+            (float)(entity.PrevPosition.Y - nudgeAmount.Y) - (m_prevViewRightNormal.Y * texture.Offset.X),
+            (float)entity.PrevPosition.Z + offsetZ);
+        vertex.LightLevel = entity.Flags.Bright || entity.Frame.Properties.Bright ? 255 :
+            ((sector.TransferFloorLightSector.LightLevel + sector.TransferCeilingLightSector.LightLevel) / 2);
+        vertex.Options = VertexOptions.Entity(alpha, fuzz, spriteRotation.FlipU, colorMapIndex);
+        vertex.SectorIndex = Renderer.GetColorMapBufferIndex(sector, LightBufferType.Floor);
+        
         arrayData.Length = length + 1;
     }
 

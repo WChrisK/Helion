@@ -167,10 +167,9 @@ public class EntityProgram : RenderProgram
 
             vec3 pos = gl_in[0].gl_Position.xyz;
             ivec2 textureDim = textureSize(boundTexture, 0);
-            float halfTexWidth = textureDim.x * 0.5;
             vec3 posMoveDir = vec3(mix(prevViewRightNormal, viewRightNormal, timeFrac), 0);
-            vec3 minPos = pos - (posMoveDir * halfTexWidth);
-            vec3 maxPos = pos + (posMoveDir * halfTexWidth) + (vec3(0, 0, 1) * textureDim.y);
+            vec3 minPos = pos;
+            vec3 maxPos = pos + (posMoveDir * textureDim.x) + (vec3(0, 0, 1) * textureDim.y);
 
             // Triangle strip ordering is: v0 v1 v2, v2 v1 v3
             // We also need to be going counter-clockwise.

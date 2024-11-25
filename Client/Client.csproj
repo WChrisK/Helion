@@ -37,6 +37,7 @@
     <DirectPInvoke Include="zmusic" />
     <DirectPInvoke Include="fluidsynth" />
     <DirectPInvoke Include="glfw3" />
+    <DirectPInvoke Include="sdl2" />
     <DirectPInvoke Condition="'$(RuntimeIdentifier)'=='win-x64'" Include="AL" />
 
     <NativeLibrary Condition="'$(RuntimeIdentifier)'=='win-x64'" Include="Unmanaged\lib\win-x64\*.lib" />

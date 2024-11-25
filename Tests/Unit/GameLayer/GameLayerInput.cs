@@ -48,8 +48,8 @@ public class GameLayerInput
 
         public bool TryGetAnalogValueForAxis(Key key, out float axisAnalogValue)
         {
-            (Key _, axisAnalogValue) = AxisValues.FirstOrDefault(a => a.Item1 == key);
-            return true;
+            (Key found, axisAnalogValue) = AxisValues.FirstOrDefault(a => a.Item1 == key);
+            return found == key;
         }
 
         public void Rumble(ushort lowFrequency, ushort highFrequency, uint durationms)

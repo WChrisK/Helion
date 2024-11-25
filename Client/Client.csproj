@@ -67,11 +67,11 @@
 
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.7.4" />
+    <PackageReference Include="Helion.ZMusic" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
-    <ProjectReference Include="..\ZMusic\ZMusicWrapper\ZMusicWrapper.csproj" />
     <ProjectReference Include="..\NFluidsynth\NFluidsynth.csproj" />
   </ItemGroup>
 

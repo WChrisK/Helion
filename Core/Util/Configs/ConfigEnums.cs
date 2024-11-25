@@ -2,7 +2,6 @@
 using Helion.Render.Common.Textures;
 using Helion.Resources.Definitions;
 using Helion.Util.Configs.Components;
-using Helion.Util.Configs.Impl;
 using Helion.World;
 using Helion.World.Entities.Players;
 using Helion.World.StatusBar;
@@ -40,7 +39,6 @@ namespace Helion.Util.Configs
             { typeof(WindowBorder), Enum.GetValues<WindowBorder>() },
             { typeof(RenderColorMode), Enum.GetValues<RenderColorMode>() },
             { typeof(BlitFilter), Enum.GetValues<BlitFilter>() },
-            { typeof(ControllerPresetType), Enum.GetValues<ControllerPresetType>() }
         };
 
         public static Dictionary<Type, Dictionary<Enum, string>> KnownEnumLabels { get; } = new Dictionary<Type, Dictionary<Enum, string>>()
@@ -61,7 +59,6 @@ namespace Helion.Util.Configs
             { typeof(WindowBorder), GetDescriptions<WindowBorder>() },
             { typeof(RenderColorMode), GetDescriptions<RenderColorMode>() },
             { typeof(BlitFilter), GetDescriptions<BlitFilter>() },
-            { typeof(ControllerPresetType), GetDescriptions<ControllerPresetType>() }
         };
 
         private static Dictionary<Enum, string> GetDescriptions<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T>() where T : struct, Enum

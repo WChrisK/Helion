@@ -8,10 +8,9 @@ public static class ColorMapBuffer
     const int LayerSize = Colormap.NumColors * Colormap.NumLayers * 3;
     const int ColorMapSize = LayerSize * Palette.NumPalettes;
 
-    public static float[] Create(Palette palette, Colormap baseColormap, List<Colormap> colormaps)
+    public static float[] Create(Palette palette, List<Colormap> colormaps)
     {
-        float[] buffer = new float[ColorMapSize * (colormaps.Count + 1)];
-        WriteColorMap(0, palette, baseColormap, buffer);
+        float[] buffer = new float[ColorMapSize * colormaps.Count];
 
         for (int i = 0; i < colormaps.Count; i++)
         {

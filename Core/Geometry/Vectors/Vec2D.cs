@@ -11,7 +11,7 @@ using Helion.Util.Extensions;
 namespace Helion.Geometry.Vectors
 {
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct Vec2D(double x, double y)
+    public struct Vec2D(double x, double y) : IEquatable<Vec2D>
     {
         public static readonly Vec2D Zero = new(0, 0);
         public static readonly Vec2D One = new(1, 1);
@@ -87,7 +87,8 @@ namespace Helion.Geometry.Vectors
         public readonly double Angle(Vector3D other) => Math.Atan2(other.Y - Y, other.X - X);
 
         public override readonly string ToString() => $"{X}, {Y}";
-        public override readonly bool Equals(object? obj) => obj is Vec2D v && X == v.X && Y == v.Y;
         public override readonly int GetHashCode() => HashCode.Combine(X, Y);
+        public readonly bool Equals(Vec2D other) => X == other.X && Y == other.Y;
+        public readonly override bool Equals(object? obj) => obj is not null && obj is Vec2D v && Equals(v);
     }
 }

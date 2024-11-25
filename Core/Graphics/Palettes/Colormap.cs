@@ -20,7 +20,7 @@ public class Colormap
     public readonly bool[] FullBright = new bool[NumColors];
 
     public int Index;
-    public readonly Vec3F ColorMix;
+    public Vec3F ColorMix;
     public readonly Entry? Entry;
 
     public int Count => m_layers.Count;
@@ -100,7 +100,7 @@ public class Colormap
                 if (layer > 0 && layer < 32)
                 {
                     var previousColor = colormapLayers[layer - 1][i];
-                    if (previousColor != currentColor)
+                    if (previousColor.Uint != currentColor.Uint)
                         fullBright[i] = false;
                 }
 

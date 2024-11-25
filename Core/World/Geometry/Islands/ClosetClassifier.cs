@@ -17,6 +17,9 @@ public static class ClosetClassifier
         {
             for (var entity = world.EntityManager.Head; entity != null; entity = entity.Next)
             {
+                if (entity.Flags.Friendly)
+                    continue;
+
                 var subsector = world.Geometry.BspTree.Subsectors[entity.Subsector.Id];
                 if (subsector.IslandId < 0 || subsector.IslandId >= world.Geometry.IslandGeometry.Islands.Count)
                     continue;
@@ -48,7 +51,11 @@ public static class ClosetClassifier
             if (island.IsMonsterCloset)
             {
                 foreach (Entity entity in islandToEntities[island.Id])
+                {
+                    if (entity.Flags.Friendly)
+                        continue;
                     entity.ClosetFlags |= ClosetFlags.MonsterCloset;
+                }
             }
         }
 

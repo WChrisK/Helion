@@ -291,7 +291,7 @@ public class DefinitionEntries
         }
 
         for (int i = 0; i < Colormaps.Count; i++)
-            Colormaps[i].Index = i + 1;
+            Colormaps[i].Index = i;
 
         SetGameConfTranslations();
 
@@ -413,8 +413,8 @@ public class DefinitionEntries
 
             m_processedTranslationColormaps[entryName] = colormap;
 
-            Colormaps.Add(colormap);
             colormap.Index = Colormaps.Count;
+            Colormaps.Add(colormap);
 
             if (!translationDefinitions.TryGetValue(entryName, out var list))
                 continue;
@@ -441,8 +441,8 @@ public class DefinitionEntries
 
         if (addToColorMaps)
         {
-            Colormaps.Add(colormap);
             colormap.Index = Colormaps.Count;
+            Colormaps.Add(colormap);
         }
 
         return true;
@@ -488,6 +488,9 @@ public class DefinitionEntries
         var colormap = Colormap.From(m_archiveCollection.Data.Palette, entry.ReadData(), entry);
         if (colormap != null)
         {
+            if (entry.Parent.ArchiveType == ArchiveType.Assets && entry.Path.Name.EqualsIgnoreCase("WATERMAP"))
+                colormap.ColorMix = (0, 4, 165); //ZDoom uses 0004FA5. This is for true color rendering only.
+
             colormap.Index = Colormaps.Count;
             Colormaps.Add(colormap);
             ColormapsLookup[entry.Path.Name] = colormap;

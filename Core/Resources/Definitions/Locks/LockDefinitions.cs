@@ -126,5 +126,13 @@ public class LockDefinitions
         LockDefs.Add(allThreeColors);
     }
 
-    public LockDef? GetLockDef(int keyNumber) => LockDefs.FirstOrDefault(x => x.KeyNumber == keyNumber);
+    public LockDef? GetLockDef(int keyNumber)
+    {
+        for (int i = 0; i < LockDefs.Count; i++)
+        {
+            if (LockDefs[i].KeyNumber == keyNumber)
+                return LockDefs[i];
+        }
+        return null;
+    }
 }

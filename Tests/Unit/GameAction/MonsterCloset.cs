@@ -47,5 +47,7 @@ public class MonsterCloset
         imp1.ClosetFlags.Should().Be(ClosetFlags.None);
         imp1.Frame.Sprite.Should().NotBe("TNT1");
         imp1.Frame.ActionFunction!.Method.Name.Should().Be("A_Chase");
+        // Should not play sight sound
+        GameActions.AssertNoSound(World, imp1);
     }
 }

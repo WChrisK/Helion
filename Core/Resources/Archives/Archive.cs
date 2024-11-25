@@ -29,7 +29,8 @@ public abstract class Archive : IDisposable
         ("SOUNDS", ResourceNamespace.Sounds),
         ("SPRITES", ResourceNamespace.Sprites),
         ("TEXTURES", ResourceNamespace.Textures),
-        ("PATCHES", ResourceNamespace.Textures)
+        ("PATCHES", ResourceNamespace.Textures),
+        ("COLORMAPS", ResourceNamespace.Colormaps)
     ];
 
     protected static ResourceNamespace NamespaceFromEntryPath(string path)

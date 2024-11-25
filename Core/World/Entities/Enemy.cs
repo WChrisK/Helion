@@ -77,7 +77,9 @@ public partial class Entity
                 if (newTarget != null && newTarget.IsPlayer && newTarget != previousTarget.Entity && Definition.MissileState.HasValue)
                 {
                     SetSeeState();
+                    PlaySeeSound();
                     Flags.JustHit = false;
+                    return true;
                 }
             }
             else
@@ -135,9 +137,9 @@ public partial class Entity
         ClosetFlags = ClosetFlags.None;
 
         if ((flags & ClosetFlags.ClosetLook) != 0)
-            SetSeeState();
-        if ((flags & ClosetFlags.ClosetChase) != 0)
             SetSpawnState();
+        if ((flags & ClosetFlags.ClosetChase) != 0)
+            SetSeeState();
     }
 
     private Entity? GetNewTarget(bool allAround)

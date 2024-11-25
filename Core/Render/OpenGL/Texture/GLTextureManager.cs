@@ -215,7 +215,6 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
         if (spriteRotation == null)
             return NullSpriteRotation;
 
-        colorMapIndex--;
         if (!ArchiveCollection.StoreImageIndices && colorMapIndex >= 0)
         {
             // For true color mode the image needs to be recreated using a different palette

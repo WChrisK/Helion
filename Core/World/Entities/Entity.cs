@@ -925,11 +925,11 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetTranslationColorMap()
     {
-        // Player colormaps start index 1 (green)
+        // Player colormaps start index 0 (green)
         if (PlayerObj != null)
-            return PlayerObj.PlayerNumber % ((int)TranslateColor.Count + 1) + 1;
+            return PlayerObj.PlayerNumber % ((int)TranslateColor.Count + 1);
 
-        return (Flags.Flags3 & EntityFlags.TranslationFlag) >> 10;
+        return (Flags.Flags3 & EntityFlags.TranslationFlag) >> 11;
     }
 
     public void Dispose()

@@ -35,7 +35,7 @@ public class GameLayerInput
     private static readonly TickerInfo ZeroTick = new(0, 0);
     private static readonly TickerInfo SingleTick = new(1, 0);
 
-    private class FakeAnalogAdapter : IAnalogAdapter
+    private class FakeAnalogAdapter : IGameControlAdapter
     {
         public List<(Key, float)> AxisValues { get; set; } = new List<(Key, float)>();
 
@@ -50,6 +50,16 @@ public class GameLayerInput
         {
             (Key _, axisAnalogValue) = AxisValues.FirstOrDefault(a => a.Item1 == key);
             return true;
+        }
+
+        public void Rumble(ushort lowFrequency, ushort highFrequency, uint durationms)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryGetGyroAxis(GyroAxis axis, out float value)
+        {
+            throw new NotImplementedException();
         }
     }
 

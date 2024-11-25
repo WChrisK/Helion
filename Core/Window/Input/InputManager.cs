@@ -38,7 +38,7 @@ public class InputManager : IInputManager
     public DynamicArray<Key> GetPrevDownKeys() => m_prevDownKeys;
     public DynamicArray<InputKey> GetEvents() => m_events;
 
-    public IAnalogAdapter? AnalogAdapter { get; set; }
+    public IGameControlAdapter? AnalogAdapter { get; set; }
 
     public InputManager()
     {

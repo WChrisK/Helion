@@ -88,7 +88,12 @@
             }
         }
 
-        private void DetectControllers()
+        /// <summary>
+        /// Redetect connected controllers
+        /// It should only be necessary to call this if there's been a very long gap since the last polling event
+        /// (in which case, the event buffer might have overrun, causing us to lose a connect/disconnect event).
+        /// </summary>
+        public void DetectControllers()
         {
             int numJoysticks = SDL_joystick.SDL_NumJoysticks();
             for (int i = 0; i < numJoysticks; i++)

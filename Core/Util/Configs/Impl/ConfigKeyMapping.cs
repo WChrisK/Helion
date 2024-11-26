@@ -76,6 +76,8 @@ public partial class ConfigKeyMapping : IConfigKeyMapping
         (Key.LeftXPlus,         Constants.Input.Right),
         (Key.RightXMinus,       Constants.Input.TurnLeft),
         (Key.RightXPlus,        Constants.Input.TurnRight),
+        (Key.RightYMinus,       Constants.Input.LookUp),
+        (Key.RightYPlus,        Constants.Input.LookDown),
         (Key.ButtonB,           Constants.Input.Use),
         (Key.ButtonX,           Constants.Input.Use),
         (Key.ButtonA,           Constants.Input.Attack),

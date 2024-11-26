@@ -46,11 +46,11 @@ public class ConfigController : ConfigElement<ConfigController>
     public readonly ConfigValue<GyroTurnAxis> GyroAimTurnAxis = new(GyroTurnAxis.Yaw);
 
     [ConfigInfo("Vertical aiming sensitivity for gyro input.")]
-    [OptionMenu(OptionSectionType.Controller, "Gyro Aim Vertical Sensitivity", sliderMin: 0, sliderMax: 5, sliderStep: .1)]
-    public readonly ConfigValue<double> GyroAimVerticalSensitivity = new(0.0, Clamp(0, 5.0));
+    [OptionMenu(OptionSectionType.Controller, "Gyro Aim Vertical Sensitivity", sliderMin: 0, sliderMax: 10, sliderStep: .1)]
+    public readonly ConfigValue<double> GyroAimVerticalSensitivity = new(3.0, Clamp(0, 10.0));
 
     [ConfigInfo("Horizontal aiming sensitivity for gyro input.")]
-    [OptionMenu(OptionSectionType.Controller, "Gyro Aim Turn Sensitivity", sliderMin: 0, sliderMax: 5, sliderStep: .1)]
-    public readonly ConfigValue<double> GyroAimHorizontalSensitivity = new(1.0, Clamp(0, 5.0));
+    [OptionMenu(OptionSectionType.Controller, "Gyro Aim Turn Sensitivity", sliderMin: 0, sliderMax: 10, sliderStep: .1)]
+    public readonly ConfigValue<double> GyroAimHorizontalSensitivity = new(3.0, Clamp(0, 10.0));
 }
 

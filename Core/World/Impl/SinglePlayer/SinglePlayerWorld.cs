@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using Helion.Geometry.Vectors;
 using Helion.Util.Profiling;
 using Helion.Window;
+using Helion.Window.Input;
 using static Helion.Util.Assertion.Assert;
 using static Helion.World.Entities.EntityManager;
 using Helion.Util.RandomGenerators;
@@ -576,5 +577,6 @@ public class SinglePlayerWorld : WorldBase
             && (input.Manager.AnalogAdapter?.TryGetGyroDelta(GyroAxis.Pitch, out double pitch) == true))
         {
             player.AddToPitch((float)(pitch * Config.Controller.GyroAimVerticalSensitivity), true);
+        }
     }
 }

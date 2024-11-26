@@ -566,5 +566,15 @@ public class SinglePlayerWorld : WorldBase
                 player.AddToPitch(moveDelta.Y * factorY, true);
             }
         }
+        // Handle controller gyro inputs if available; these work basically the same as a mouse.
+        if (input.Manager.AnalogAdapter?.TryGetGyroDelta((GyroAxis)(int)Config.Controller.GyroAimTurnAxis.Value, out double yaw) == true)
+        {
+            player.AddToYaw((float)(yaw * Config.Controller.GyroAimHorizontalSensitivity), true);
+        }
+
+        if ((!MapInfo.HasOption(MapOptions.NoFreelook) || IsChaseCamMode)
+            && (input.Manager.AnalogAdapter?.TryGetGyroDelta(GyroAxis.Pitch, out double pitch) == true))
+        {
+            player.AddToPitch((float)(pitch * Config.Controller.GyroAimVerticalSensitivity), true);
     }
 }

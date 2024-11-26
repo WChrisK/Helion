@@ -39,6 +39,7 @@ namespace Helion.Util.Configs
             { typeof(WindowBorder), Enum.GetValues<WindowBorder>() },
             { typeof(RenderColorMode), Enum.GetValues<RenderColorMode>() },
             { typeof(BlitFilter), Enum.GetValues<BlitFilter>() },
+            { typeof(GyroTurnAxis), Enum.GetValues<GyroTurnAxis>() },
         };
 
         public static Dictionary<Type, Dictionary<Enum, string>> KnownEnumLabels { get; } = new Dictionary<Type, Dictionary<Enum, string>>()
@@ -59,6 +60,7 @@ namespace Helion.Util.Configs
             { typeof(WindowBorder), GetDescriptions<WindowBorder>() },
             { typeof(RenderColorMode), GetDescriptions<RenderColorMode>() },
             { typeof(BlitFilter), GetDescriptions<BlitFilter>() },
+            { typeof(GyroTurnAxis), GetDescriptions<GyroTurnAxis>() },
         };
 
         private static Dictionary<Enum, string> GetDescriptions<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T>() where T : struct, Enum

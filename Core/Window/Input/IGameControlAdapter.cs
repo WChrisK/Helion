@@ -64,6 +64,14 @@ public interface IGameControlAdapter
     bool TryGetGyroAbsolute(GyroAxis axis, out double absoluteValue);
 
     /// <summary>
+    /// Get the difference in absolute positions between the current and previous sampled values from the gyro
+    /// </summary>
+    /// <param name="axis">Gyro axis</param>
+    /// <param name="gyroDelta">Output: difference between last estimated absolute position for specified axis</param>
+    /// <returns>True if the controller has a gyro and has reported a value for that axis, false otherwise</returns>
+    bool TryGetGyroDelta(GyroAxis axis, out double gyroDelta);
+
+    /// <summary>
     /// Reset estimated absolute positions for the controller's onboard gyroscope
     /// </summary>
     void ZeroGyroAbsolute();

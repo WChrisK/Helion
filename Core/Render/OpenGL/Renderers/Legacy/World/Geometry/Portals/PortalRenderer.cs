@@ -21,7 +21,9 @@ public class PortalRenderer : IDisposable
     enum PushDir { Back, Forward }
     const int FakeWallHeight = Constants.MaxTextureHeight;
 
-    private readonly FloodFillRenderer m_floodFillRenderer;
+    private FloodFillRenderer m_floodFillRenderer;
+    private readonly FloodFillRenderer m_floodFillStatic;
+    private readonly FloodFillRenderer m_floodFillDynamic;
     private readonly ArchiveCollection m_archiveCollection;
     private readonly SectorPlane m_fakeFloor = new(SectorPlaneFace.Floor, 0, 0, 0);
     private readonly SectorPlane m_fakeCeiling = new(SectorPlaneFace.Floor, 0, 0, 0);
@@ -29,10 +31,13 @@ public class PortalRenderer : IDisposable
     private TransferHeightView m_transferHeightView;
     private bool m_disposed;
 
+
     public PortalRenderer(ArchiveCollection archiveCollection, LegacyGLTextureManager glTextureManager)
     {
         m_archiveCollection = archiveCollection;
-        m_floodFillRenderer = new(glTextureManager);
+        m_floodFillStatic = new(glTextureManager, FloodFillRenderMode.Static);
+        m_floodFillDynamic = new(glTextureManager, FloodFillRenderMode.Dynamic);
+        m_floodFillRenderer = m_floodFillStatic;
         // ReversedZ allows for a much smaller push amount
         m_pushSegAmount = ShaderVars.ReversedZ ? 0.005 : 0.05;
         m_transferHeightView = TransferHeightView.Middle;
@@ -43,34 +48,47 @@ public class PortalRenderer : IDisposable
         Dispose(false);
     }
 
+    public FloodFillRenderer GetStaticFloodFillRenderer() => m_floodFillStatic;
 
-    public void SetTransferHeightView(TransferHeightView view) => m_transferHeightView = view;
+    public void SetTransferHeightView(TransferHeightView view)
+    {
+        m_transferHeightView = view;
+
+        if (view == TransferHeightView.Middle)
+        {
+            m_floodFillRenderer = m_floodFillStatic;
+            return;
+        }
+
+        m_floodFillRenderer = m_floodFillDynamic;
+        m_floodFillDynamic.ClearVertices();
+    }
 
     public void UpdateTo(IWorld world)
     {
-        m_floodFillRenderer.UpdateTo(world);
+        m_floodFillStatic.UpdateTo(world);
+        m_floodFillDynamic.UpdateTo(world);
     }
 
     public void ClearStaticWall(int floodKey) =>
         m_floodFillRenderer.ClearStaticWall(floodKey);
 
-    public void AddStaticFloodFillSide(Side facingSide, Side otherSide, Sector floodSector, SideTexture sideTexture, bool isFront) =>
-        HandleStaticFloodFillSide(facingSide, otherSide, floodSector, sideTexture, isFront, false);
+    public void AddStaticFloodFillSide(Side facingSide, Side otherSide, Sector floodSector, SideTexture sideTexture, bool isFront, FloodFillRenderer? renderer = null) =>
+        HandleStaticFloodFillSide(facingSide, otherSide, floodSector, sideTexture, isFront, false, renderer);
 
-    public void UpdateStaticFloodFillSide(Side facingSide, Side otherSide, Sector floodSector, SideTexture sideTexture, bool isFront) =>
-        HandleStaticFloodFillSide(facingSide, otherSide, floodSector, sideTexture, isFront, true);
+    public void UpdateStaticFloodFillSide(Side facingSide, Side otherSide, Sector floodSector, SideTexture sideTexture, bool isFront, FloodFillRenderer? renderer = null) =>
+        HandleStaticFloodFillSide(facingSide, otherSide, floodSector, sideTexture, isFront, true, renderer);
 
-    public void AddFloodFillPlane(Side facingSide, Sector floodSector, SectorPlanes planes, SectorPlaneFace face, bool isFront) =>
-        HandleFloodFillPlane(facingSide, floodSector, planes, face, isFront, false);
+    public void AddFloodFillPlane(Side facingSide, Sector floodSector, SectorPlanes planes, SectorPlaneFace face, bool isFront, FloodFillRenderer? renderer = null) =>
+        HandleFloodFillPlane(facingSide, floodSector, planes, face, isFront, false, renderer);
 
-    public void UpdateFloodFillPlane(Side facingSide, Sector floodSector, SectorPlanes planes, SectorPlaneFace face, bool isFront) =>
-        HandleFloodFillPlane(facingSide, floodSector, planes,face, isFront, true);
+    public void UpdateFloodFillPlane(Side facingSide, Sector floodSector, SectorPlanes planes, SectorPlaneFace face, bool isFront, FloodFillRenderer? renderer = null) =>
+        HandleFloodFillPlane(facingSide, floodSector, planes,face, isFront, true, renderer);
 
-    private void HandleFloodFillPlane(Side facingSide, Sector floodSector, SectorPlanes planes, SectorPlaneFace face, bool isFront, bool update)
+    private void HandleFloodFillPlane(Side facingSide, Sector floodSector, SectorPlanes planes, SectorPlaneFace face, bool isFront, bool update, 
+        FloodFillRenderer? useRenderer)
     {
-        if (m_transferHeightView != TransferHeightView.Middle)
-            return;
-
+        var renderer = useRenderer ?? m_floodFillRenderer;
         var line = facingSide.Line;
         var saveStart = line.Segment.Start;
         var saveEnd = line.Segment.End;
@@ -88,10 +106,10 @@ public class PortalRenderer : IDisposable
 
             WorldTriangulator.HandleTwoSidedLower(facingSide, top, m_fakeFloor, Vec2F.Zero, isFront, ref wall);
 
-            if (update)
-                m_floodFillRenderer.UpdateStaticWall(facingSide.FloorFloodKey, floodSector.Floor, wall, top.Z, double.MaxValue, isFloodFillPlane: true);
+            if (update || m_transferHeightView != TransferHeightView.Middle)
+                renderer.UpdateStaticWall(facingSide.FloorFloodKey, floodSector.Floor, wall, top.Z, double.MaxValue, isFloodFillPlane: true);
             else
-                facingSide.FloorFloodKey = m_floodFillRenderer.AddStaticWall(floodSector.Floor, wall, top.Z, double.MaxValue, isFloodFillPlane: true);
+                facingSide.FloorFloodKey = renderer.AddStaticWall(floodSector.Floor, wall, top.Z, double.MaxValue, isFloodFillPlane: true);
         }
         else
         {
@@ -103,22 +121,20 @@ public class PortalRenderer : IDisposable
 
             WorldTriangulator.HandleTwoSidedUpper(facingSide, m_fakeCeiling, bottom, Vec2F.Zero, isFront, ref wall);
 
-            if (update)
-                m_floodFillRenderer.UpdateStaticWall(facingSide.CeilingFloodKey, floodSector.Ceiling, wall, double.MinValue, bottom.Z, isFloodFillPlane: true);
+            if (update || m_transferHeightView != TransferHeightView.Middle)
+                renderer.UpdateStaticWall(facingSide.CeilingFloodKey, floodSector.Ceiling, wall, double.MinValue, bottom.Z, isFloodFillPlane: true);
             else
-                facingSide.CeilingFloodKey = m_floodFillRenderer.AddStaticWall(floodSector.Ceiling, wall, double.MinValue, bottom.Z, isFloodFillPlane: true);
+                facingSide.CeilingFloodKey = renderer.AddStaticWall(floodSector.Ceiling, wall, double.MinValue, bottom.Z, isFloodFillPlane: true);
         }
 
         line.Segment.Start = saveStart;
         line.Segment.End = saveEnd;
     }
 
-    private void HandleStaticFloodFillSide(Side facingSide, Side otherSide, Sector floodSector, SideTexture sideTexture, bool isFront, bool update)
+    private void HandleStaticFloodFillSide(Side facingSide, Side otherSide, Sector floodSector, SideTexture sideTexture, bool isFront, bool update,
+        FloodFillRenderer? useRenderer)
     {
-        // TODO this only has a single buffer. Needs to be able to handle different transfer height views.
-        if (m_transferHeightView != TransferHeightView.Middle)
-            return;
-
+        var renderer = useRenderer ?? m_floodFillRenderer;
         WallVertices wall = default;
         Sector facingSector = facingSide.Sector.GetRenderSector(m_transferHeightView);
         Sector otherSector = otherSide.Sector.GetRenderSector(m_transferHeightView);
@@ -139,10 +155,10 @@ public class PortalRenderer : IDisposable
             double floodMaxZ = bottom.Z;
             if (!floodOpposing && !IsSky(floodSector.Ceiling))
             {
-                if (update)
-                    m_floodFillRenderer.UpdateStaticWall(facingSide.UpperFloodKeys.Key1, floodSector.Ceiling, wall, double.MinValue, floodMaxZ);
+                if (update || m_transferHeightView != TransferHeightView.Middle)
+                    renderer.UpdateStaticWall(facingSide.UpperFloodKeys.Key1, floodSector.Ceiling, wall, double.MinValue, floodMaxZ);
                 else
-                    facingSide.UpperFloodKeys.Key1 = m_floodFillRenderer.AddStaticWall(floodSector.Ceiling, wall, double.MinValue, floodMaxZ);
+                    facingSide.UpperFloodKeys.Key1 = renderer.AddStaticWall(floodSector.Ceiling, wall, double.MinValue, floodMaxZ);
             }
 
             if (IgnoreAltFloodFill(facingSide, otherSide, SectorPlaneFace.Ceiling))
@@ -162,10 +178,10 @@ public class PortalRenderer : IDisposable
             var min = floodOpposing ? double.MinValue : floodMaxZ;
             var max = floodOpposing ? bottom.Z : double.MaxValue;
 
-            if (update)
-                m_floodFillRenderer.UpdateStaticWall(facingSide.UpperFloodKeys.Key2, facingSector.Ceiling, wall, min, max);
+            if (update || m_transferHeightView != TransferHeightView.Middle)
+                renderer.UpdateStaticWall(facingSide.UpperFloodKeys.Key2, facingSector.Ceiling, wall, min, max);
             else
-                facingSide.UpperFloodKeys.Key2 = m_floodFillRenderer.AddStaticWall(facingSector.Ceiling, wall, min, max);
+                facingSide.UpperFloodKeys.Key2 = renderer.AddStaticWall(facingSector.Ceiling, wall, min, max);
         }
         else
         {
@@ -177,10 +193,10 @@ public class PortalRenderer : IDisposable
             double floodMinZ = top.Z;
             if (!floodOpposing && !IsSky(floodSector.Floor))
             {
-                if (update)
-                    m_floodFillRenderer.UpdateStaticWall(facingSide.LowerFloodKeys.Key1, floodSector.Floor, wall, floodMinZ, double.MaxValue);
+                if (update || m_transferHeightView != TransferHeightView.Middle)
+                    renderer.UpdateStaticWall(facingSide.LowerFloodKeys.Key1, floodSector.Floor, wall, floodMinZ, double.MaxValue);
                 else
-                    facingSide.LowerFloodKeys.Key1 = m_floodFillRenderer.AddStaticWall(floodSector.Floor, wall, floodMinZ, double.MaxValue);
+                    facingSide.LowerFloodKeys.Key1 = renderer.AddStaticWall(floodSector.Floor, wall, floodMinZ, double.MaxValue);
             }
 
             if (IgnoreAltFloodFill(facingSide, otherSide, SectorPlaneFace.Floor))
@@ -201,10 +217,10 @@ public class PortalRenderer : IDisposable
             var min = floodOpposing ? top.Z : double.MinValue;
             var max = floodOpposing ? double.MaxValue : floodMinZ;
 
-            if (update)
-                m_floodFillRenderer.UpdateStaticWall(facingSide.LowerFloodKeys.Key2, facingSector.Floor, wall, min, max);
+            if (update || m_transferHeightView != TransferHeightView.Middle)
+                renderer.UpdateStaticWall(facingSide.LowerFloodKeys.Key2, facingSector.Floor, wall, min, max);
             else
-                facingSide.LowerFloodKeys.Key2 = m_floodFillRenderer.AddStaticWall(facingSector.Floor, wall, min, max);
+                facingSide.LowerFloodKeys.Key2 = renderer.AddStaticWall(facingSector.Floor, wall, min, max);
         }
 
         facingSide.Line.Segment.Start = saveStart;
@@ -243,7 +259,8 @@ public class PortalRenderer : IDisposable
         if (m_disposed)
             return;
 
-        m_floodFillRenderer.Dispose();
+        m_floodFillStatic.Dispose();
+        m_floodFillDynamic.Dispose();
 
         m_disposed = true;
     }

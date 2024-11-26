@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -61,9 +62,10 @@ public class GeometryRenderer : IDisposable
     private bool m_buffer = true;
     private Vec3D m_viewPosition;
     private Vec3D m_prevViewPosition;
-    private Sector m_viewSector;
     private IWorld m_world;
     private TransferHeightView m_transferHeightsView = TransferHeightView.Middle;
+    private TransferHeightView m_prevTransferHeightsView = TransferHeightView.Middle;
+    private BitArray m_vertexLookupInvalidated = new(0);
     private DynamicVertex[]?[] m_vertexLookup = [];
     private DynamicVertex[]?[] m_vertexLowerLookup = [];
     private DynamicVertex[]?[] m_vertexUpperLookup = [];
@@ -88,7 +90,6 @@ public class GeometryRenderer : IDisposable
         m_worldDataManager = worldDataManager;
         Portals = new(archiveCollection, glTextureManager);
         m_skyRenderer = new LegacySkyRenderer(archiveCollection, glTextureManager);
-        m_viewSector = DefaultSector;
         m_archiveCollection = archiveCollection;
         m_staticCacheGeometryRenderer = new(archiveCollection, glTextureManager, staticProgram, this);
 
@@ -109,7 +110,6 @@ public class GeometryRenderer : IDisposable
         if (!world.SameAsPreviousMap)
             m_skyRenderer.Reset();
         m_lineDrawnTracker.UpdateToWorld(world);
-        m_viewSector = DefaultSector;
 
         m_vanillaRender = world.Config.Render.VanillaRender;
 
@@ -123,6 +123,7 @@ public class GeometryRenderer : IDisposable
         m_vertexUpperLookup = UpdateVertexWallLookup(m_vertexUpperLookup, sideCount, freeData);
         m_skyWallVertexLowerLookup = UpdateSkyWallLookup(m_skyWallVertexLowerLookup, sideCount, freeData);
         m_skyWallVertexUpperLookup = UpdateSkyWallLookup(m_skyWallVertexUpperLookup, sideCount, freeData);
+        m_vertexLookupInvalidated = new(sideCount);
         UpdateFlatVertices(m_vertexFloorLookup, sectorCount, freeData);
         UpdateFlatVertices(m_vertexCeilingLookup, sectorCount, freeData);
         UpdateSkyFlatVertices(m_skyFloorVertexLookup, sectorCount, freeData);
@@ -336,16 +337,13 @@ public class GeometryRenderer : IDisposable
     public void RenderPortals(RenderInfo renderInfo) =>
         Portals.Render(renderInfo);
 
-
-    public void RenderSector(Sector viewSector, Sector sector, in Vec3D viewPosition, in Vec3D prevViewPosition)
+    public void RenderSector(Sector sector, in Vec3D viewPosition, in Vec3D prevViewPosition)
     {
         m_buffer = true;
-        m_viewSector = viewSector;
         m_viewPosition = viewPosition;
         m_prevViewPosition = prevViewPosition;
 
         SetSectorRendering(sector);
-        m_transferHeightsView = TransferHeights.GetView(m_viewSector, viewPosition.Z);
 
         if (sector.TransferHeights != null)
         {
@@ -360,10 +358,9 @@ public class GeometryRenderer : IDisposable
             RenderSectorFlats(sector, sector, sector);
     }
 
-    public void RenderSectorWall(Sector viewSector, Sector sector, Line line, Vec3D viewPosition, Vec3D prevViewPosition)
+    public void RenderSectorWall(Sector sector, Line line, Vec3D viewPosition, Vec3D prevViewPosition)
     {
         m_buffer = true;
-        m_viewSector = viewSector;
         m_viewPosition = viewPosition;
         m_prevViewPosition = prevViewPosition;
         SetSectorRendering(sector);
@@ -377,11 +374,12 @@ public class GeometryRenderer : IDisposable
         m_floorChanged = sector.Floor.CheckRenderingChanged();
         m_ceilingChanged = sector.Ceiling.CheckRenderingChanged();
 
-        m_transferHeightsView = TransferHeights.GetView(m_viewSector, m_viewPosition.Z);
         if (sector.TransferHeights != null)
         {
-            m_floorChanged = m_floorChanged || sector.TransferHeights.ControlSector.Floor.CheckRenderingChanged();
-            m_ceilingChanged = m_ceilingChanged || sector.TransferHeights.ControlSector.Ceiling.CheckRenderingChanged();
+            // Transfer heights can swap the rendering from floor to ceiling.
+            // If either the floor or ceiling has changed recalculate both to ensure it's correct.
+            m_floorChanged = m_floorChanged || m_ceilingChanged;
+            m_ceilingChanged = m_floorChanged || m_ceilingChanged;
 
             // Walls can only cache if middle view
             m_cacheOverride = m_transferHeightsView != TransferHeightView.Middle;
@@ -395,7 +393,6 @@ public class GeometryRenderer : IDisposable
     public void SetInitRender()
     {
         SetTransferHeightView(TransferHeightView.Middle);
-        SetViewSector(DefaultSector);
         SetBuffer(false);
         m_floorChanged = true;
         m_ceilingChanged = true;
@@ -506,15 +503,16 @@ public class GeometryRenderer : IDisposable
 
     private void CheckFloodFillLine(Side front, Side back)
     {
+        if (m_renderMode == GeometryRenderMode.All)
+            return;
+
         const RenderChangeOptions Options = RenderChangeOptions.None;
-        bool dynamic = m_renderMode == GeometryRenderMode.All || front.IsDynamic;
-        if (dynamic && m_drawnSides[front.Id] != WorldStatic.CheckCounter &&
+        if (front.IsDynamic && m_drawnSides[front.Id] != WorldStatic.CheckCounter &&
             (back.Sector.CheckRenderingChanged(m_world.Gametick, Options) ||
             front.Sector.CheckRenderingChanged(m_world.Gametick, Options)))
             m_staticCacheGeometryRenderer.CheckForFloodFill(front, back,
                 front.Sector.GetRenderSector(m_transferHeightsView), back.Sector.GetRenderSector(m_transferHeightsView), isFront: true);
 
-        dynamic = m_renderMode == GeometryRenderMode.All || back.IsDynamic;
         if (back.IsDynamic && m_drawnSides[back.Id] != WorldStatic.CheckCounter &&
             (front.Sector.CheckRenderingChanged(m_world.Gametick, Options) ||
             back.Sector.CheckRenderingChanged(m_world.Gametick, Options)))
@@ -564,7 +562,6 @@ public class GeometryRenderer : IDisposable
             Side otherSide = side.PartnerSide!;
             m_cacheOverride = false;
             m_sectorChangedLine = false;
-            m_transferHeightsView = TransferHeights.GetView(m_viewSector, m_viewPosition.Z);
 
             // Only cache if middle view. This can cause sides to be incorrectly cached for upper/lower views and will get used for the middle.
             if (side.Sector.TransferHeights != null || otherSide.Sector.TransferHeights != null)
@@ -693,6 +690,13 @@ public class GeometryRenderer : IDisposable
         if (!m_renderCoverOnly)
             facingSide.LastRenderGametick = m_world.Gametick;
 
+        bool invalidated = m_vertexLookupInvalidated[facingSide.Id];
+        if (invalidated)
+        {
+            m_vertexLookupInvalidated.Set(facingSide.Id, false);
+            m_sectorChangedLine = true;
+        }
+
         bool dynamic = m_renderMode == GeometryRenderMode.All || facingSide.IsDynamic;
         if (dynamic && IsLowerVisibleWithTransferHeights(facingSide, otherSide, facingSector, otherSector))
             RenderTwoSidedLower(facingSide, otherSide, facingSector, otherSector, isFrontSide, out _, out _);
@@ -798,7 +802,8 @@ public class GeometryRenderer : IDisposable
         WallVertices wall = default;
         bool skyRender = isSky && TextureManager.IsSkyTexture(otherSide.Sector.Floor.TextureHandle);
 
-        if (facingSide.LowerFloodKeys.Key1 > 0 || facingSide.LowerFloodKeys.Key2 > 0)
+        if ((m_renderMode == GeometryRenderMode.Dynamic && (facingSide.LowerFloodKeys.Key1 > 0 || facingSide.LowerFloodKeys.Key2 > 0)) ||
+            (m_renderMode == GeometryRenderMode.All && StaticDataApplier.ShouldFloodLower(facingSide, otherSide, facingSector, otherSector)))
         {
             Portals.UpdateStaticFloodFillSide(facingSide, otherSide, otherSector, SideTexture.Lower, isFrontSide);
             // Key2 is used for partner side flood. Still may need to draw the lower.
@@ -894,11 +899,13 @@ public class GeometryRenderer : IDisposable
 
         Wall upperWall = facingSide.Upper;
         bool renderSkySideOnly = false;
-        if (facingSide.UpperFloodKeys.Key1 > 0 || facingSide.UpperFloodKeys.Key2 > 0)
+        if ((m_renderMode == GeometryRenderMode.Dynamic && (facingSide.UpperFloodKeys.Key1 > 0 || facingSide.UpperFloodKeys.Key2 > 0)) ||
+            (m_renderMode == GeometryRenderMode.All && StaticDataApplier.ShouldFloodUpper(m_world, facingSide, otherSide, facingSector, otherSector)))
         {
             Portals.UpdateStaticFloodFillSide(facingSide, otherSide, otherSector, SideTexture.Upper, isFrontSide);
             // Key2 is used for partner side flood. Still may need to draw the upper.
             // Flood only floods the upper texture portion. If the ceiling is a sky texture then the fake sky side needs to be rendered with RenderSkySide.
+            // TODO fix for rendermode all
             renderSkySideOnly = facingSide.UpperFloodKeys.Key1 > 0;
         }
 
@@ -1208,11 +1215,13 @@ public class GeometryRenderer : IDisposable
 
     public void SetTransferHeightView(TransferHeightView view)
     {
+        m_prevTransferHeightsView = m_transferHeightsView;
         m_transferHeightsView = view;
+        if (m_prevTransferHeightsView != m_transferHeightsView)
+            m_vertexLookupInvalidated.SetAll(true);
         Portals.SetTransferHeightView(view);
     }
     public void SetBuffer(bool set) => m_buffer = set;
-    public void SetViewSector(Sector sector) => m_viewSector = sector;
     public void SetRenderMode(GeometryRenderMode renderMode) => m_renderMode = renderMode;
 
     public void SetBufferCoverWall(bool set)

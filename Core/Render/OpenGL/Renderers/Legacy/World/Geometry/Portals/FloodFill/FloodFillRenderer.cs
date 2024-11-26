@@ -11,6 +11,7 @@ using Helion.Render.OpenGL.Shared.World;
 using Helion.Render.OpenGL.Texture.Legacy;
 using Helion.Resources;
 using Helion.Util;
+using Helion.Util.Assertion;
 using Helion.Util.Container;
 using Helion.World;
 using Helion.World.Geometry.Sectors;
@@ -18,24 +19,20 @@ using OpenTK.Graphics.OpenGL;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Portals.FloodFill;
 
-public class FloodFillRenderer : IDisposable
+public class FloodFillRenderer(LegacyGLTextureManager glTextureManager, FloodFillRenderMode renderMode) : IDisposable
 {
     const int FloodPlaneAddCount = 2;
     const int VerticesPerWall = 6;
 
-    private readonly LegacyGLTextureManager m_glTextureManager;
-    private TextureManager? m_textureManager;
+    private readonly LegacyGLTextureManager m_glTextureManager = glTextureManager;
+    private readonly FloodFillRenderMode m_renderMode = renderMode;
     private readonly FloodFillProgram m_program = new();
-    private readonly List<FloodFillInfo> m_floodFillInfos = new();
-    private readonly Dictionary<int, int> m_textureHandleToFloodFillInfoIndex = new();
+    private readonly List<FloodFillInfo> m_floodFillInfos = [];
+    private readonly Dictionary<int, int> m_textureHandleToFloodFillInfoIndex = [];
     private readonly DynamicArray<FloodGeometry> m_floodGeometry = new();
-    private readonly List<FloodGeometry> m_freeData = new();
+    private readonly List<FloodGeometry> m_freeData = [];
+    private TextureManager? m_textureManager;
     private bool m_disposed;
-
-    public FloodFillRenderer(LegacyGLTextureManager glTextureManager)
-    {
-        m_glTextureManager = glTextureManager;
-    }
 
     ~FloodFillRenderer()
     {
@@ -81,8 +78,11 @@ public class FloodFillRenderer : IDisposable
     public void UpdateStaticWall(int floodKey, SectorPlane floodPlane, WallVertices vertices, double minPlaneZ, double maxPlaneZ, 
         bool isFloodFillPlane = false)
     {
-        if (!TryGetFloodGeometry(floodKey, out var data))
+        if (!TryGetFloodGeometry(floodKey, out var data) || m_renderMode == FloodFillRenderMode.Dynamic)
+        {
+            AddStaticWall(floodPlane, vertices, minPlaneZ, maxPlaneZ, isFloodFillPlane);
             return;
+        }
 
         if (!m_textureHandleToFloodFillInfoIndex.TryGetValue(data.TextureHandle, out int index))
             return;
@@ -192,6 +192,9 @@ public class FloodFillRenderer : IDisposable
             ProjectFloodPlane(vbo, vbo.Data.Length, vertices, minZ, maxZ, planeZ, prevPlaneZ, lightIndex, 
                 maxPlaneZ > Constants.MaxTextureHeight ? -Constants.MaxTextureHeight : Constants.MaxTextureHeight, true, colorMapIndex);
 
+        if (m_renderMode == FloodFillRenderMode.Dynamic)
+            return 0;
+
         return newKey;
     }
 
@@ -234,6 +237,9 @@ public class FloodFillRenderer : IDisposable
 
     public void ClearStaticWall(int floodKey)
     {
+        if (m_renderMode == FloodFillRenderMode.Dynamic)
+            return;
+
         if (TryGetFloodGeometry(floodKey, out var data))
         {
             int listIndex = m_textureHandleToFloodFillInfoIndex[data.TextureHandle];
@@ -300,6 +306,19 @@ public class FloodFillRenderer : IDisposable
             info.Vertices.Vao.Bind();
             info.Vertices.Vbo.DrawArrays();
         }
+    }
+
+    public void ClearVertices()
+    {
+        Debug.Assert(m_renderMode == FloodFillRenderMode.Dynamic, "Clear should only be called on dynamic flood fill renderer");
+
+        for (int i = 0; i < m_floodFillInfos.Count; i++)
+        {
+            var info = m_floodFillInfos[i];
+            info.Vertices.Vbo.Clear();
+        }
+
+        m_floodGeometry.Clear();
     }
 
     private void ClearData()

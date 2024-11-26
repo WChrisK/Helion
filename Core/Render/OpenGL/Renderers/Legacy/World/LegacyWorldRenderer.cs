@@ -36,7 +36,6 @@ public class LegacyWorldRenderer : WorldRenderer
     private readonly Comparison<IRenderObject> m_renderObjectComparer = new(RenderObjectCompare);
     private readonly ArchiveCollection m_archiveCollection;
     private readonly LegacyGLTextureManager m_textureManager;
-    private Sector m_viewSector;
     private Vec2D m_occludeViewPos;
     private bool m_occlude;
     private bool m_spriteTransparency;
@@ -54,7 +53,6 @@ public class LegacyWorldRenderer : WorldRenderer
         m_config = config;
         m_entityRenderer = new(config, textureManager);
         m_primitiveRenderer = new();
-        m_viewSector = Sector.CreateDefault();
         m_geometryRenderer = new(config, archiveCollection, textureManager, m_interpolationProgram, m_staticProgram, m_worldDataManager);
         m_archiveCollection = archiveCollection;
         m_textureManager = textureManager;
@@ -120,6 +118,8 @@ public class LegacyWorldRenderer : WorldRenderer
         if (!shouldRender)
             return;
 
+        m_geometryRenderer.SetTransferHeightView(renderInfo.TransferHeightView);
+
         m_renderCount = ++WorldStatic.CheckCounter;
         m_renderData.ViewerEntity = renderInfo.ViewerEntity;
         m_renderData.ViewPosInterpolated = renderInfo.Camera.PositionInterpolated.XY.Double;
@@ -127,7 +127,6 @@ public class LegacyWorldRenderer : WorldRenderer
         m_renderData.ViewPos3D = renderInfo.Camera.Position.Double;
         m_renderData.ViewDirection = renderInfo.Camera.Direction.XY.Double;
         m_renderData.ViewIsland = world.Geometry.IslandGeometry.Islands[world.Geometry.BspTree.Subsectors[renderInfo.ViewerEntity.Subsector.Id].IslandId];
-        m_viewSector = renderInfo.ViewSector;
 
         m_viewerEntity = renderInfo.ViewerEntity;
         m_geometryRenderer.Clear(renderInfo.TickFraction, true);
@@ -190,7 +189,7 @@ public class LegacyWorldRenderer : WorldRenderer
             double dy1 = Math.Max(sectorIsland.Box.Min.Y - m_renderData.ViewPosInterpolated.Y, Math.Max(0, m_renderData.ViewPosInterpolated.Y - sectorIsland.Box.Max.Y));
             if (dx1 * dx1 + dy1 * dy1 <= m_renderData.MaxDistanceSquared)
             {
-                m_geometryRenderer.RenderSector(m_viewSector, sector, m_renderData.ViewPos3D, m_renderData.ViewPosInterpolated3D);
+                m_geometryRenderer.RenderSector(sector, m_renderData.ViewPos3D, m_renderData.ViewPosInterpolated3D);
                 sector.CheckCount = m_renderData.CheckCount;
             }
         }
@@ -209,8 +208,7 @@ public class LegacyWorldRenderer : WorldRenderer
                 continue;
 
             side.BlockmapCount = m_renderData.CheckCount;
-            m_geometryRenderer.RenderSectorWall(m_viewSector, side.Sector, side.Line,
-                m_renderData.ViewPos3D, m_renderData.ViewPosInterpolated3D);
+            m_geometryRenderer.RenderSectorWall(side.Sector, side.Line, m_renderData.ViewPos3D, m_renderData.ViewPosInterpolated3D);
         }
         m_geometryRenderer.SetBufferCoverWall(true);
     }
@@ -250,9 +248,7 @@ public class LegacyWorldRenderer : WorldRenderer
         m_renderStatic = renderInfo.TransferHeightView == TransferHeightView.Middle;
         m_spriteTransparency = m_config.Render.SpriteTransparency;
         m_maxDistance = m_config.Render.MaxDistance;
-        Clear(world, renderInfo);
-
-        m_geometryRenderer.SetTransferHeightView(renderInfo.TransferHeightView);
+        Clear(world, renderInfo);        
 
         if (m_lastTicker != world.GameTicker)
             m_entityRenderer.Start(renderInfo);

@@ -2,7 +2,6 @@
 using Helion.World.Special.Specials;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sides;
-using Helion.Resources;
 using Helion.Util;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry;
 
@@ -100,17 +99,27 @@ public class StaticDataApplier
         SetFloodFillSide(world, line.Back, line.Front, backSector, frontSector);
     }
 
+    public static bool ShouldFloodLower(Side facingSide, Side otherSide, Sector facingSector, Sector otherSector)
+    {
+        return facingSide.Lower.TextureHandle <= Constants.NullCompatibilityTextureIndex &&
+            (facingSector.Floor.Z < otherSector.Floor.Z || facingSector.Floor.PrevZ < otherSector.Floor.PrevZ);
+    }
+
+    public static bool ShouldFloodUpper(IWorld world, Side facingSide, Side otherSide, Sector facingSector, Sector otherSector)
+    {
+        return facingSide.Upper.TextureHandle <= Constants.NullCompatibilityTextureIndex &&
+            (facingSector.Ceiling.Z > otherSector.Ceiling.Z || facingSector.Ceiling.PrevZ > otherSector.Ceiling.PrevZ) &&
+            GeometryRenderer.UpperIsVisibleOrFlood(world.ArchiveCollection.TextureManager, facingSide, otherSide, facingSector, otherSector, out _);
+    }
+
     public static void SetFloodFillSide(IWorld world, Side facingSide, Side otherSide, Sector facingSector, Sector otherSector)
     {
-        if (facingSide.Lower.TextureHandle <= Constants.NullCompatibilityTextureIndex && 
-            (facingSector.Floor.Z < otherSector.Floor.Z || facingSector.Floor.PrevZ < otherSector.Floor.PrevZ))
+        if (ShouldFloodLower(facingSide, otherSide, facingSector, otherSector))
             facingSide.FloodTextures |= SideTexture.Lower;
         else
             facingSide.FloodTextures &= ~SideTexture.Lower;
 
-        if (facingSide.Upper.TextureHandle <= Constants.NullCompatibilityTextureIndex && 
-            (facingSector.Ceiling.Z > otherSector.Ceiling.Z || facingSector.Ceiling.PrevZ > otherSector.Ceiling.PrevZ) &&
-            GeometryRenderer.UpperIsVisibleOrFlood(world.ArchiveCollection.TextureManager, facingSide, otherSide, facingSector, otherSector, out _))
+        if (ShouldFloodUpper(world, facingSide, otherSide, facingSector, otherSector))
             facingSide.FloodTextures |= SideTexture.Upper;
         else
             facingSide.FloodTextures &= ~SideTexture.Upper;
@@ -163,9 +172,6 @@ public class StaticDataApplier
 
         plane.Sector.UnlinkFromWorld(world);
 
-        bool floor = plane.Facing == SectorPlaneFace.Floor;
-        bool ceiling = plane.Facing == SectorPlaneFace.Ceiling;
-
         for (int i = 0; i < plane.Sector.Lines.Count; i++)
             ClearDynamicMovement(plane.Sector.Lines[i]);
     }
@@ -190,6 +196,5 @@ public class StaticDataApplier
             line.Back.Dynamic &= ~SectorDynamic.Movement;
 
         line.Front.Dynamic &= ~SectorDynamic.Movement;
-
     }
 }

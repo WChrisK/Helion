@@ -178,19 +178,6 @@
             return true;
         }
 
-        public bool TryGetGyroDelta(Helion.Window.Input.GyroAxis axis, out double gyroDelta)
-        {
-            if (!Enabled || m_activeController == null || !m_activeController.HasGyro)
-            {
-                gyroDelta = 0;
-                return false;
-            }
-
-            gyroDelta = m_activeController.CurrentGyroAbsolutePosition[(int)axis]
-                - m_activeController.PreviousGyroAbsolutePosition[(int)axis];
-            return true;
-        }
-
         public void ZeroGyroAbsolute()
         {
             m_activeController?.ZeroGyroAbsolute();

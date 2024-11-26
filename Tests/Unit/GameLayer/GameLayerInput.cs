@@ -71,11 +71,6 @@ public class GameLayerInput
         {
             throw new NotImplementedException();
         }
-
-        public bool TryGetGyroDelta(GyroAxis axis, out double gyroDelta)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public GameLayerInput()

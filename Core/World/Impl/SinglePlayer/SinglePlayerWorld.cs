@@ -40,13 +40,15 @@ public class SinglePlayerWorld : WorldBase
     private bool m_chaseCamMode;
     private WorldType m_worldType = WorldType.SinglePlayer;
     private int m_renderDistanceOverride;
+    private double m_gyroYawAngle;
+    private double m_gyroPitchAngle;
 
     public override WorldType WorldType => m_worldType;
     public override Player Player { get; protected set; }
     public readonly Player ChaseCamPlayer;
     public override bool IsChaseCamMode => m_chaseCamMode;
     public override Player GetCameraPlayer()
-    { 
+    {
         if (m_chaseCamMode)
             return ChaseCamPlayer;
         return Player;
@@ -279,7 +281,7 @@ public class SinglePlayerWorld : WorldBase
     }
 
     private void PlayerName_OnChanged(object? sender, string name) => Player.Info.Name = name;
-    private void PlayerGender_OnChanged(object? sender, PlayerGender gender) =>  Player.Info.Gender = gender;
+    private void PlayerGender_OnChanged(object? sender, PlayerGender gender) => Player.Info.Gender = gender;
 
     private void ApplyCheats(WorldModel worldModel)
     {
@@ -473,7 +475,7 @@ public class SinglePlayerWorld : WorldBase
     }
 
     public override void ToggleChaseCameraMode()
-    {       
+    {
         m_chaseCamMode = !m_chaseCamMode;
         if (m_chaseCamMode)
             DisplayMessage("Chase camera activated.");
@@ -568,15 +570,17 @@ public class SinglePlayerWorld : WorldBase
             }
         }
         // Handle controller gyro inputs if available; these work basically the same as a mouse.
-        if (input.Manager.AnalogAdapter?.TryGetGyroDelta((GyroAxis)(int)Config.Controller.GyroAimTurnAxis.Value, out double yaw) == true)
+        if (input.Manager.AnalogAdapter?.TryGetGyroAbsolute((GyroAxis)(int)Config.Controller.GyroAimTurnAxis.Value, out double yaw) == true)
         {
-            player.AddToYaw((float)(yaw * Config.Controller.GyroAimHorizontalSensitivity), true);
+            player.AddToYaw((float)((yaw - m_gyroYawAngle) * Config.Controller.GyroAimHorizontalSensitivity), true);
+            m_gyroYawAngle = yaw;
         }
 
         if ((!MapInfo.HasOption(MapOptions.NoFreelook) || IsChaseCamMode)
-            && (input.Manager.AnalogAdapter?.TryGetGyroDelta(GyroAxis.Pitch, out double pitch) == true))
+            && (input.Manager.AnalogAdapter?.TryGetGyroAbsolute(GyroAxis.Pitch, out double pitch) == true))
         {
-            player.AddToPitch((float)(pitch * Config.Controller.GyroAimVerticalSensitivity), true);
+            player.AddToPitch((float)((pitch - m_gyroPitchAngle) * Config.Controller.GyroAimVerticalSensitivity), true);
+            m_gyroPitchAngle = pitch;
         }
     }
 }

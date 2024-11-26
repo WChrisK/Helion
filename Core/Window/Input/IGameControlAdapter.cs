@@ -2,6 +2,13 @@
 
 public enum GyroAxis
 {
+    Pitch,
+    Yaw,
+    Roll
+}
+
+public enum GyroOrAccelAxis
+{
     X,
     Y,
     Z,
@@ -46,5 +53,18 @@ public interface IGameControlAdapter
     /// <param name="axis">Gyro/accelerometer axis</param>
     /// <param name="value">Output: last reported value for the specified axis</param>
     /// <returns>True if the controller has a gyro and has reported a value for that axis, false otherwise</returns>
-    bool TryGetGyroAxis(GyroAxis axis, out float value);
+    bool TryGetGyroAxis(GyroOrAccelAxis axis, out float value);
+
+    /// <summary>
+    /// Get the estimated absolute position from the controller's onboard gyroscope
+    /// </summary>
+    /// <param name="axis">Gyro axis</param>
+    /// <param name="absoluteValue">Output: last estimated absolute position for the specified axis</param>
+    /// <returns>True if the controller has a gyro and has reported a value for that axis, false otherwise</returns>
+    bool TryGetGyroAbsolute(GyroAxis axis, out double absoluteValue);
+
+    /// <summary>
+    /// Reset estimated absolute positions for the controller's onboard gyroscope
+    /// </summary>
+    void ZeroGyroAbsolute();
 }

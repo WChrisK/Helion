@@ -132,7 +132,7 @@
             return true;
         }
 
-        public bool TryGetGyroAxis(Helion.Window.Input.GyroAxis axis, out float value)
+        public bool TryGetGyroAxis(GyroOrAccelAxis axis, out float value)
         {
             if (!Enabled || m_activeController == null || !m_activeController.HasGyro)
             {
@@ -142,28 +142,45 @@
 
             switch (axis)
             {
-                case Helion.Window.Input.GyroAxis.X:
+                case GyroOrAccelAxis.X:
                     value = m_activeController.CurrentAccelValues[0];
                     return true;
-                case Helion.Window.Input.GyroAxis.Y:
+                case GyroOrAccelAxis.Y:
                     value = m_activeController.CurrentAccelValues[1];
                     return true;
-                case Helion.Window.Input.GyroAxis.Z:
+                case GyroOrAccelAxis.Z:
                     value = m_activeController.CurrentAccelValues[2];
                     return true;
-                case Helion.Window.Input.GyroAxis.Pitch:
+                case GyroOrAccelAxis.Pitch:
                     value = m_activeController.CurrentGyroValues[0];
                     return true;
-                case Helion.Window.Input.GyroAxis.Yaw:
+                case GyroOrAccelAxis.Yaw:
                     value = m_activeController.CurrentGyroValues[1];
                     return true;
-                case Helion.Window.Input.GyroAxis.Roll:
+                case GyroOrAccelAxis.Roll:
                     value = m_activeController.CurrentGyroValues[2];
                     return true;
                 default:
                     value = 0;
                     return false;
             }
+        }
+
+        public bool TryGetGyroAbsolute(Helion.Window.Input.GyroAxis axis, out double value)
+        {
+            if (!Enabled || m_activeController == null || !m_activeController.HasGyro)
+            {
+                value = 0;
+                return false;
+            }
+
+            value = m_activeController.CurrentGyroAbsolutePosition[(int)axis];
+            return true;
+        }
+
+        public void ZeroGyroAbsolute()
+        {
+            m_activeController?.ZeroGyroAbsolute();
         }
 
         public void Rumble(ushort lowFrequency, ushort highFrequency, uint durationms)

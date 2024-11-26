@@ -57,7 +57,17 @@ public class GameLayerInput
             throw new NotImplementedException();
         }
 
-        public bool TryGetGyroAxis(GyroAxis axis, out float value)
+        public bool TryGetGyroAxis(GyroOrAccelAxis axis, out float value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryGetGyroAbsolute(GyroAxis axis, out double absoluteValue)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ZeroGyroAbsolute()
         {
             throw new NotImplementedException();
         }

@@ -1,5 +1,7 @@
 ﻿namespace Helion.Window.Input;
 
+using Helion.Audio.Sounds;
+
 public enum GyroAxis
 {
     Pitch,
@@ -46,6 +48,14 @@ public interface IGameControlAdapter
     /// <param name="highFrequency">Intensity for high-frequency rumble</param>
     /// <param name="durationms">Effect duration in milliseconds</param>
     void Rumble(ushort lowFrequency, ushort highFrequency, uint durationms);
+
+    /// <summary>
+    /// Event handler for when the sound system plays a sound.  The controller adapter should decide whether 
+    /// to apply a rumble effect.
+    /// </summary>
+    /// <param name="sender"><see cref="SoundManager"/> that sent the sound effect</param>
+    /// <param name="evt">Details about the sound that was created</param>
+    void RumbleForSoundCreated(object sender, SoundCreatedEventArgs evt);
 
     /// <summary>
     /// Get the most recent reported values from the controller's onboard gyroscope/accelerometer, if supported

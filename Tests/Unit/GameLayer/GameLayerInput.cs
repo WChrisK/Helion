@@ -1,6 +1,7 @@
 ﻿namespace Helion.Tests.Unit.GameLayer;
 
 using FluentAssertions;
+using Helion.Audio.Sounds;
 using Helion.Geometry.Vectors;
 using Helion.Layer;
 using Helion.Layer.Worlds;
@@ -69,6 +70,10 @@ public class GameLayerInput
         }
 
         public void ZeroGyroAbsolute()
+        {
+        }
+
+        public void RumbleForSoundCreated(object sender, SoundCreatedEventArgs evt)
         {
         }
     }

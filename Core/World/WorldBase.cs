@@ -1383,7 +1383,13 @@ public abstract partial class WorldBase : IWorld
 
         Vec3D velocity = Vec3D.UnitSphere(angle, pitch) * speed;
         projectile.Velocity = velocity;
-        projectile.PlaySeeSound();
+
+        SoundContext? ctx = null;
+        if (player != null)
+        {
+            ctx = new SoundContext(SoundEventType.WeaponFired, 0, ushort.MaxValue, 100);
+        }
+        projectile.PlaySeeSound(ctx);
 
         if (projectile.Flags.NoClip)
             return projectile;

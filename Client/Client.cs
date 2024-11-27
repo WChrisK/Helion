@@ -99,6 +99,7 @@ public partial class Client : IDisposable, IInputManagement
         }
 
         m_window = new Window(AppInfo.ApplicationName, config, archiveCollection, m_fpsTracker, this, GlVersion.Major, GlVersion.Minor, GlVersion.Flags, CheckOpenGLSupport);
+        m_soundManager.SoundCreated += m_window.JoystickAdapter.RumbleForSoundCreated;
         SetIcon(m_window);
 
         m_layerManager = new GameLayerManager(config, m_window, console, m_consoleCommands, archiveCollection,

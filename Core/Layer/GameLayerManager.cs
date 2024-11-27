@@ -69,7 +69,7 @@ public class GameLayerManager : IGameLayerManager
     private readonly HelionConsole m_console;
     private readonly ConsoleCommands m_consoleCommands;
     private readonly ArchiveCollection m_archiveCollection;
-    private readonly SoundManager m_soundManager;
+    public readonly SoundManager m_soundManager;
     private readonly SaveGameManager m_saveGameManager;
     private readonly Profiler m_profiler;
     private readonly Stopwatch m_stopwatch = new();

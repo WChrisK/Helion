@@ -18,11 +18,10 @@ public struct SoundParams
     public Attenuation Attenuation { get; set; }
     public SoundType SoundType { get; set; }
     public SoundChannel Channel { get; set; }
-    public SoundContext Context { get; set; }
-    public ushort EffectIntensity { get; set; }
+    public SoundContext? Context { get; set; }
 
     public SoundParams(ISoundSource soundSource, bool loop = false, Attenuation attenuation = Attenuation.Default, float volume = MaxVolume,
-        SoundType type = SoundType.Default, SoundChannel channel = SoundChannel.Default, SoundContext context = SoundContext.Default, ushort effectIntensity = 0)
+        SoundType type = SoundType.Default, SoundChannel channel = SoundChannel.Default, SoundContext? context = null)
     {
         SoundSource = soundSource;
         Attenuation = attenuation;
@@ -31,6 +30,5 @@ public struct SoundParams
         SoundType = type;
         Channel = channel;
         Context = context;
-        EffectIntensity = effectIntensity;
     }
 }

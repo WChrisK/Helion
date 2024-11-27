@@ -1486,16 +1486,17 @@ public class Player : Entity
     {
         if (!IsDead)
         {
-            ushort effectIntensity = (ushort)Math.Min(ushort.MaxValue * damageAmount / 100, ushort.MaxValue);
+            ushort effectIntensity = (ushort)Math.Min(ushort.MaxValue * damageAmount / 25, ushort.MaxValue);
+            SoundContext context = new SoundContext(SoundEventType.DamageReceived, effectIntensity, 0, 200);
 
             if (Health < 26)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain25", new SoundParams(this, context: SoundContext.DamageReceived, effectIntensity: effectIntensity));
+                WorldStatic.SoundManager.CreateSoundOn(this, "*pain25", new SoundParams(this, context: context));
             else if (Health < 51)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain50", new SoundParams(this, context: SoundContext.DamageReceived, effectIntensity: effectIntensity));
+                WorldStatic.SoundManager.CreateSoundOn(this, "*pain50", new SoundParams(this, context: context));
             else if (Health < 76)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain75", new SoundParams(this, context: SoundContext.DamageReceived, effectIntensity: effectIntensity));
+                WorldStatic.SoundManager.CreateSoundOn(this, "*pain75", new SoundParams(this, context: context));
             else
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain100", new SoundParams(this, context: SoundContext.DamageReceived, effectIntensity: effectIntensity));
+                WorldStatic.SoundManager.CreateSoundOn(this, "*pain100", new SoundParams(this, context: context));
         }
     }
 

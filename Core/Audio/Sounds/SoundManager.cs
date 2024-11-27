@@ -12,6 +12,9 @@ namespace Helion.Audio.Sounds;
 
 public class SoundManager : IDisposable
 {
+    public delegate void SoundCreatedEvent(object sender, SoundCreatedEventArgs args);
+    public event SoundCreatedEvent? SoundCreated;
+
     public readonly IAudioSourceManager AudioManager;
     private readonly IRandom m_random = new TrueRandom();
     private readonly IAudioSystem m_audioSystem;
@@ -382,6 +385,7 @@ public class SoundManager : IDisposable
         m_soundsToPlay.Add(audioSource);
 
         source?.SoundCreated(soundInfo, audioSource, soundParams.Channel);
+        SoundCreated?.Invoke(this, new SoundCreatedEventArgs() { SoundInfo = soundInfo, SoundParams = soundParams, SoundSource = source});
         return audioSource;
     }
 

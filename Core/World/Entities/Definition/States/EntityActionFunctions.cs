@@ -461,7 +461,7 @@ public static class EntityActionFunctions
     private static void A_BFGSound(Entity entity)
     {
         if (entity.IsPlayer)
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/bfgf", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/bfgf", new SoundParams(entity, channel: entity.WeaponSoundChannel, context: SoundContext.WeaponFired));
     }
 
     private static void A_BFGSpray(Entity entity)
@@ -1184,7 +1184,7 @@ public static class EntityActionFunctions
             return;
 
         entity.PlayerObj.DecreaseAmmoCompatibility(1);
-        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol", new SoundParams(entity, channel: entity.WeaponSoundChannel, context: SoundContext.WeaponFired));
         int offset = entity.PlayerObj.Weapon == null ? 0 : Math.Clamp(entity.PlayerObj.Weapon.FrameState.Frame.Frame, 0, 1);
         entity.PlayerObj.Weapon?.SetFlashState(offset);
         WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, 1, Constants.DefaultSpreadAngle, 0,
@@ -1227,7 +1227,7 @@ public static class EntityActionFunctions
             return;
         
         entity.PlayerObj.DecreaseAmmoCompatibility(1);
-        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol", new SoundParams(entity, channel: entity.WeaponSoundChannel, context: SoundContext.WeaponFired));
         entity.PlayerObj.Weapon?.SetFlashState();
         WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, 1, Constants.DefaultSpreadAngle, 0,
             entity.PlayerObj.PitchRadians, Constants.EntityShootDistance, WorldStatic.World.Config.Game.AutoAim);
@@ -1259,7 +1259,7 @@ public static class EntityActionFunctions
         if (entity.PlayerObj != null)
         {
             entity.PlayerObj.DecreaseAmmoCompatibility(1);
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/shotgf", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/shotgf", new SoundParams(entity, channel: entity.WeaponSoundChannel, context: SoundContext.WeaponFired));
             entity.PlayerObj.Weapon?.SetFlashState();
             WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, Constants.ShotgunBullets, Constants.DefaultSpreadAngle, 0.0,
                 entity.PlayerObj.PitchRadians, Constants.EntityShootDistance, WorldStatic.World.Config.Game.AutoAim);
@@ -1271,7 +1271,7 @@ public static class EntityActionFunctions
         if (entity.PlayerObj != null)
         {
             entity.PlayerObj.DecreaseAmmoCompatibility(2);
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sshotf", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sshotf", new SoundParams(entity, channel: entity.WeaponSoundChannel, context: SoundContext.WeaponFired));
             entity.PlayerObj.Weapon?.SetFlashState();
             WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, Constants.SuperShotgunBullets, Constants.SuperShotgunSpreadAngle, Constants.SuperShotgunSpreadPitch,
                 entity.PlayerObj.PitchRadians, Constants.EntityShootDistance, WorldStatic.World.Config.Game.AutoAim);
@@ -2015,11 +2015,11 @@ public static class EntityActionFunctions
         Entity? hitEntity = WorldStatic.World.FireHitscan(entity, angle, pitch, range, damage);
         if (hitEntity == null)
         {
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sawfull", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sawfull", new SoundParams(entity, channel: entity.WeaponSoundChannel, context: SoundContext.WeaponFired));
         }
         else
         {
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sawhit", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sawhit", new SoundParams(entity, channel: entity.WeaponSoundChannel, context: SoundContext.MeleeWeaponHit));
             double toAngle = MathHelper.GetPositiveAngle(entity.Position.Angle(hitEntity.Position));
             double playerAngle = MathHelper.GetPositiveAngle(player.AngleRadians);
             const double AngleLarger = MathHelper.HalfPi / 20;
@@ -2986,7 +2986,7 @@ public static class EntityActionFunctions
             return;
 
         entity.PlayerObj.DecreaseAmmoCompatibility();
-        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/railgf", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/railgf", new SoundParams(entity, channel: entity.WeaponSoundChannel, context: SoundContext.WeaponFired));
         entity.PlayerObj.Weapon?.SetFlashState();
         WorldStatic.World.FireHitscan(entity, entity.AngleRadians, entity.PlayerObj.PitchRadians, 8192, 150, HitScanOptions.PassThroughEntities | HitScanOptions.DrawRail);
     }
@@ -3397,7 +3397,7 @@ public static class EntityActionFunctions
 
         player.AngleRadians = player.Position.Angle(hitEntity.Position);
         if (!string.IsNullOrEmpty(hitSound))
-            WorldStatic.World.SoundManager.CreateSoundOn(player, hitSound, new SoundParams(player, channel: player.WeaponSoundChannel));
+            WorldStatic.World.SoundManager.CreateSoundOn(player, hitSound, new SoundParams(player, channel: player.WeaponSoundChannel, context: SoundContext.MeleeWeaponHit));
     }
 
     private static bool GetPlayerWeaponFrame(Entity entity, [NotNullWhen(true)] out EntityFrame? frame)

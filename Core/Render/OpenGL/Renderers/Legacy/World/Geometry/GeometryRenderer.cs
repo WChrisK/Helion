@@ -36,7 +36,7 @@ public class GeometryRenderer : IDisposable
     private const double MaxSky = 16384;
     private static readonly Sector DefaultSector = CreateDefault();
 
-    public readonly List<IRenderObject> AlphaSides = new();
+    public readonly List<IRenderObject> AlphaSides = [];
     public readonly PortalRenderer Portals;
     private readonly IConfig m_config;
     private readonly RenderProgram m_program;
@@ -66,15 +66,17 @@ public class GeometryRenderer : IDisposable
     private TransferHeightView m_transferHeightsView = TransferHeightView.Middle;
     private TransferHeightView m_prevTransferHeightsView = TransferHeightView.Middle;
     private BitArray m_vertexLookupInvalidated = new(0);
+    private BitArray m_vertexAlphaLookupInvalidated = new(0);
+    private BitArray m_flatVertexLookupInvalidated = new(0);
     private DynamicVertex[]?[] m_vertexLookup = [];
     private DynamicVertex[]?[] m_vertexLowerLookup = [];
     private DynamicVertex[]?[] m_vertexUpperLookup = [];
     private SkyGeometryVertex[]?[] m_skyWallVertexLowerLookup = [];
     private SkyGeometryVertex[]?[] m_skyWallVertexUpperLookup = [];
-    private readonly DynamicArray<DynamicVertex[][]?> m_vertexFloorLookup = new(3);
-    private readonly DynamicArray<DynamicVertex[][]?> m_vertexCeilingLookup = new(3);
-    private readonly DynamicArray<SkyGeometryVertex[][]?> m_skyFloorVertexLookup = new(3);
-    private readonly DynamicArray<SkyGeometryVertex[][]?> m_skyCeilingVertexLookup = new(3);
+    private DynamicVertex[]?[] m_vertexFloorLookup = [];
+    private DynamicVertex[]?[] m_vertexCeilingLookup = [];
+    private SkyGeometryVertex[]?[] m_skyFloorVertexLookup = [];
+    private SkyGeometryVertex[]?[] m_skyCeilingVertexLookup = [];
     // List of each subsector mapped to a sector id
     private DynamicArray<Subsector>[] m_subsectors = [];
     private int[] m_drawnSides = [];
@@ -123,11 +125,14 @@ public class GeometryRenderer : IDisposable
         m_vertexUpperLookup = UpdateVertexWallLookup(m_vertexUpperLookup, sideCount, freeData);
         m_skyWallVertexLowerLookup = UpdateSkyWallLookup(m_skyWallVertexLowerLookup, sideCount, freeData);
         m_skyWallVertexUpperLookup = UpdateSkyWallLookup(m_skyWallVertexUpperLookup, sideCount, freeData);
+        m_vertexFloorLookup = UpdateFlatVertices(m_vertexFloorLookup, sectorCount, freeData);
+        m_vertexCeilingLookup = UpdateFlatVertices(m_vertexCeilingLookup, sectorCount, freeData);
+        m_skyFloorVertexLookup = UpdateSkyFlatVertices(m_skyFloorVertexLookup, sectorCount, freeData);
+        m_skyCeilingVertexLookup = UpdateSkyFlatVertices(m_skyCeilingVertexLookup, sectorCount, freeData);
+
         m_vertexLookupInvalidated = new(sideCount);
-        UpdateFlatVertices(m_vertexFloorLookup, sectorCount, freeData);
-        UpdateFlatVertices(m_vertexCeilingLookup, sectorCount, freeData);
-        UpdateSkyFlatVertices(m_skyFloorVertexLookup, sectorCount, freeData);
-        UpdateSkyFlatVertices(m_skyCeilingVertexLookup, sectorCount, freeData);
+        m_vertexAlphaLookupInvalidated = new(sideCount);
+        m_flatVertexLookupInvalidated = new(sectorCount);
 
         if (!world.SameAsPreviousMap)
         {
@@ -220,58 +225,50 @@ public class GeometryRenderer : IDisposable
         return vertices;
     }
 
-    private static void UpdateFlatVertices(DynamicArray<DynamicVertex[][]?> data, int sectorCount, bool free)
+    private static DynamicVertex[]?[] UpdateFlatVertices(DynamicVertex[]?[] vertices, int sectorCount, bool free)
     {
-        for (int i = 0; i < data.Capacity; i++)
+        for (int i = 0; i < vertices.Length; i++)
         {
-            var lookup = data[i];
-            if (lookup == null)
+            var data = vertices[i];
+            if (data == null)
                 continue;
-            for (int j = 0; j < lookup.Length; j++)
+
+            if (free)
             {
-                var vertices = lookup[j];
-                if (vertices == null)
-                    continue;
-
-                if (free)
-                {
-                    lookup[j] = null!;
-                    continue;
-                }
-
-                ZeroArray(vertices);
+                //m_world.DataCache.FreeSkyWallVertices(data);
+                vertices[i] = null;
+                continue;
             }
 
-            if (lookup.Length < sectorCount)
-                data[i] = new DynamicVertex[sectorCount][];
+            ZeroArray(data);
         }
+
+        if (vertices.Length < sectorCount)
+            return new DynamicVertex[sectorCount][];
+        return vertices;
     }
 
-    private static void UpdateSkyFlatVertices(DynamicArray<SkyGeometryVertex[][]?> data, int sectorCount, bool free)
+    private static SkyGeometryVertex[]?[] UpdateSkyFlatVertices(SkyGeometryVertex[]?[] vertices, int sectorCount, bool free)
     {
-        for (int i = 0; i < data.Capacity; i++)
+        for (int i = 0; i < vertices.Length; i++)
         {
-            var lookup = data[i];
-            if (lookup == null)
+            var data = vertices[i];
+            if (data == null)
                 continue;
-            for (int j = 0; j < lookup.Length; j++)
+
+            if (free)
             {
-                var vertices = lookup[j];
-                if (vertices == null)
-                    continue;
-
-                if (free)
-                {
-                    lookup[j] = null!;
-                    continue;
-                }
-
-                ZeroArray(vertices);
+                //m_world.DataCache.FreeSkyWallVertices(data);
+                vertices[i] = null;
+                continue;
             }
 
-            if (lookup.Length < sectorCount)
-                data[i] = new SkyGeometryVertex[sectorCount][];
+            ZeroArray(data);
         }
+
+        if (vertices.Length < sectorCount)
+            return new SkyGeometryVertex[sectorCount][];
+        return vertices;
     }
 
     private void SetRenderCompatibility(IWorld world)
@@ -554,27 +551,31 @@ public class GeometryRenderer : IDisposable
 
     public void RenderAlphaSide(Side side, bool isFrontSide)
     {
-        if (side.Line.Back == null)
+        if (side.Line.Back == null || side.Middle.TextureHandle == Constants.NoTextureIndex)
             return;
 
-        if (side.Middle.TextureHandle != Constants.NoTextureIndex)
+        Side otherSide = side.PartnerSide!;
+        m_cacheOverride = false;
+        m_sectorChangedLine = false;
+
+        // Only cache if middle view. This can cause sides to be incorrectly cached for upper/lower views and will get used for the middle.
+        if (side.Sector.TransferHeights != null || otherSide.Sector.TransferHeights != null)
+            m_cacheOverride = m_transferHeightsView != TransferHeightView.Middle;
+
+        if (!m_cacheOverride)
+            m_sectorChangedLine = otherSide.Sector.CheckRenderingChanged(side.LastRenderGametickAlpha) || side.Sector.CheckRenderingChanged(side.LastRenderGametickAlpha);
+
+        var invalidated = m_vertexAlphaLookupInvalidated[side.Id];
+        if (invalidated)
         {
-            Side otherSide = side.PartnerSide!;
-            m_cacheOverride = false;
-            m_sectorChangedLine = false;
-
-            // Only cache if middle view. This can cause sides to be incorrectly cached for upper/lower views and will get used for the middle.
-            if (side.Sector.TransferHeights != null || otherSide.Sector.TransferHeights != null)
-                m_cacheOverride = m_transferHeightsView != TransferHeightView.Middle;
-
-            if (!m_cacheOverride)
-                m_sectorChangedLine = otherSide.Sector.CheckRenderingChanged(side.LastRenderGametickAlpha) || side.Sector.CheckRenderingChanged(side.LastRenderGametickAlpha);
-
-            Sector facingSector = side.Sector.GetRenderSector(m_transferHeightsView);
-            Sector otherSector = otherSide.Sector.GetRenderSector(m_transferHeightsView);
-            RenderTwoSidedMiddle(side, side.PartnerSide!, facingSector, otherSector, isFrontSide, out _);
-            side.LastRenderGametickAlpha = m_world.Gametick;
+            m_vertexAlphaLookupInvalidated.Set(side.Id, false);
+            m_sectorChangedLine = true;
         }
+
+        Sector facingSector = side.Sector.GetRenderSector(m_transferHeightsView);
+        Sector otherSector = otherSide.Sector.GetRenderSector(m_transferHeightsView);
+        RenderTwoSidedMiddle(side, side.PartnerSide!, facingSector, otherSector, isFrontSide, out _);
+        side.LastRenderGametickAlpha = m_world.Gametick;
     }
 
     public void RenderSide(Side side, bool isFrontSide)
@@ -1218,7 +1219,11 @@ public class GeometryRenderer : IDisposable
         m_prevTransferHeightsView = m_transferHeightsView;
         m_transferHeightsView = view;
         if (m_prevTransferHeightsView != m_transferHeightsView)
+        {
             m_vertexLookupInvalidated.SetAll(true);
+            m_vertexAlphaLookupInvalidated.SetAll(true);
+            m_flatVertexLookupInvalidated.SetAll(true);
+        }
         Portals.SetTransferHeightView(view);
     }
     public void SetBuffer(bool set) => m_buffer = set;
@@ -1255,6 +1260,13 @@ public class GeometryRenderer : IDisposable
         Sector renderSector = sector.GetRenderSector(m_transferHeightsView);
         var textureVector = new Vec2F(texture.Dimension.Vector.X, texture.Dimension.Vector.Y);
 
+        bool invalidated = m_flatVertexLookupInvalidated[id];
+        if (invalidated)
+        {
+            m_flatVertexLookupInvalidated.Set(id, false);
+            flatChanged = true;
+        }
+
         int indexStart = 0;
         if (isSky)
         {
@@ -1269,12 +1281,12 @@ public class GeometryRenderer : IDisposable
 
                     WorldTriangulator.HandleSubsector(m_world.BspTree, subsector, flat, textureVector, m_subsectorVertices,
                         floor ? flat.Z : MaxSky);
-                    TriangulatedWorldVertex root = m_subsectorVertices[0];
+                    ref var root = ref m_subsectorVertices.Data[0];
                     for (int i = 1; i < m_subsectorVertices.Length - 1; i++)
                     {
-                        TriangulatedWorldVertex second = m_subsectorVertices[i];
-                        TriangulatedWorldVertex third = m_subsectorVertices[i + 1];
-                        CreateSkyFlatVertices(lookupData, indexStart, root, second, third);
+                        ref var second = ref m_subsectorVertices.Data[i];
+                        ref var third = ref m_subsectorVertices.Data[i + 1];
+                        CreateSkyFlatVertices(lookupData, indexStart, ref root, ref second, ref third);
                         indexStart += 3;
                     }
                 }
@@ -1312,11 +1324,11 @@ public class GeometryRenderer : IDisposable
 
                     WorldTriangulator.HandleSubsector(m_world.BspTree, subsector, flat, textureVector, m_subsectorVertices);
 
-                    TriangulatedWorldVertex root = m_subsectorVertices[0];
+                    ref var root = ref m_subsectorVertices.Data[0];
                     for (int i = 1; i < m_subsectorVertices.Length - 1; i++)
                     {
-                        TriangulatedWorldVertex second = m_subsectorVertices[i];
-                        TriangulatedWorldVertex third = m_subsectorVertices[i + 1];
+                        ref var second = ref m_subsectorVertices.Data[i];
+                        ref var third = ref m_subsectorVertices.Data[i + 1];
                         GetFlatVertices(lookupData, indexStart, ref root, ref second, ref third, lightIndex, colorMapIndex);
                         indexStart += 3;
                     }
@@ -1341,66 +1353,42 @@ public class GeometryRenderer : IDisposable
 
     private DynamicVertex[] GetSectorVertices(DynamicArray<Subsector> subsectors, bool floor, int id, out bool generate)
     {
-        DynamicVertex[][]? lookupView = floor ? m_vertexFloorLookup[(int)m_transferHeightsView] : m_vertexCeilingLookup[(int)m_transferHeightsView];
-        if (lookupView == null)
-        {
-            lookupView ??= new DynamicVertex[m_world.Sectors.Count][];
-            if (floor)
-                m_vertexFloorLookup[(int)m_transferHeightsView] = lookupView;
-            else
-                m_vertexCeilingLookup[(int)m_transferHeightsView] = lookupView;
-        }
-
-        DynamicVertex[]? data = lookupView[id];
+        var lookup = floor ? m_vertexFloorLookup : m_vertexCeilingLookup;
+        DynamicVertex[]? data = lookup[id];
         generate = data == null;
-        data ??= InitSectorVertices(subsectors, floor, id, lookupView);
+        data ??= InitSectorVertices(subsectors, id, lookup);
         return data;
     }
 
     private SkyGeometryVertex[] GetSkySectorVertices(DynamicArray<Subsector> subsectors, bool floor, int id, out bool generate)
     {
-        SkyGeometryVertex[][]? lookupView = floor ? m_skyFloorVertexLookup[(int)m_transferHeightsView] : m_skyCeilingVertexLookup[(int)m_transferHeightsView];
-        if (lookupView == null)
-        {
-            lookupView ??= new SkyGeometryVertex[m_world.Sectors.Count][];
-            if (floor)
-                m_skyFloorVertexLookup[(int)m_transferHeightsView] = lookupView;
-            else
-                m_skyCeilingVertexLookup[(int)m_transferHeightsView] = lookupView;
-        }
-
-        SkyGeometryVertex[]? data = lookupView[id];
+        var lookup = floor ? m_skyFloorVertexLookup : m_skyCeilingVertexLookup;
+        SkyGeometryVertex[]? data = lookup[id];
         generate = data == null;
-        data ??= InitSkyVertices(subsectors, floor, id, lookupView);
+        data ??= InitSkyVertices(subsectors, id, lookup);
         return data;
     }
 
-    private static DynamicVertex[] InitSectorVertices(DynamicArray<Subsector> subsectors, bool floor, int id, DynamicVertex[][] lookup)
+    private static DynamicVertex[] InitSectorVertices(DynamicArray<Subsector> subsectors, int id, DynamicVertex[]?[] lookup)
     {
         int count = 0;
         for (int j = 0; j < subsectors.Length; j++)
             count += (subsectors[j].SegCount - 2) * 3;
 
         var data = new DynamicVertex[count];
-        if (floor)
-            lookup[id] = data;
-        else
-            lookup[id] = data;
+        lookup[id] = data;
 
         return data;
     }
 
-    private static SkyGeometryVertex[] InitSkyVertices(DynamicArray<Subsector> subsectors, bool floor, int id, SkyGeometryVertex[][] lookup)
+    private static SkyGeometryVertex[] InitSkyVertices(DynamicArray<Subsector> subsectors, int id, SkyGeometryVertex[]?[] lookup)
     {
         int count = 0;
         for (int j = 0; j < subsectors.Length; j++)
             count += (subsectors[j].SegCount - 2) * 3;
 
         var data = new SkyGeometryVertex[count];
-        if (floor)
-            lookup[id] = data;
-        else
-            lookup[id] = data;
+        lookup[id] = data;
 
         return data;
     }
@@ -1500,7 +1488,7 @@ public class GeometryRenderer : IDisposable
         return data;
     }
 
-    private static unsafe void CreateSkyFlatVertices(SkyGeometryVertex[] vertices, int startIndex, in TriangulatedWorldVertex root, in TriangulatedWorldVertex second, in TriangulatedWorldVertex third)
+    private static unsafe void CreateSkyFlatVertices(SkyGeometryVertex[] vertices, int startIndex, ref TriangulatedWorldVertex root, ref TriangulatedWorldVertex second, ref TriangulatedWorldVertex third)
     {
         fixed (SkyGeometryVertex* startVertex = &vertices[startIndex])
         {

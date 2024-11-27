@@ -1,5 +1,5 @@
 using Helion.Client.Input;
-using Helion.Client.Input.Joystick;
+using Helion.Client.Input.Controller;
 using Helion.Geometry;
 using Helion.Geometry.Vectors;
 using Helion.Render;
@@ -40,7 +40,7 @@ public class Window : GameWindow, IWindow
     private readonly InputManager m_inputManager = new();
     private SpanString m_textInput = new();
     private bool m_disposed;
-    private readonly JoystickAdapter m_joystickAdapter;
+    public readonly ControllerAdapter JoystickAdapter;
 
     public Window(string title, IConfig config, ArchiveCollection archiveCollection, FpsTracker tracker, IInputManagement inputManagement,
         int glMajor, int glMinor, GLContextFlags flags, Action onCreate) :
@@ -62,28 +62,23 @@ public class Window : GameWindow, IWindow
         MouseWheel += Window_MouseWheel;
         TextInput += Window_TextInput;
 
-        m_joystickAdapter = new JoystickAdapter(
-            JoystickStates,
+        JoystickAdapter = new ControllerAdapter(
             (float)m_config.Controller.GameControllerDeadZone.Value,
             m_config.Controller.EnableGameController,
             m_inputManager);
-        JoystickConnected += RedetectJoysticks;
 
         m_config.Render.MaxFPS.OnChanged += OnMaxFpsChanged;
         m_config.Render.VSync.OnChanged += OnVSyncChanged;
         m_config.Controller.EnableGameController.OnChanged += EnableGameController_OnChanged;
         m_config.Controller.GameControllerDeadZone.OnChanged += GameControllerDeadZone_OnChanged;
+
+
     }
 
     public void SetMousePosition(Vec2I pos)
     {
         MousePosition = (pos.X, pos.Y);
         InputManager.MousePosition = pos;
-    }
-
-    private void RedetectJoysticks(JoystickEventArgs obj)
-    {
-        m_joystickAdapter.RedetectJoysticks();
     }
 
     public void SetWindowState(RenderWindowState state)
@@ -303,12 +298,12 @@ public class Window : GameWindow, IWindow
 
     private void GameControllerDeadZone_OnChanged(object? sender, double e)
     {
-        m_joystickAdapter.DeadZone = (float)e;
+        JoystickAdapter.AnalogDeadZone = (float)e;
     }
 
     private void EnableGameController_OnChanged(object? sender, bool e)
     {
-        m_joystickAdapter.Enabled = e;
+        JoystickAdapter.SetEnabled(e);
     }
 
     private void PerformDispose()
@@ -323,7 +318,6 @@ public class Window : GameWindow, IWindow
         MouseUp -= Window_MouseUp;
         MouseWheel -= Window_MouseWheel;
         TextInput -= Window_TextInput;
-        JoystickConnected -= RedetectJoysticks;
 
         m_config.Render.MaxFPS.OnChanged -= OnMaxFpsChanged;
         m_config.Render.VSync.OnChanged -= OnVSyncChanged;
@@ -331,6 +325,7 @@ public class Window : GameWindow, IWindow
         m_config.Controller.GameControllerDeadZone.OnChanged -= GameControllerDeadZone_OnChanged;
 
         Renderer.Dispose();
+        JoystickAdapter.Dispose();
 
         m_disposed = true;
     }

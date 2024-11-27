@@ -226,7 +226,6 @@ public partial class WorldLayer
                     // If there is an analog input that corresponds to this key, build up a set of analog movement vectors
                     // rather than using the on/off value from the keypress.
                     if (MovementCommmands.TryGetValue(tickCommand, out var movementVector)
-                        && input.Manager.AnalogAdapter?.KeyIsAnalogAxis(key) == true
                         && input.Manager.AnalogAdapter?.TryGetAnalogValueForAxis(key, out float analogValue) == true)
                     {
                         analogInput += movementVector(analogValue);

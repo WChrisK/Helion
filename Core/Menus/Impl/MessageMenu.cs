@@ -40,12 +40,12 @@ public class MessageMenu : Menu
     {
         if (IsYesNoConfirm)
         {
-            if (input.ConsumeKeyPressed(Key.Y) || input.ConsumeKeyPressed(Key.Button1))
+            if (input.ConsumeKeyPressed(Key.Y) || input.ConsumeKeyPressed(Key.ButtonA))
             {
                 Cleared?.Invoke(this, true);
                 return true;
             }
-            if (input.ConsumeKeyPressed(Key.N) || input.ConsumeKeyPressed(Key.Button2))
+            if (input.ConsumeKeyPressed(Key.N) || input.ConsumeKeyPressed(Key.ButtonB))
             {
                 Cleared?.Invoke(this, false);
                 return true;

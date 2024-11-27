@@ -69,6 +69,22 @@ public partial class ConfigKeyMapping : IConfigKeyMapping
         (Key.Minus,         Constants.Input.AutoMapDecrease),
         (Key.MouseWheelUp,  Constants.Input.AutoMapIncrease),
         (Key.MouseWheelDown, Constants.Input.AutoMapDecrease),
+        // Controller bindings
+        (Key.LeftYMinus,        Constants.Input.Forward),
+        (Key.LeftYPlus,         Constants.Input.Backward),
+        (Key.LeftXMinus,        Constants.Input.Left),
+        (Key.LeftXPlus,         Constants.Input.Right),
+        (Key.RightXMinus,       Constants.Input.TurnLeft),
+        (Key.RightXPlus,        Constants.Input.TurnRight),
+        (Key.RightYMinus,       Constants.Input.LookUp),
+        (Key.RightYPlus,        Constants.Input.LookDown),
+        (Key.ButtonB,           Constants.Input.Use),
+        (Key.ButtonX,           Constants.Input.Use),
+        (Key.ButtonA,           Constants.Input.Attack),
+        (Key.RightTriggerPlus,  Constants.Input.Attack),
+        (Key.DPadUp,            Constants.Input.NextWeapon),
+        (Key.DPadDown,          Constants.Input.PreviousWeapon),
+        (Key.ButtonStart,       Constants.Input.Menu),
     };
 
     public void SetInitialDefaultKeyBindings()
@@ -85,20 +101,7 @@ public partial class ConfigKeyMapping : IConfigKeyMapping
         Changed = true;
     }
 
-    public void LoadControllerPreset(ControllerPresetType presetType)
-    {
-        if (presetType == ControllerPresetType.Custom)
-            return;
-
-        m_commands.RemoveAll(keyCommand => keyCommand.Key >= Key.Axis1Plus && keyCommand.Key <= Key.Button30);
-
-        foreach (var keyMapping in ControllerPresetMappings[presetType])
-        {
-            m_commands.Add(new KeyCommandItem(keyMapping.key, keyMapping.command));
-        }
-    }
-
-    public bool IsControllerInput(Key key) => key >= Key.Axis1Plus && key <= Key.Button30;
+    public bool IsControllerInput(Key key) => key >= Key.LeftXPlus && key <= Key.DPadRight;
 
     public void EnsureMenuKey()
     {

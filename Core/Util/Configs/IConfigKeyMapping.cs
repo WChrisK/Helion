@@ -99,13 +99,6 @@ public interface IConfigKeyMapping
     void EnsureMenuKey();
 
     /// <summary>
-    /// Loads button mapping presets for the specified controller type.
-    /// If changed to "custom", this will do nothing.
-    /// </summary>
-    /// <param name="presetType">Controller type</param>
-    void LoadControllerPreset(ControllerPresetType presetType);
-
-    /// <summary>
     /// Determines whether a given input belongs to a game controller.
     /// </summary>
     /// <param name="key">Input key</param>

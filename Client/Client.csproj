@@ -37,6 +37,7 @@
     <DirectPInvoke Include="zmusic" />
     <DirectPInvoke Include="fluidsynth" />
     <DirectPInvoke Include="glfw3" />
+    <DirectPInvoke Include="sdl2" />
     <DirectPInvoke Condition="'$(RuntimeIdentifier)'=='win-x64'" Include="AL" />
 
     <NativeLibrary Condition="'$(RuntimeIdentifier)'=='win-x64'" Include="Unmanaged\lib\win-x64\*.lib" />
@@ -67,12 +68,13 @@
 
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.7.4" />
+    <PackageReference Include="Helion.NFluidsynth" Version="1.0.0" />
+    <PackageReference Include="Helion.SDLControllerWrapper" Version="1.1.3" />
+    <PackageReference Include="Helion.ZMusic" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
-    <ProjectReference Include="..\ZMusic\ZMusicWrapper\ZMusicWrapper.csproj" />
-    <ProjectReference Include="..\NFluidsynth\NFluidsynth.csproj" />
   </ItemGroup>
 
   <Target Name="SetPublishDir" BeforeTargets="Build">

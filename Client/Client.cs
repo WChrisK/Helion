@@ -241,6 +241,7 @@ public partial class Client : IDisposable, IInputManagement
 
     private void Window_MainLoop(FrameEventArgs frameEventArgs)
     {
+        m_window.JoystickAdapter.Poll();
         m_profiler.ResetTimers();
         m_profiler.Global.Start();
 

@@ -43,7 +43,19 @@
 
         public void SetEnabled(bool enable)
         {
-            m_controllerWrapper.DetectControllers();
+            if (enable)
+            {
+                m_controllerWrapper.DetectControllers();
+                m_activeController = m_controllerWrapper.Controllers.FirstOrDefault();
+            }
+            else
+            {
+                // Ensure no buttons are "stuck" when we disable the controller.
+                for (Key k = Key.LeftYPlus; k <= Key.DPadRight; k++)
+                {
+                    m_inputManager.SetKeyUp(k);
+                }
+            }
             Enabled = enable;
         }
 

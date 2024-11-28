@@ -1808,7 +1808,7 @@ public abstract partial class WorldBase : IWorld
             for (int i = 0; i < tryMove.ImpactSpecialLines.Length; i++)
                 ActivateSpecialLine(entity, tryMove.ImpactSpecialLines[i], ActivationContext.EntityImpactsWall, true);
 
-            if (entity.IsPlayer && Config.Game.BumpUse)
+            if (entity.PlayerObj != null && !entity.PlayerObj.IsVooDooDoll && Config.Game.BumpUse)
                 PlayerBumpUse(entity);
         }
 

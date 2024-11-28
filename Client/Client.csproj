@@ -19,6 +19,20 @@
     <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
+  <Target Name="CheckLinuxVersion" BeforeTargets="Build" Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+    <ItemGroup>
+      <AllDependencyFiles Include="Unmanaged\binary\linux-x64\**\*" />
+      <LinuxVersions Include="$([System.String]::new(%(AllDependencyFiles.RecursiveDir)).TrimEnd('\').TrimEnd('/'))"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <FlavorExists Condition="'%(LinuxVersions.Identity)' == '$(LinuxVersion)'">True</FlavorExists>
+    </PropertyGroup>
+
+    <Error Text="Please use the LinuxVersion parameter to specify a subtype of Linux.  Valid options include: @(LinuxVersions)." Condition="'$(FlavorExists)' != 'True'"/>
+    <Message Importance="High" Text="Packaging dependencies for $(LinuxVersion)." />
+  </Target>
+
   <PropertyGroup Condition="'$(AOT)' == 'true'">
     <PublishAot>true</PublishAot>
     <OptimizationPreference>Speed</OptimizationPreference>
@@ -57,13 +71,16 @@
     <None Remove="SoundFonts\*" />
 
     <Content Include="helion.ico" Link="%(Filename)%(Extension)" CopyToOutputDirectory="Never" />
-    <Content Include="$(HelionRootDir)Assets\Documentation\*" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(HelionRootDir)Assets\Documentation\README.md" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="$(ProjectDir)SoundFonts\*" Link="SoundFonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
 
     <!-- FluidSynth and ZMusic native libs -->
-    <Content Include="$(ProjectDir)Unmanaged\binary\**\*" Link="runtimes\%(RecursiveDir)\native\%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == ''" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="$(ProjectDir)Unmanaged\binary\$(RuntimeIdentifier)\*.dll" Link="%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == 'win-x64'" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="$(ProjectDir)Unmanaged\binary\$(RuntimeIdentifier)\*.so*" Link="%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == 'linux-x64'" CopyToOutputDirectory="PreserveNewest" />
+    <!-- No RID specified; Windows devs get default dependencies, Linux devs will need them installed in their lib dir -->
+    <Content Include="$(ProjectDir)Unmanaged\binary\win-x64\*" Link="runtimes\%(RecursiveDir)\native\win-x64\%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == ''" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- RID specified.  Linux users must specify a supported Linux version if they want prebuilt deps. -->
+    <Content Include="$(ProjectDir)Unmanaged\binary\win-x64\*" Link="%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == 'win-x64'" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(ProjectDir)Unmanaged\binary\linux-x64\$(LinuxVersion)\*" Link="%(Filename)%(Extension)" Condition="'$(RuntimeIdentifier)' == 'linux-x64'" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -79,7 +96,9 @@
 
   <Target Name="SetPublishDir" BeforeTargets="Build">
     <PropertyGroup>
-      <PublishDir Condition="'$(SelfContainedRelease)' == 'true'">$(HelionRootDir)\Publish\$(RuntimeIdentifier)_SelfContained\</PublishDir>
+      <PublishDirPrefix Condition="'$(RuntimeIdentifier)'=='linux-x64'">$(LinuxVersion)</PublishDirPrefix>
+      <PublishDirPrefix Condition="'$(RuntimeIdentifier)'=='win-x64'">win-x64</PublishDirPrefix>
+      <PublishDir Condition="'$(SelfContainedRelease)' == 'true'">$(HelionRootDir)\Publish\$(PublishDirPrefix)_SelfContained\</PublishDir>
       <PublishDir Condition="'$(AOT)' == 'true'">$(HelionRootDir)\Publish\$(RuntimeIdentifier)_AOT\</PublishDir>
       <PublishDir Condition="'$(SelfContainedRelease)' != 'true' AND '$(AOT)' != 'true'">$(HelionRootDir)\Publish\$(RuntimeIdentifier)\</PublishDir>
     </PropertyGroup>

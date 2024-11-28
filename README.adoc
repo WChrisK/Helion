@@ -76,7 +76,7 @@ sudo dnf install dotnet-sdk-8.0 openal-devel
 
 After installing dependencies, if you have an IDE that supports C# (like Rider), you can open Helion and build/run directly.  You can also build from the command line, as described in the section below.
 
-Note that we have provided copies of various binaries we depend upon.  If you experience difficulties using the provided .so files, you may need to build your own. Symptoms may include nonfunctional music, or issues with controller input.  Please see Assets/Documentation/Building-Linux-Native-Dependencies.md[this document] for help with native dependencies.
+Note that we have provided copies of various binaries we depend upon.  If you experience difficulties using the provided .so files, you may need to build your own. Symptoms may include nonfunctional music, or issues with controller input.  Please see link:Assets/Documentation/Building-Linux-Native-Dependencies.md[this document] for help with native dependencies.
 
 ### Mac
 

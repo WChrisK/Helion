@@ -82,7 +82,7 @@ public class Player : Entity
     private double m_jumpStartZ = double.MaxValue;
     private WeakEntity m_killer = WeakEntity.Default;
 
-    private readonly OldCamera m_camera = new (Vec3F.Zero, Vec3F.Zero, 0, 0);
+    private readonly OldCamera m_camera = new(Vec3F.Zero, Vec3F.Zero, 0, 0);
 
     public IAudioSource?[] SoundChannels = new IAudioSource[Constants.MaxSoundChannels];
 
@@ -221,7 +221,7 @@ public class Player : Entity
             WeaponBobOffset.X = playerModel.WeaponBobX.Value;
             WeaponBobOffset.Y = playerModel.WeaponBobY.Value;
             PrevWeaponBobOffset = WeaponBobOffset;
-        }    
+        }
 
         StatusBar = new PlayerStatusBar(this);
 
@@ -442,18 +442,18 @@ public class Player : Entity
             m_jumpStartZ = double.MaxValue;
         }
 
-        if (!Flags.NoGravity && !Flags.NoClip && !IsDead && BlockingLine != null && 
-            Sector.Friction > Constants.DefaultFriction && 
+        if (!Flags.NoGravity && !Flags.NoClip && !IsDead && BlockingLine != null &&
+            Sector.Friction > Constants.DefaultFriction &&
             Position.Z <= Sector.Floor.Z &&
-            Math.Abs(velocity.X) + Math.Abs(velocity.Y) > 8 && 
+            Math.Abs(velocity.X) + Math.Abs(velocity.Y) > 8 &&
             CheckIcyBounceLineAngle(BlockingLine, velocity))
         {
             var existingSound = SoundChannels[(int)SoundChannel.Default];
             if (existingSound == null || !existingSound.AudioData.SoundInfo.Name.EndsWith("*grunt"))
                 PlayGruntSound();
             var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, null);
-            Velocity.X = bounceVelocity.X/2;
-            Velocity.Y = bounceVelocity.Y/2;
+            Velocity.X = bounceVelocity.X / 2;
+            Velocity.Y = bounceVelocity.Y / 2;
         }
 
         base.Hit(velocity);
@@ -522,7 +522,7 @@ public class Player : Entity
     }
 
     private static double AddPitch(double pitch, double delta)
-    {        
+    {
         pitch = MathHelper.Clamp(pitch + delta, -MaxPitch, MaxPitch);
         return pitch;
     }
@@ -664,7 +664,7 @@ public class Player : Entity
 
         if (IsDead)
             DeathTick();
-        
+
         m_hasNewWeapon = false;
     }
 
@@ -965,7 +965,7 @@ public class Player : Entity
         m_viewBob = m_viewBob / 2 * Math.Sin(angle);
     }
 
-    private double CalculateBob(double bobAmount) => 
+    private double CalculateBob(double bobAmount) =>
         Math.Min(16, ((Velocity.X * Velocity.X) + (Velocity.Y * Velocity.Y)) / 4) * bobAmount;
 
     public bool HasItemOrWeapon(EntityDefinition definition)
@@ -1222,7 +1222,7 @@ public class Player : Entity
     {
         Weapon? selectWeapon = null;
         var weapons = Inventory.Weapons.GetWeaponsInSelectionOrder();
-        for (int i= 0; i < weapons.Count; i++)
+        for (int i = 0; i < weapons.Count; i++)
         {
             var weapon = weapons[i];
             if (Inventory.Weapons.CanSelectWeapon(weapon))
@@ -1473,7 +1473,7 @@ public class Player : Entity
         if (damageApplied)
         {
             SetAttacker(source?.Owner.Entity ?? source);
-            PlayPainSound();
+            PlayPainSound(damage);
             DamageCount += damage;
             DamageCount = Math.Min(DamageCount, Definition.Properties.Health);
             DamageCount = (int)((float)DamageCount / Definition.Properties.Health * 100);
@@ -1482,18 +1482,21 @@ public class Player : Entity
         return damageApplied;
     }
 
-    private void PlayPainSound()
+    private void PlayPainSound(int damageAmount)
     {
         if (!IsDead)
         {
+            ushort effectIntensity = (ushort)Math.Min(ushort.MaxValue * damageAmount / 25, ushort.MaxValue);
+            SoundContext context = new SoundContext(SoundEventType.DamageReceived, effectIntensity, 0, 200);
+
             if (Health < 26)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain25", new SoundParams(this));
+                WorldStatic.SoundManager.CreateSoundOn(this, "*pain25", new SoundParams(this, context: context));
             else if (Health < 51)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain50", new SoundParams(this));
+                WorldStatic.SoundManager.CreateSoundOn(this, "*pain50", new SoundParams(this, context: context));
             else if (Health < 76)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain75", new SoundParams(this));
+                WorldStatic.SoundManager.CreateSoundOn(this, "*pain75", new SoundParams(this, context: context));
             else
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain100", new SoundParams(this));
+                WorldStatic.SoundManager.CreateSoundOn(this, "*pain100", new SoundParams(this, context: context));
         }
     }
 

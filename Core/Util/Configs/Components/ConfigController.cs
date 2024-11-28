@@ -19,6 +19,10 @@ public class ConfigController : ConfigElement<ConfigController>
     [OptionMenu(OptionSectionType.Controller, "Enable Game Controller", spacer: true)]
     public readonly ConfigValue<bool> EnableGameController = new(true);
 
+    [ConfigInfo("Enable rumble feedback effects.")]
+    [OptionMenu(OptionSectionType.Controller, "Enable Rumble")]
+    public readonly ConfigValue<bool> EnableRumble = new(true);
+
     [ConfigInfo("Dead zone for analog inputs.")]
     [OptionMenu(OptionSectionType.Controller, "Dead Zone", sliderMin: 0.1, sliderMax: 0.9, sliderStep: .05)]
     public readonly ConfigValue<double> GameControllerDeadZone = new(0.2, Clamp(0.1, 0.9));

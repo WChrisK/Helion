@@ -4,8 +4,9 @@
   - Enable trimming (reduces file size of release artifacts)
   - Allow interpolation to finish when game is paused and on level exit for smooth transitions
   - Fade sprites into max distance
-  - Autosave timer that automatically write a quicksave every x seconds
+  - Autosave timer that automatically writes a quicksave every x seconds
   - Frustum culling for the automap
+  - Controller gyroscope support (tested with PS DualShock 4, should work with other SDL-supported controllers)
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch

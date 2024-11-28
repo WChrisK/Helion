@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Helion.Audio;
 using Helion.Dehacked;
 using Helion.Geometry.Segments;
@@ -22,6 +19,9 @@ using Helion.World.Geometry.Walls;
 using Helion.World.Physics;
 using Helion.World.Special;
 using NLog;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using static Helion.Dehacked.DehackedDefinition;
 
 namespace Helion.World.Entities.Definition.States;
@@ -398,70 +398,72 @@ public static class EntityActionFunctions
 
     public static ActionFunction? Find(string? actionFuncName)
     {
-         if (actionFuncName != null)
-         {
-              if (ActionFunctions.TryGetValue(actionFuncName, out ActionFunction? func))
-                   return func;
-              Log.Warn("Unable to find action function: {0}", actionFuncName);
-         }
+        if (actionFuncName != null)
+        {
+            if (ActionFunctions.TryGetValue(actionFuncName, out ActionFunction? func))
+                return func;
+            Log.Warn("Unable to find action function: {0}", actionFuncName);
+        }
 
-         return null;
+        return null;
     }
 
     private static void ACS_NamedExecute(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void ACS_NamedExecuteAlways(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void ACS_NamedExecuteWithResult(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void ACS_NamedLockedExecute(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void ACS_NamedLockedExecuteDoor(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void ACS_NamedSuspend(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void ACS_NamedTerminate(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ActiveAndUnblock(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ActiveSound(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_AlertMonsters(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_BFGSound(Entity entity)
     {
         if (entity.IsPlayer)
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/bfgf", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/bfgf",
+                new SoundParams(entity, channel: entity.WeaponSoundChannel,
+                context: new SoundContext(SoundEventType.WeaponFired, ushort.MaxValue, 0, 300)));
     }
 
     private static void A_BFGSpray(Entity entity)
@@ -497,17 +499,17 @@ public static class EntityActionFunctions
 
     private static void A_BasicAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_BetaSkullAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_BishopMissileWeave(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_BossDeath(Entity entity)
@@ -673,12 +675,12 @@ public static class EntityActionFunctions
 
     private static void A_BulletAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Burst(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CPosAttack(Entity entity)
@@ -702,27 +704,27 @@ public static class EntityActionFunctions
 
     private static void A_CStaffMissileSlither(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CentaurDefend(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ChangeCountFlags(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ChangeFlag(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ChangeVelocity(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     public static void A_Chase(Entity entity)
@@ -799,52 +801,52 @@ public static class EntityActionFunctions
 
     private static void A_CheckBlock(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckCeiling(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckFlag(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckFloor(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckForReload(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckForResurrection(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckLOF(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckPlayerDone(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckProximity(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckRange(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckReload(Entity entity)
@@ -858,52 +860,52 @@ public static class EntityActionFunctions
 
     private static void A_CheckSight(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckSightOrRange(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckSpecies(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CheckTerrain(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ClearLastHeard(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ClearOverlays(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ClearReFire(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ClearShadow(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ClearSoundTarget(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ClearTarget(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CloseShotgun2(Entity entity)
@@ -915,57 +917,57 @@ public static class EntityActionFunctions
 
     private static void A_ComboAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CopyFriendliness(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CopySpriteFrame(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Countdown(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CountdownArg(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CustomBulletAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CustomComboAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CustomMeleeAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CustomMissile(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CustomPunch(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CustomRailgun(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_CyberAttack(Entity entity)
@@ -979,52 +981,52 @@ public static class EntityActionFunctions
 
     private static void A_DamageChildren(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DamageMaster(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DamageSelf(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DamageSiblings(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DamageTarget(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DamageTracer(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DeQueueCorpse(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DropInventory(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DropItem(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_DualPainAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     public static void A_Explode(Entity entity)
@@ -1037,22 +1039,22 @@ public static class EntityActionFunctions
 
     private static void A_ExtChase(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FLoopActiveSound(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FaceMaster(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FaceMovementDirection(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     public static void A_FaceTarget(Entity entity)
@@ -1067,22 +1069,22 @@ public static class EntityActionFunctions
 
     private static void A_FaceTracer(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FadeIn(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FadeOut(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FadeTo(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Fall(Entity entity)
@@ -1092,7 +1094,7 @@ public static class EntityActionFunctions
 
     private static void A_FastChase(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FatAttack1(Entity entity)
@@ -1157,7 +1159,7 @@ public static class EntityActionFunctions
 
     private static void A_FireAssaultGun(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FireBFG(Entity entity)
@@ -1172,7 +1174,7 @@ public static class EntityActionFunctions
 
     private static void A_FireBullets(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FireCGun(Entity entity)
@@ -1184,7 +1186,9 @@ public static class EntityActionFunctions
             return;
 
         entity.PlayerObj.DecreaseAmmoCompatibility(1);
-        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol",
+            new SoundParams(entity, channel: entity.WeaponSoundChannel,
+            context: new SoundContext(SoundEventType.WeaponFired, 0, ushort.MaxValue, 100)));
         int offset = entity.PlayerObj.Weapon == null ? 0 : Math.Clamp(entity.PlayerObj.Weapon.FrameState.Frame.Frame, 0, 1);
         entity.PlayerObj.Weapon?.SetFlashState(offset);
         WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, 1, Constants.DefaultSpreadAngle, 0,
@@ -1198,7 +1202,7 @@ public static class EntityActionFunctions
 
     private static void A_FireCustomMissile(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FireMissile(Entity entity)
@@ -1225,9 +1229,11 @@ public static class EntityActionFunctions
     {
         if (entity.PlayerObj == null)
             return;
-        
+
         entity.PlayerObj.DecreaseAmmoCompatibility(1);
-        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol",
+            new SoundParams(entity, channel: entity.WeaponSoundChannel,
+            context: new SoundContext(SoundEventType.WeaponFired, 0, ushort.MaxValue, 100)));
         entity.PlayerObj.Weapon?.SetFlashState();
         WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, 1, Constants.DefaultSpreadAngle, 0,
             entity.PlayerObj.PitchRadians, Constants.EntityShootDistance, WorldStatic.World.Config.Game.AutoAim);
@@ -1246,12 +1252,12 @@ public static class EntityActionFunctions
 
     private static void A_FireProjectile(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FireSTGrenade(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FireShotgun(Entity entity)
@@ -1259,7 +1265,9 @@ public static class EntityActionFunctions
         if (entity.PlayerObj != null)
         {
             entity.PlayerObj.DecreaseAmmoCompatibility(1);
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/shotgf", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/shotgf",
+                new SoundParams(entity, channel: entity.WeaponSoundChannel,
+                context: new SoundContext(SoundEventType.WeaponFired, 0, ushort.MaxValue, 100)));
             entity.PlayerObj.Weapon?.SetFlashState();
             WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, Constants.ShotgunBullets, Constants.DefaultSpreadAngle, 0.0,
                 entity.PlayerObj.PitchRadians, Constants.EntityShootDistance, WorldStatic.World.Config.Game.AutoAim);
@@ -1271,7 +1279,9 @@ public static class EntityActionFunctions
         if (entity.PlayerObj != null)
         {
             entity.PlayerObj.DecreaseAmmoCompatibility(2);
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sshotf", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sshotf",
+                new SoundParams(entity, channel: entity.WeaponSoundChannel,
+                context: new SoundContext(SoundEventType.WeaponFired, ushort.MaxValue, ushort.MaxValue, 100)));
             entity.PlayerObj.Weapon?.SetFlashState();
             WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, Constants.SuperShotgunBullets, Constants.SuperShotgunSpreadAngle, Constants.SuperShotgunSpreadPitch,
                 entity.PlayerObj.PitchRadians, Constants.EntityShootDistance, WorldStatic.World.Config.Game.AutoAim);
@@ -1280,22 +1290,22 @@ public static class EntityActionFunctions
 
     private static void A_FreezeDeath(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_FreezeDeathChunks(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_GenericFreezeDeath(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_GetHurt(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_GiveInventory(Entity entity)
@@ -1317,22 +1327,22 @@ public static class EntityActionFunctions
 
     private static void A_GiveToChildren(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_GiveToSiblings(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_GiveToTarget(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Gravity(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_GunFlash(Entity entity)
@@ -1366,7 +1376,7 @@ public static class EntityActionFunctions
 
     private static void A_HideThing(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Hoof(Entity entity)
@@ -1376,77 +1386,77 @@ public static class EntityActionFunctions
 
     private static void A_IceGuyDie(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Jump(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIf(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfArmorType(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfCloser(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfHealthLower(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfHigherOrLower(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfInTargetInventory(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfInTargetLOS(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfInventory(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfMasterCloser(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfNoAmmo(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfTargetInLOS(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfTargetInsideMeleeRange(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_JumpIfTargetOutsideMeleeRange(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     public static void A_KeenDie(Entity entity)
@@ -1467,32 +1477,32 @@ public static class EntityActionFunctions
 
     private static void A_KillChildren(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_KillMaster(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_KillSiblings(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_KillTarget(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_KillTracer(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_KlaxonBlare(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Light(Entity entity)
@@ -1522,7 +1532,7 @@ public static class EntityActionFunctions
 
     private static void A_LightInverse(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_LoadShotgun2(Entity entity)
@@ -1532,17 +1542,17 @@ public static class EntityActionFunctions
 
     private static void A_Log(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_LogFloat(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_LogInt(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     public static void A_Look(Entity entity)
@@ -1551,39 +1561,39 @@ public static class EntityActionFunctions
         {
             entity.SetClosetLook();
             return;
-        }    
+        }
 
         entity.SetNewTarget(false);
     }
 
     private static void A_Look2(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_LookEx(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_LoopActiveSound(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_LowGravity(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_M_Saw(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_MeleeAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Metal(Entity entity)
@@ -1593,22 +1603,22 @@ public static class EntityActionFunctions
 
     private static void A_MissileAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_MonsterRail(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_MonsterRefire(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Morph(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_NoBlocking(Entity entity)
@@ -1618,7 +1628,7 @@ public static class EntityActionFunctions
 
     private static void A_NoGravity(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_OpenShotgun2(Entity entity)
@@ -1628,27 +1638,27 @@ public static class EntityActionFunctions
 
     private static void A_Overlay(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_OverlayAlpha(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_OverlayFlags(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_OverlayOffset(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_OverlayRenderstyle(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_PainAttack(Entity entity)
@@ -1699,7 +1709,7 @@ public static class EntityActionFunctions
         // Add some better checking from the original
         // Set the skull barely clipped into the parent
         // Then check if it can move to it's final position (TryMoveXY does step checking and won't skip lines/entities)
-        if (!WorldStatic.World.PhysicsManager.IsPositionValid(skull, startPos.X, startPos.Y, WorldStatic.World.PhysicsManager.TryMoveData) || 
+        if (!WorldStatic.World.PhysicsManager.IsPositionValid(skull, startPos.X, startPos.Y, WorldStatic.World.PhysicsManager.TryMoveData) ||
             !WorldStatic.World.PhysicsManager.TryMoveXY(skull, skullPos.X, skullPos.Y).Success)
         {
             skull.Kill(null);
@@ -1714,17 +1724,17 @@ public static class EntityActionFunctions
 
     private static void A_PlaySoundEx(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_PlayWeaponSound(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_PlayerSkinCheck(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_PosAttack(Entity entity)
@@ -1744,12 +1754,12 @@ public static class EntityActionFunctions
 
     private static void A_Print(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_PrintBold(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Punch(Entity entity)
@@ -1760,32 +1770,32 @@ public static class EntityActionFunctions
 
     private static void A_Quake(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_QuakeEx(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_QueueCorpse(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RadiusDamageSelf(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RadiusGive(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RadiusThrust(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RailAttack(Entity entity)
@@ -1830,7 +1840,7 @@ public static class EntityActionFunctions
     {
         if (entity.PlayerObj == null || entity.PlayerObj.Weapon == null)
             return;
-        
+
         var player = entity.PlayerObj;
         player.Weapon.ReadyState = true;
         player.WeaponOffset.Y = Constants.WeaponTop;
@@ -1871,22 +1881,22 @@ public static class EntityActionFunctions
 
     private static void A_RaiseChildren(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RaiseMaster(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RaiseSelf(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RaiseSiblings(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ReFire(Entity entity)
@@ -1916,57 +1926,57 @@ public static class EntityActionFunctions
 
     private static void A_RearrangePointers(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Recoil(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Remove(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RemoveChildren(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RemoveMaster(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RemoveSiblings(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RemoveTarget(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_RemoveTracer(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ResetHealth(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ResetReloadCounter(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Respawn(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SPosAttack(Entity entity)
@@ -1982,7 +1992,7 @@ public static class EntityActionFunctions
 
         double angle = entity.AngleRadians;
         for (int i = 0; i < 3; i++)
-            WorldStatic.World.FireHitscan(entity, angle + (WorldStatic.Random.NextDiff() * Constants.PosRandomSpread / 255), 
+            WorldStatic.World.FireHitscan(entity, angle + (WorldStatic.Random.NextDiff() * Constants.PosRandomSpread / 255),
                 pitch, Constants.EntityShootDistance, 3 * ((WorldStatic.Random.NextByte() % 5) + 1));
     }
 
@@ -2015,11 +2025,15 @@ public static class EntityActionFunctions
         Entity? hitEntity = WorldStatic.World.FireHitscan(entity, angle, pitch, range, damage);
         if (hitEntity == null)
         {
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sawfull", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sawfull",
+                new SoundParams(entity, channel: entity.WeaponSoundChannel,
+                context: new SoundContext(SoundEventType.WeaponFired, 0, ushort.MaxValue, 100)));
         }
         else
         {
-            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sawhit", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/sawhit",
+                new SoundParams(entity, channel: entity.WeaponSoundChannel,
+                context: new SoundContext(SoundEventType.MeleeWeaponHit, 0, ushort.MaxValue, 100)));
             double toAngle = MathHelper.GetPositiveAngle(entity.Position.Angle(hitEntity.Position));
             double playerAngle = MathHelper.GetPositiveAngle(player.AngleRadians);
             const double AngleLarger = MathHelper.HalfPi / 20;
@@ -2047,7 +2061,7 @@ public static class EntityActionFunctions
 
     private static void A_ScaleVelocity(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Pain(Entity entity)
@@ -2067,7 +2081,7 @@ public static class EntityActionFunctions
             return;
         }
 
-        string deathSound =  entity.Health > -50 ? "*death" : "*xdeath";
+        string deathSound = entity.Health > -50 ? "*death" : "*xdeath";
         WorldStatic.SoundManager.CreateSoundOn(entity, deathSound, new SoundParams(entity));
     }
 
@@ -2079,7 +2093,7 @@ public static class EntityActionFunctions
     private static void A_XScream(Entity entity)
     {
         if (entity.IsPlayer)
-            WorldStatic.SoundManager.CreateSoundOn(entity, "*gibbed",  new SoundParams(entity));
+            WorldStatic.SoundManager.CreateSoundOn(entity, "*gibbed", new SoundParams(entity));
         else
             WorldStatic.SoundManager.CreateSoundOn(entity, "misc/gibbed", new SoundParams(entity));
 
@@ -2087,12 +2101,12 @@ public static class EntityActionFunctions
 
     private static void A_ScreamAndUnblock(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SeekerMissile(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SelectWeapon(Entity entity)
@@ -2109,232 +2123,232 @@ public static class EntityActionFunctions
 
     private static void A_SentinelBob(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SentinelRefire(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetAngle(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetArg(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetBlend(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetChaseThreshold(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetCrosshair(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetDamageType(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetFloat(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetFloatBobPhase(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetFloatSpeed(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetFloorClip(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetGravity(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetHealth(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetInventory(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetInvulnerable(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetMass(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetMugshotState(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetPainThreshold(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetPitch(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetReflective(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetReflectiveInvulnerable(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetRenderStyle(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetRipMax(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetRipMin(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetRipperLevel(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetRoll(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetScale(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetShadow(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetShootable(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetSize(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetSolid(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetSpecial(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetSpecies(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetSpeed(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetSpriteAngle(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetSpriteRotation(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetTeleFog(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetTics(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetTranslation(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetTranslucent(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetUserArray(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetUserArrayFloat(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetUserVar(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetUserVarFloat(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SetVisibleRotation(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SkelFist(Entity entity)
@@ -2380,49 +2394,49 @@ public static class EntityActionFunctions
         A_FaceTarget(entity);
 
         var targetCenter = entity.Target.Entity.CenterPoint;
-        entity.Velocity = Vec3D.UnitSphere(entity.AngleRadians, 
+        entity.Velocity = Vec3D.UnitSphere(entity.AngleRadians,
             entity.Position.Pitch(targetCenter, targetCenter.XY.Distance(entity.Position.XY))) * 20;
         entity.Flags.Skullfly = true;
     }
 
     private static void A_SkullPop(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SoundPitch(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SoundVolume(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SpawnDebris(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SpawnItem(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SpawnItemEx(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SpawnParticle(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SpawnProjectile(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SpawnSound(Entity entity)
@@ -2469,7 +2483,7 @@ public static class EntityActionFunctions
 
     private static void A_SprayDecal(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_StartFire(Entity entity)
@@ -2479,57 +2493,57 @@ public static class EntityActionFunctions
 
     private static void A_Stop(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_StopSound(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_StopSoundEx(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_SwapTeleFog(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_TakeFromChildren(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_TakeFromSiblings(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_TakeFromTarget(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_TakeInventory(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Teleport(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ThrowGrenade(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_TossGib(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     public static void A_Tracer(Entity entity)
@@ -2568,12 +2582,12 @@ public static class EntityActionFunctions
 
     private static void A_Tracer2(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_TransferPointer(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_TroopAttack(Entity entity)
@@ -2597,47 +2611,47 @@ public static class EntityActionFunctions
 
     private static void A_TurretLook(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_UnHideThing(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_UnSetFloorClip(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_UnSetInvulnerable(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_UnSetReflective(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_UnSetReflectiveInvulnerable(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_UnSetShootable(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_UnsetFloat(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_UnsetSolid(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_VileAttack(Entity entity)
@@ -2706,32 +2720,32 @@ public static class EntityActionFunctions
 
     private static void A_Wander(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Warp(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_WeaponOffset(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_Weave(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_WolfAttack(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void A_ZoomFactor(Entity entity)
     {
-         // TODO
+        // TODO
     }
 
     private static void HealThing(Entity entity)
@@ -2876,7 +2890,7 @@ public static class EntityActionFunctions
         WorldStatic.World.SpecialManager.TryAddActivatedLineSpecial(args);
     }
 
-    public static bool CreateLineEffectSpecial(EntityFrame frame, LineSpecial lineSpecial, 
+    public static bool CreateLineEffectSpecial(EntityFrame frame, LineSpecial lineSpecial,
         out LineFlags flags, ref SpecialArgs specialArgs)
     {
         flags = new LineFlags(MapLineFlags.Doom(0));
@@ -2935,7 +2949,7 @@ public static class EntityActionFunctions
 
         int sound = frame.DehackedArgs1;
         Attenuation attenuation = frame.DehackedArgs2 == 0 ? Attenuation.Default : Attenuation.None;
-        PlayDehackedSound(entity, sound, attenuation);      
+        PlayDehackedSound(entity, sound, attenuation);
     }
 
     private static void A_WeaponJump(Entity entity)
@@ -2986,7 +3000,9 @@ public static class EntityActionFunctions
             return;
 
         entity.PlayerObj.DecreaseAmmoCompatibility();
-        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/railgf", new SoundParams(entity, channel: entity.WeaponSoundChannel));
+        WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/railgf",
+            new SoundParams(entity, channel: entity.WeaponSoundChannel,
+            context: new SoundContext(SoundEventType.WeaponFired, ushort.MaxValue / 2, ushort.MaxValue, 100)));
         entity.PlayerObj.Weapon?.SetFlashState();
         WorldStatic.World.FireHitscan(entity, entity.AngleRadians, entity.PlayerObj.PitchRadians, 8192, 150, HitScanOptions.PassThroughEntities | HitScanOptions.DrawRail);
     }
@@ -3366,7 +3382,7 @@ public static class EntityActionFunctions
         if (target != null)
             firePitch = entity.PitchTo(entity.Position, target);
 
-        Entity? createdEntity = WorldStatic.World.FireProjectile(entity, entity.AngleRadians, firePitch, Constants.EntityShootDistance, true, projectileDef, 
+        Entity? createdEntity = WorldStatic.World.FireProjectile(entity, entity.AngleRadians, firePitch, Constants.EntityShootDistance, true, projectileDef,
             out Entity? autoAimEntity, addAngle: addAngle, addPitch: addPitch, zOffset: zOffset);
         if (createdEntity == null)
             return null;
@@ -3397,7 +3413,9 @@ public static class EntityActionFunctions
 
         player.AngleRadians = player.Position.Angle(hitEntity.Position);
         if (!string.IsNullOrEmpty(hitSound))
-            WorldStatic.World.SoundManager.CreateSoundOn(player, hitSound, new SoundParams(player, channel: player.WeaponSoundChannel));
+            WorldStatic.World.SoundManager.CreateSoundOn(player, hitSound,
+                new SoundParams(player, channel: player.WeaponSoundChannel,
+                context: new SoundContext(SoundEventType.MeleeWeaponHit, ushort.MaxValue, 0, 100)));
     }
 
     private static bool GetPlayerWeaponFrame(Entity entity, [NotNullWhen(true)] out EntityFrame? frame)

@@ -83,7 +83,7 @@ public partial class WorldLayer : IGameLayerParent
     public bool ShouldFocus => !World.Paused || (World.IsChaseCamMode && !AnyLayerObscuring);
     private readonly Font DefaultFont;
 
-    public WorldLayer(GameLayerManager parent, IConfig config, HelionConsole console, FpsTracker fpsTracker, 
+    public WorldLayer(GameLayerManager parent, IConfig config, HelionConsole console, FpsTracker fpsTracker,
         SinglePlayerWorld world, MapInfoDef mapInfoDef, Profiler profiler)
     {
         m_worldContext = new(m_camera, 0);
@@ -136,7 +136,7 @@ public partial class WorldLayer : IGameLayerParent
         m_resetInterpolation = true;
     }
 
-    private RenderableString InitRenderableString(TextAlign align = TextAlign.Left) => 
+    private RenderableString InitRenderableString(TextAlign align = TextAlign.Left) =>
         new(World.ArchiveCollection.DataCache, string.Empty, DefaultFont, 12, align: align, shouldFree: false);
 
     private Font GetFontOrDefault(string name)
@@ -168,6 +168,12 @@ public partial class WorldLayer : IGameLayerParent
         if (world == null)
             return null;
 
+        // Copy any sound effect listeners from the "global" sound manager to the one in the SinglePlayerWorld
+        foreach (var listener in parent.m_soundManager.GetSoundCreatedEventListeners())
+        {
+            world.SoundManager.SoundCreated += listener;
+        }
+
         if (!sameAsPreviousMap && archiveCollection.Definitions.CompLevelDefinition.CompLevel == CompLevel.Undefined)
             SetCompatibilityOptions(config, map, mapInfoDef, archiveCollection);
 
@@ -181,7 +187,7 @@ public partial class WorldLayer : IGameLayerParent
     private static void SetCompatibilityOptions(IConfig config, IMap map, MapInfoDef mapInfoDef, ArchiveCollection archiveCollection)
     {
         // Complevel is a global modifier. Cannot restore compatibility options here.
-        if (archiveCollection.Definitions.CompLevelDefinition.CompLevel != CompLevel.Undefined)            
+        if (archiveCollection.Definitions.CompLevelDefinition.CompLevel != CompLevel.Undefined)
             return;
 
         var compat = config.Compatibility;
@@ -236,7 +242,7 @@ public partial class WorldLayer : IGameLayerParent
 
         config.ApplyConfiguration(worldModel.ConfigValues, writeToConfig: false);
     }
-    
+
     public static SinglePlayerWorld? CreateWorldGeometry(GlobalData globalData, IConfig config, IAudioSystem audioSystem,
         ArchiveCollection archiveCollection, Profiler profiler, MapInfoDef mapDef, SkillDef skillDef, IMap map,
         Player? existingPlayer, WorldModel? worldModel, IRandom? random, bool unitTest = false, bool sameAsPreviousMap = false)

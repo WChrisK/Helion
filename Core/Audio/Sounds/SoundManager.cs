@@ -12,6 +12,8 @@ namespace Helion.Audio.Sounds;
 
 public class SoundManager : IDisposable
 {
+    public event EventHandler<SoundCreatedEventArgs>? SoundCreated;
+
     public readonly IAudioSourceManager AudioManager;
     private readonly IRandom m_random = new TrueRandom();
     private readonly IAudioSystem m_audioSystem;
@@ -76,6 +78,14 @@ public class SoundManager : IDisposable
         AudioManager.DeviceChanging();
     }
 
+    public IEnumerable<EventHandler<SoundCreatedEventArgs>> GetSoundCreatedEventListeners()
+    {
+        foreach (Delegate del in SoundCreated?.GetInvocationList() ?? [])
+        {
+            yield return (EventHandler<SoundCreatedEventArgs>)del;
+        }
+    }
+
     ~SoundManager()
     {
         ReleaseUnmanagedResources();
@@ -86,6 +96,11 @@ public class SoundManager : IDisposable
     {
         ClearSounds();
         ReleaseUnmanagedResources();
+
+        foreach (Delegate del in SoundCreated?.GetInvocationList() ?? [])
+        {
+            SoundCreated -= (EventHandler<SoundCreatedEventArgs>)del;
+        }
 
         m_audioSystem.DeviceChanging -= AudioSystem_DeviceChanging;
 
@@ -382,6 +397,7 @@ public class SoundManager : IDisposable
         m_soundsToPlay.Add(audioSource);
 
         source?.SoundCreated(soundInfo, audioSource, soundParams.Channel);
+        SoundCreated?.Invoke(this, new SoundCreatedEventArgs() { SoundInfo = soundInfo, SoundParams = soundParams, SoundSource = source});
         return audioSource;
     }
 

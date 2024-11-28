@@ -565,14 +565,14 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     public void SetHealState() =>
         FrameState.SetState(Constants.FrameStates.Heal);
 
-    public void PlaySeeSound()
+    public void PlaySeeSound(SoundContext? ctx = null)
     {
         if (Definition.Properties.SeeSound.Length == 0)
             return;
 
         Attenuation attenuation = (Flags.FullVolSee || Flags.Boss) ? Attenuation.None : Attenuation.Default;
         WorldStatic.SoundManager.CreateSoundOn(this, Definition.Properties.SeeSound,
-            new SoundParams(this, attenuation: attenuation, type: SoundType.See));
+            new SoundParams(this, attenuation: attenuation, type: SoundType.See, context: ctx));
     }
 
     public void PlayDeathSound()

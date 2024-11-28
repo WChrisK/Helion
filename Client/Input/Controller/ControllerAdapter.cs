@@ -1,5 +1,6 @@
 ﻿namespace Helion.Client.Input.Controller
 {
+    using Helion.Audio.Sounds;
     using Helion.Window.Input;
     using SDLControllerWrapper;
     using System;
@@ -8,17 +9,19 @@
     public class ControllerAdapter : IGameControlAdapter, IDisposable
     {
         public float AnalogDeadZone;
-        private bool Enabled;
+        private bool m_enabled;
+        private bool m_rumbleEnabled;
         private readonly InputManager m_inputManager;
         private SDLControllerWrapper m_controllerWrapper;
         private bool m_disposedValue;
 
         private Controller? m_activeController;
 
-        public ControllerAdapter(float analogDeadZone, bool enabled, InputManager inputManager)
+        public ControllerAdapter(float analogDeadZone, bool enabled, bool rumbleEnabled, InputManager inputManager)
         {
             AnalogDeadZone = analogDeadZone;
-            Enabled = enabled;
+            m_enabled = enabled;
+            m_rumbleEnabled = rumbleEnabled;
             m_inputManager = inputManager;
             inputManager.AnalogAdapter = this;
 
@@ -56,12 +59,17 @@
                     m_inputManager.SetKeyUp(k);
                 }
             }
-            Enabled = enable;
+            m_enabled = enable;
+        }
+
+        public void SetRumbleEnabled(bool enable)
+        {
+            m_rumbleEnabled = enable;
         }
 
         public void Poll()
         {
-            if (!Enabled)
+            if (!m_enabled)
             {
                 return;
             }
@@ -129,7 +137,7 @@
 
         public bool TryGetAnalogValueForAxis(Key key, out float axisAnalogValue)
         {
-            if (!Enabled || m_activeController == null || !ControllerStatic.KeysToAxis.TryGetValue(key, out (int axisId, bool isPositive) axis))
+            if (!m_enabled || m_activeController == null || !ControllerStatic.KeysToAxis.TryGetValue(key, out (int axisId, bool isPositive) axis))
             {
                 axisAnalogValue = 0;
                 return false;
@@ -146,7 +154,7 @@
 
         public bool TryGetGyroAxis(GyroOrAccelAxis axis, out float value)
         {
-            if (!Enabled || m_activeController == null || !m_activeController.HasGyro)
+            if (!m_enabled || m_activeController == null || !m_activeController.HasGyro)
             {
                 value = 0;
                 return false;
@@ -180,7 +188,7 @@
 
         public bool TryGetGyroAbsolute(Helion.Window.Input.GyroAxis axis, out double value)
         {
-            if (!Enabled || m_activeController == null || !m_activeController.HasGyro)
+            if (!m_enabled || m_activeController == null || !m_activeController.HasGyro)
             {
                 value = 0;
                 return false;
@@ -197,9 +205,23 @@
 
         public void Rumble(ushort lowFrequency, ushort highFrequency, uint durationms)
         {
-            if (Enabled && m_activeController?.HasRumble == true)
+            if (m_enabled && m_rumbleEnabled && m_activeController?.HasRumble == true)
             {
                 m_activeController.Rumble(lowFrequency, highFrequency, durationms);
+            }
+        }
+
+        public void RumbleForSoundCreated(object? sender, SoundCreatedEventArgs evt)
+        {
+            if (!m_enabled || !m_rumbleEnabled || m_activeController?.HasRumble != true)
+            {
+                return;
+            }
+
+            if (evt.SoundParams.Context != null)
+            {
+                Audio.SoundContext ctx = evt.SoundParams.Context.Value;
+                m_activeController.Rumble(ctx.LowFrequencyIntensity, ctx.HighFrequencyIntensity, ctx.DurationMilliseconds);
             }
         }
 

@@ -584,6 +584,13 @@ public class GeometryRenderer : IDisposable
         m_sectorChangedLine = side.Sector.CheckRenderingChanged(side.LastRenderGametick);
         side.LastRenderGametick = m_world.Gametick;
 
+        bool invalidated = m_vertexLookupInvalidated[side.Id];
+        if (invalidated)
+        {
+            m_vertexLookupInvalidated.Set(side.Id, false);
+            m_sectorChangedLine = true;
+        }
+
         WallVertices wall = default;
         GLLegacyTexture texture = m_glTextureManager.GetTexture(side.Middle.TextureHandle);
         DynamicVertex[]? data = m_vertexLookup[side.Id];

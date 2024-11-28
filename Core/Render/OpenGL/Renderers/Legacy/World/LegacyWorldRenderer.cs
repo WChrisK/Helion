@@ -18,7 +18,6 @@ using Helion.World.Blockmap;
 using Helion.World.Entities;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Sides;
-using Helion.World.Static;
 using OpenTK.Graphics.OpenGL;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World;
@@ -42,8 +41,6 @@ public class LegacyWorldRenderer : WorldRenderer
     private bool m_vanillaRender;
     private bool m_renderStatic;
     private int m_lastTicker = -1;
-    private int m_renderCount;
-    private int m_maxDistance;
     private Entity? m_viewerEntity;
     private IWorld? m_previousWorld;
     private RenderBlockMapData m_renderData;
@@ -56,7 +53,6 @@ public class LegacyWorldRenderer : WorldRenderer
         m_geometryRenderer = new(config, archiveCollection, textureManager, m_interpolationProgram, m_staticProgram, m_worldDataManager);
         m_archiveCollection = archiveCollection;
         m_textureManager = textureManager;
-        m_maxDistance = config.Render.MaxDistance;
     }
 
     static int RenderObjectCompare(IRenderObject? x, IRenderObject? y)
@@ -120,7 +116,6 @@ public class LegacyWorldRenderer : WorldRenderer
 
         m_geometryRenderer.SetTransferHeightView(renderInfo.TransferHeightView);
 
-        m_renderCount = ++WorldStatic.CheckCounter;
         m_renderData.ViewerEntity = renderInfo.ViewerEntity;
         m_renderData.ViewPosInterpolated = renderInfo.Camera.PositionInterpolated.XY.Double;
         m_renderData.ViewPosInterpolated3D = renderInfo.Camera.PositionInterpolated.Double;
@@ -243,11 +238,11 @@ public class LegacyWorldRenderer : WorldRenderer
     }
 
     protected override void PerformRender(IWorld world, RenderInfo renderInfo)
-    {   // If the transfer height view is not the middle then the cached static geometry cannot be used.
+    {   
+        // If the transfer height view is not the middle then the cached static geometry cannot be used.
         // Render all sectors dynamically instead.
         m_renderStatic = renderInfo.TransferHeightView == TransferHeightView.Middle;
         m_spriteTransparency = m_config.Render.SpriteTransparency;
-        m_maxDistance = m_config.Render.MaxDistance;
         Clear(world, renderInfo);        
 
         if (m_lastTicker != world.GameTicker)

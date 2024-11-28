@@ -21,6 +21,7 @@ using OpenTK.Graphics.OpenGL;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Portals.FloodFill;
+using Helion.Resources;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Static;
 
@@ -100,17 +101,7 @@ public class StaticCacheGeometryRenderer : IDisposable
         if (!world.SameAsPreviousMap)
             m_skyRenderer.Reset();
 
-        if (!world.SameAsPreviousMap || (world.SameAsPreviousMap && m_vanillaRender && m_coverWallGeometry == null))
-        {
-            var texture = m_textureManager.WhiteTexture;
-            var textureIndex = 0;
-            m_coverWallGeometry = AllocateGeometryData(GeometryType.Wall, textureIndex,
-                repeat: true, addToGeometry: false, world.Sides.Count * 3 * WallVertices, overrideTexture: texture);
-            m_coverWallGeometryOneSided = AllocateGeometryData(GeometryType.Wall, textureIndex,
-                repeat: true, addToGeometry: false, world.Lines.Count * WallVertices, overrideTexture: texture);
-            m_coverFlatGeometry = AllocateGeometryData(GeometryType.Flat, textureIndex,
-                repeat: true, addToGeometry: false, overrideTexture: texture);
-        }
+        SetupCoverGeometry(world);
 
         for (int i = 0; i < world.Sectors.Count; i++)
         {
@@ -152,11 +143,32 @@ public class StaticCacheGeometryRenderer : IDisposable
         }
     }
 
+    private void SetupCoverGeometry(IWorld world)
+    {
+        var texture = m_textureManager.WhiteTexture;
+        var textureIndex = 0;
+
+        // Cover flat geometry is always allocated to ensure sprites are covered/clipped to transfer heights
+        if (!world.SameAsPreviousMap)
+        {
+            m_coverFlatGeometry = AllocateGeometryData(GeometryType.Flat, textureIndex,
+                repeat: true, addToGeometry: false, overrideTexture: texture);
+        }
+
+        if (!world.SameAsPreviousMap || (world.SameAsPreviousMap && m_vanillaRender && m_coverWallGeometry == null))
+        {
+            m_coverWallGeometry = AllocateGeometryData(GeometryType.Wall, textureIndex,
+                repeat: true, addToGeometry: false, world.Sides.Count * 3 * WallVertices, overrideTexture: texture);
+            m_coverWallGeometryOneSided = AllocateGeometryData(GeometryType.Wall, textureIndex,
+                repeat: true, addToGeometry: false, world.Lines.Count * WallVertices, overrideTexture: texture);
+        }
+    }
+
     private void UpdateSectorPlaneFloodFill(Line line)
     {
-        UpdateSectorPlaneFloodFill(line.Front, line.Front.Sector, true);
+        UpdateSectorPlaneFloodFill(line.Front, line.Front.Sector.GetRenderSector(TransferHeightView.Middle), true);
         if (line.Back != null)
-            UpdateSectorPlaneFloodFill(line.Back, line.Back.Sector, false);
+            UpdateSectorPlaneFloodFill(line.Back, line.Back.Sector.GetRenderSector(TransferHeightView.Middle), false);
     }
 
     private void UpdateSectorPlaneFloodFill(Side facingSide, Sector facingSector, bool isFront)
@@ -261,7 +273,7 @@ public class StaticCacheGeometryRenderer : IDisposable
         if (!flood && side.MidTextureFlood == SectorPlanes.None)
             return;
 
-        if (side.PartnerSide != null && side.Sector.Id == side.PartnerSide.Sector.Id)
+        if (side.PartnerSide != null && side.Sector == side.PartnerSide.Sector)
             return;
 
         bool floodFloor = (flood && !sector.Floor.MidTextureHack) || side.MidTextureFlood != SectorPlanes.None;
@@ -580,15 +592,19 @@ public class StaticCacheGeometryRenderer : IDisposable
         var renderPlane = floor ? renderSector.Floor : renderSector.Ceiling;
         // Need to set to actual plane, not potential transfer heights plane.
         var plane = floor ? sector.Floor : sector.Ceiling;
-        m_geometryRenderer.RenderSectorFlats(sector, renderPlane, floor, out var renderedVertices, out var renderedSkyVertices);
+        m_geometryRenderer.RenderSectorFlats(sector, renderPlane, floor, renderFlood: false, out var renderedVertices, out var renderedSkyVertices);
 
         AddSkyGeometry(null, WallLocation.None, plane, renderedSkyVertices, sector, update);
 
         if (renderedVertices == null)
             return;
 
-        if (sector.TransferHeights != null && m_coverFlatGeometry != null)
-            AddOrUpdateCoverFlatGeometry(sector, plane, renderedVertices);
+        if (sector.TransferHeights != null && m_coverFlatGeometry != null && (m_vanillaRender || (!m_vanillaRender && sector.Flood)))
+        {
+            m_geometryRenderer.RenderSectorFlats(sector, renderPlane, floor, renderFlood: true, out var coverFlatVertices, out _);
+            if (coverFlatVertices != null)
+                AddOrUpdateCoverFlatGeometry(sector, plane, coverFlatVertices);
+        }
 
         if (update)
         {

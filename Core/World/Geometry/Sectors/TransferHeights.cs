@@ -78,7 +78,7 @@ public class TransferHeights
                 sector.FloorSkyTextureHandle = ControlSector.FloorSkyTextureHandle;
                 sector.CeilingSkyTextureHandle = ControlSector.CeilingSkyTextureHandle;
                 sector.FlipSkyTexture = ControlSector.FlipSkyTexture;
-
+                sector.Flood = ParentSector.Flood;
                 break;
 
             case TransferHeightView.Middle:
@@ -105,6 +105,7 @@ public class TransferHeights
                 sector.FloorSkyTextureHandle = ParentSector.FloorSkyTextureHandle;
                 sector.CeilingSkyTextureHandle = ParentSector.CeilingSkyTextureHandle;
                 sector.FlipSkyTexture = ParentSector.FlipSkyTexture;
+                sector.Flood = ParentSector.Flood;
                 break;
 
             default:
@@ -129,6 +130,7 @@ public class TransferHeights
                 sector.FloorSkyTextureHandle = ControlSector.FloorSkyTextureHandle;
                 sector.CeilingSkyTextureHandle = ControlSector.CeilingSkyTextureHandle;
                 sector.FlipSkyTexture = ControlSector.FlipSkyTexture;
+                sector.Flood = ParentSector.Flood;
                 break;
         }
 

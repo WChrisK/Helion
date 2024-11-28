@@ -407,13 +407,13 @@ public class GeometryRenderer : IDisposable
         {
             sector.Floor.LastRenderGametick = m_world.Gametick;
             set.Floor.LastRenderGametick = m_world.Gametick;
-            RenderFlat(subsectors, renderSector.Floor, true, m_floorVertexLookupInvalidated, out _, out _);
+            RenderFlat(subsectors, renderSector.Floor, true, false, m_floorVertexLookupInvalidated, out _, out _);
         }
         if (ceilingVisible && (m_renderMode == GeometryRenderMode.All || !sector.IsCeilingStatic))
         {
             sector.Ceiling.LastRenderGametick = m_world.Gametick;
             set.Ceiling.LastRenderGametick = m_world.Gametick;
-            RenderFlat(subsectors, renderSector.Ceiling, false, m_ceilingVertexLookupInvalidated, out _, out _);
+            RenderFlat(subsectors, renderSector.Ceiling, false, false, m_ceilingVertexLookupInvalidated, out _, out _);
         }
     }
 
@@ -566,12 +566,10 @@ public class GeometryRenderer : IDisposable
 
     public void RenderSide(Side side, bool isFrontSide)
     {
-        //m_skyOverride = false;
-
         if (side.FloorFloodKey > 0)
-            Portals.UpdateFloodFillPlane(side, side.Sector, SectorPlanes.Floor, SectorPlaneFace.Floor, isFrontSide);
+            Portals.UpdateFloodFillPlane(side, side.Sector.GetRenderSector(m_transferHeightsView), SectorPlanes.Floor, SectorPlaneFace.Floor, isFrontSide);
         if (side.CeilingFloodKey > 0)
-            Portals.UpdateFloodFillPlane(side, side.Sector, SectorPlanes.Ceiling, SectorPlaneFace.Ceiling, isFrontSide);
+            Portals.UpdateFloodFillPlane(side, side.Sector.GetRenderSector(m_transferHeightsView), SectorPlanes.Ceiling, SectorPlaneFace.Ceiling, isFrontSide);
 
         if (side.Line.Flags.TwoSided && side.Line.Back != null)
             RenderTwoSided(side, isFrontSide);
@@ -1207,7 +1205,8 @@ public class GeometryRenderer : IDisposable
         m_worldDataManager.BufferCoverWalls = set;
     }
 
-    public void RenderSectorFlats(Sector sector, SectorPlane flat, bool floor, out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices)
+    public void RenderSectorFlats(Sector sector, SectorPlane flat, bool floor, bool renderFlood,
+        out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices)
     {
         if (sector.Id >= m_subsectors.Length)
         {
@@ -1218,11 +1217,11 @@ public class GeometryRenderer : IDisposable
 
         var subsectors = m_subsectors[sector.Id];
         var invalidatedLookup = floor ? m_floorVertexLookupInvalidated : m_ceilingVertexLookupInvalidated;
-        RenderFlat(subsectors, flat, floor, invalidatedLookup, out vertices, out skyVertices);
+        RenderFlat(subsectors, flat, floor, renderFlood, invalidatedLookup, out vertices, out skyVertices);
     }
 
-    private void RenderFlat(DynamicArray<Subsector> subsectors, SectorPlane flat, bool floor, BitArray flatInvalidatedVertexLookup,
-        out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices)
+    private void RenderFlat(DynamicArray<Subsector> subsectors, SectorPlane flat, bool floor, bool renderFlood,
+        BitArray flatInvalidatedVertexLookup, out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices)
     {
         bool isSky = TextureManager.IsSkyTexture(flat.TextureHandle);
         GLLegacyTexture texture = m_glTextureManager.GetTexture(flat.TextureHandle);
@@ -1291,8 +1290,7 @@ public class GeometryRenderer : IDisposable
                 for (int j = 0; j < subsectors.Length; j++)
                 {
                     Subsector subsector = subsectors[j];
-                    // Don't ignore transfer heights sectors. Flood filling sector flats for transfer heights can't currently be emulated.
-                    if (subsector.Flood && !flat.MidTextureHack && subsector.Sector.TransferHeights == null)
+                    if (!renderFlood && subsector.Flood && !flat.MidTextureHack)
                         continue;
 
                     WorldTriangulator.HandleSubsector(m_world.BspTree, subsector, flat, textureVector, m_subsectorVertices);

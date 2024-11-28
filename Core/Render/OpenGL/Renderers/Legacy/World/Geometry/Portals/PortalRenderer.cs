@@ -98,10 +98,10 @@ public class PortalRenderer : IDisposable
 
         if (face == SectorPlaneFace.Floor)
         {
-            var top = facingSide.Sector.Floor;
+            var top = floodSector.Floor;
             m_fakeFloor.TextureHandle = floodSector.Floor.TextureHandle;
             m_fakeFloor.Z = top.Z - FakeWallHeight;
-            m_fakeFloor.PrevZ = facingSide.Sector.Floor.PrevZ - FakeWallHeight;
+            m_fakeFloor.PrevZ = floodSector.Floor.PrevZ - FakeWallHeight;
             m_fakeFloor.LightLevel = floodSector.LightLevel;
 
             WorldTriangulator.HandleTwoSidedLower(facingSide, top, m_fakeFloor, Vec2F.Zero, isFront, ref wall);
@@ -113,10 +113,10 @@ public class PortalRenderer : IDisposable
         }
         else
         {
-            var bottom = facingSide.Sector.Ceiling;
+            var bottom = floodSector.Ceiling;
             m_fakeCeiling.TextureHandle = floodSector.Ceiling.TextureHandle;
             m_fakeCeiling.Z = bottom.Z + FakeWallHeight;
-            m_fakeCeiling.PrevZ = facingSide.Sector.Ceiling.PrevZ + FakeWallHeight;
+            m_fakeCeiling.PrevZ = floodSector.Ceiling.PrevZ + FakeWallHeight;
             m_fakeCeiling.LightLevel = floodSector.LightLevel;
 
             WorldTriangulator.HandleTwoSidedUpper(facingSide, m_fakeCeiling, bottom, Vec2F.Zero, isFront, ref wall);

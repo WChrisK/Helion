@@ -1,11 +1,12 @@
 ﻿using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Walls;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World;
 
-readonly struct CoverKey(int key1, int key2)
+readonly struct CoverKey(int key1, int key2) : IEquatable<CoverKey>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CoverKey MakeCoverWallKey(int sideId, WallLocation location) => new(sideId, (int)location);
@@ -26,5 +27,10 @@ readonly struct CoverKey(int key1, int key2)
         if (obj is CoverKey key)
             return key.Key1 == Key1 && key.Key2 == Key2;
         return false;
+    }
+
+    public bool Equals(CoverKey other)
+    {
+        return other.Key1 == Key1 && other.Key2 == Key2;
     }
 }

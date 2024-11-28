@@ -99,8 +99,8 @@
       <PublishDirPrefix Condition="'$(RuntimeIdentifier)'=='linux-x64'">$(LinuxVersion)</PublishDirPrefix>
       <PublishDirPrefix Condition="'$(RuntimeIdentifier)'=='win-x64'">win-x64</PublishDirPrefix>
       <PublishDir Condition="'$(SelfContainedRelease)' == 'true'">$(HelionRootDir)\Publish\$(PublishDirPrefix)_SelfContained\</PublishDir>
-      <PublishDir Condition="'$(AOT)' == 'true'">$(HelionRootDir)\Publish\$(RuntimeIdentifier)_AOT\</PublishDir>
-      <PublishDir Condition="'$(SelfContainedRelease)' != 'true' AND '$(AOT)' != 'true'">$(HelionRootDir)\Publish\$(RuntimeIdentifier)\</PublishDir>
+      <PublishDir Condition="'$(AOT)' == 'true'">$(HelionRootDir)\Publish\$(PublishDirPrefix)_AOT\</PublishDir>
+      <PublishDir Condition="'$(SelfContainedRelease)' != 'true' AND '$(AOT)' != 'true'">$(HelionRootDir)\Publish\$(PublishDirPrefix)\</PublishDir>
     </PropertyGroup>
   </Target>
 

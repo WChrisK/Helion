@@ -28,7 +28,8 @@ public class FloodFillRenderer(LegacyGLTextureManager glTextureManager, FloodFil
     private readonly List<FloodFillInfo> m_floodFillInfos = [];
     private readonly Dictionary<int, int> m_textureHandleToFloodFillInfoIndex = [];
     private readonly DynamicArray<FloodGeometry> m_floodGeometry = new();
-    private readonly List<FloodGeometry> m_freeData = [];
+    private readonly LinkedList<FloodGeometry> m_freeData = [];
+    private readonly DynamicArray<LinkedListNode<FloodGeometry>> m_freeNodes = new();
     private TextureManager? m_textureManager;
     private bool m_disposed;
 
@@ -146,13 +147,14 @@ public class FloodFillRenderer(LegacyGLTextureManager glTextureManager, FloodFil
             colorMapIndex = Renderer.GetColorMapBufferIndex(sectorPlane.Sector, LightBufferType.Ceiling);
         }
 
-        for (int i = 0; i < m_freeData.Count; i++)
+        for (var node = m_freeData.First; node != null; node = node.Next)
         {
-            if (m_freeData[i].TextureHandle != sectorPlane.TextureHandle || m_freeData[i].Vertices != vertexCount)
+            ref var data = ref node.ValueRef;
+            if (data.TextureHandle != sectorPlane.TextureHandle || data.Vertices != vertexCount)
                 continue;
 
-            var data = m_freeData[i];
-            m_freeData.RemoveAt(i);
+            m_freeData.Remove(node);
+            m_freeNodes.Add(node);
 
             m_floodGeometry[data.Key - 1] = new(data.Key, data.TextureHandle, lightIndex, colorMapIndex, data.VboOffset, data.Vertices);
             UpdateStaticWall(data.Key, sectorPlane, vertices, minPlaneZ, maxPlaneZ);
@@ -243,11 +245,17 @@ public class FloodFillRenderer(LegacyGLTextureManager glTextureManager, FloodFil
             int listIndex = m_textureHandleToFloodFillInfoIndex[data.TextureHandle];
             FloodFillInfo info = m_floodFillInfos[listIndex];
             OverwriteAndSubUploadVboWithZero(info.Vertices.Vbo, data.VboOffset, data.Vertices);
-            // Note: We do not delete it because we don't want to track
-            // having to compact, re-upload, shuffle things around, etc.
-            // This is not ideal since it is a bit wasteful for memory,
-            // but the negligible gains are not worth the complexity.
-            m_freeData.Add(data);
+
+            if (m_freeNodes.Length > 0)
+            {
+                var node = m_freeNodes.RemoveLast();
+                node.Value = data;
+                m_freeData.AddLast(node);
+            }
+            else
+            {
+                m_freeData.AddLast(new LinkedListNode<FloodGeometry>(data));
+            }
         }
         else
         {

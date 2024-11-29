@@ -17,19 +17,6 @@ public class StaticDataApplier
         for (int i = 0; i < world.Lines.Count; i++)
             DetermineStaticSectorLine(world, world.Lines[i]);
 
-        if (world.Config.Developer.FloodOpposing)
-        {
-            for (int i = 0; i < world.Lines.Count; i++)
-            {
-                var line = world.Lines[i];
-                if (line.Back == null)
-                    continue;
-
-                SetOpposingFlood(line.Front);
-                SetOpposingFlood(line.Back);
-            }
-        }
-
         foreach (var special in world.SpecialManager.GetSpecials())
         {
             if (special is ScrollSpecial scrollSpecial)
@@ -78,14 +65,6 @@ public class StaticDataApplier
             line.Back.Dynamic |= SectorDynamic.Scroll;
             world.RenderBlockmap.LinkDynamicSide(line.Back);
         }
-    }
-
-    private static void SetOpposingFlood(Side side)
-    {
-        if ((side.FloodTextures & SideTexture.Lower) != 0 && !side.PartnerSide!.Sector.Flood)
-            side.PartnerSide.Sector.FloodOpposingFloor = true;
-        if ((side.FloodTextures & SideTexture.Upper) != 0 && !side.PartnerSide!.Sector.Flood)
-            side.PartnerSide.Sector.FloodOpposingCeiling = true;
     }
 
     public static void CheckFloodFill(IWorld world, Line line)

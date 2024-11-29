@@ -383,7 +383,7 @@ public class GeometryRenderer : IDisposable
 
     public void SetInitRender()
     {
-        SetTransferHeightView(TransferHeightView.Middle);
+        SetRenderMode(GeometryRenderMode.Dynamic, TransferHeightView.Middle);
         SetBuffer(false);
         m_floorChanged = true;
         m_ceilingChanged = true;
@@ -689,7 +689,7 @@ public class GeometryRenderer : IDisposable
         if ((!m_config.Render.TextureTransparency || facingSide.Line.Alpha >= 1) && facingSide.Middle.TextureHandle != Constants.NoTextureIndex &&
             dynamic)
             RenderTwoSidedMiddle(facingSide, otherSide, facingSector, otherSector, isFrontSide, out _);
-        if (dynamic && UpperOrSkySideIsVisible(TextureManager, facingSide, facingSector, otherSector, out _))
+        if (dynamic && UpperIsVisibleOrFlood(TextureManager, facingSide, otherSide, facingSector, otherSector, out _))
             RenderTwoSidedUpper(facingSide, otherSide, facingSector, otherSector, isFrontSide, out _, out _, out _);
     }
 
@@ -777,7 +777,8 @@ public class GeometryRenderer : IDisposable
         skyVertices = null;
 
         Wall lowerWall = facingSide.Lower;
-        bool isSky = TextureManager.IsSkyTexture(otherSide.Sector.Floor.TextureHandle) && lowerWall.TextureHandle == Constants.NoTextureIndex;
+        bool isSky = TextureManager.IsSkyTexture(otherSector.Floor.TextureHandle) && lowerWall.TextureHandle == Constants.NoTextureIndex &&
+            otherSide.Sector.TransferHeights == null;
 
         if (m_vanillaRender && ((facingSide.FloodTextures & SideTexture.Lower) == 0 || isSky))
             RenderCoverWall(WallLocation.Lower, facingSide, facingSector, otherSector, isFrontSide);
@@ -786,22 +787,10 @@ public class GeometryRenderer : IDisposable
             return;
 
         WallVertices wall = default;
-        bool skyRender = isSky && TextureManager.IsSkyTexture(otherSide.Sector.Floor.TextureHandle);
+        bool skyRender = isSky && TextureManager.IsSkyTexture(otherSector.Floor.TextureHandle);
 
-        if ((m_renderMode == GeometryRenderMode.Dynamic && (facingSide.LowerFloodKeys.Key1 > 0 || facingSide.LowerFloodKeys.Key2 > 0)) ||
-            (m_renderMode == GeometryRenderMode.All && StaticDataApplier.ShouldFloodLower(facingSide, otherSide, facingSector, otherSector)))
-        {
-            Portals.UpdateStaticFloodFillSide(facingSide, otherSide, otherSector, SideTexture.Lower, isFrontSide);
-            // Key2 is used for partner side flood. Still may need to draw the lower.
-            if (facingSide.LowerFloodKeys.Key1 > 0)
-                return;
-        }
-
-        if (facingSide.Sector.FloodOpposingFloor && otherSide.LowerFloodKeys.Key2 > 0)
-        {
-            Portals.ClearStaticWall(otherSide.LowerFloodKeys.Key2);
-            otherSide.LowerFloodKeys.Key2 = 0;
-        }
+        if (!TwoSidedLowerFlood(facingSide, otherSide, facingSector, otherSector, isFrontSide))
+            return;
 
         if (lowerWall.TextureHandle <= Constants.NullCompatibilityTextureIndex && !skyRender)
             return;
@@ -858,6 +847,22 @@ public class GeometryRenderer : IDisposable
         }
     }
 
+    private bool TwoSidedLowerFlood(Side facingSide, Side otherSide, Sector facingSector, Sector otherSector, bool isFrontSide)
+    {
+        FloodSet result = default;
+        if ((m_renderMode == GeometryRenderMode.Dynamic && (facingSide.LowerFloodKeys.Key1 > 0 || facingSide.LowerFloodKeys.Key2 > 0)) || 
+            (m_renderMode == GeometryRenderMode.All && StaticDataApplier.ShouldFloodLower(facingSide, otherSide, facingSector, otherSector)))
+        {
+            result = Portals.UpdateStaticFloodFillSide(facingSide, otherSide, otherSector, SideTexture.Lower, isFrontSide);
+        }
+
+        // If partner side flood is set then return false to stop.
+        if ((result & FloodSet.Normal) != 0)
+            return false;
+
+        return true;
+    }
+
     public void RenderTwoSidedUpper(Side facingSide, Side otherSide, Sector facingSector, Sector otherSector, bool isFrontSide,
         out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices, out SkyGeometryVertex[]? skyVertices2)
     {
@@ -878,30 +883,10 @@ public class GeometryRenderer : IDisposable
             return;
 
         Wall upperWall = facingSide.Upper;
-        bool renderSkySideOnly = false;
-        if ((m_renderMode == GeometryRenderMode.Dynamic && (facingSide.UpperFloodKeys.Key1 > 0 || facingSide.UpperFloodKeys.Key2 > 0)) ||
-            (m_renderMode == GeometryRenderMode.All && StaticDataApplier.ShouldFloodUpper(m_world, facingSide, otherSide, facingSector, otherSector)))
-        {
-            Portals.UpdateStaticFloodFillSide(facingSide, otherSide, otherSector, SideTexture.Upper, isFrontSide);
-            // Key2 is used for partner side flood. Still may need to draw the upper.
-            // Flood only floods the upper texture portion. If the ceiling is a sky texture then the fake sky side needs to be rendered with RenderSkySide.
-            // TODO fix for rendermode all
-            renderSkySideOnly = facingSide.UpperFloodKeys.Key1 > 0;
-        }
+        var renderSkySideOnly = TwoSidedUpperFloodRenderSkySide(facingSide, otherSide, facingSector, otherSector, isFrontSide);
 
-        if (!TextureManager.IsSkyTexture(facingSector.Ceiling.TextureHandle) &&
-            upperWall.TextureHandle == Constants.NoTextureIndex)
-        {
-            //if (TextureManager.IsSkyTexture(otherSector.Ceiling.TextureHandle))
-            //    m_skyOverride = true;
+        if (!TextureManager.IsSkyTexture(facingSector.Ceiling.TextureHandle) && upperWall.TextureHandle == Constants.NoTextureIndex)
             return;
-        }
-
-        if (facingSide.Sector.FloodOpposingCeiling && otherSide.UpperFloodKeys.Key2 > 0)
-        {
-            Portals.ClearStaticWall(otherSide.UpperFloodKeys.Key2);
-            otherSide.UpperFloodKeys.Key2 = 0;
-        }
 
         WallVertices wall = default;
         GLLegacyTexture texture = m_glTextureManager.GetTexture(upperWall.TextureHandle);
@@ -972,6 +957,23 @@ public class GeometryRenderer : IDisposable
             vertices = data;
             skyVertices = null;
         }
+    }
+
+    private bool TwoSidedUpperFloodRenderSkySide(Side facingSide, Side otherSide, Sector facingSector, Sector otherSector, bool isFrontSide)
+    {
+        FloodSet result = default;
+        if ((m_renderMode == GeometryRenderMode.Dynamic && (facingSide.UpperFloodKeys.Key1 > 0 || facingSide.UpperFloodKeys.Key2 > 0)) ||
+            (m_renderMode == GeometryRenderMode.All && StaticDataApplier.ShouldFloodUpper(m_world, facingSide, otherSide, facingSector, otherSector)))
+        {
+            result = Portals.UpdateStaticFloodFillSide(facingSide, otherSide, otherSector, SideTexture.Upper, isFrontSide);
+        }
+        
+        // Key2 is used for partner side flood. Still may need to draw the upper.
+        // Flood only floods the upper texture portion. If the ceiling is a sky texture then the fake sky side needs to be rendered with RenderSkySide.
+        if ((result & FloodSet.Normal) != 0)
+            return true;
+
+        return false;
     }
 
     private void RenderCoverWall(WallLocation location, Side facingSide, Sector facingSector, Sector otherSector, bool isFrontSide)
@@ -1181,8 +1183,9 @@ public class GeometryRenderer : IDisposable
         return new(bottomZ, topZ, minBottomZ, maxTopZ);
     }
 
-    public void SetTransferHeightView(TransferHeightView view)
+    public void SetRenderMode(GeometryRenderMode renderMode, TransferHeightView view)
     {
+        m_renderMode = renderMode;
         m_prevTransferHeightsView = m_transferHeightsView;
         m_transferHeightsView = view;
         if (m_prevTransferHeightsView != m_transferHeightsView)
@@ -1196,7 +1199,6 @@ public class GeometryRenderer : IDisposable
     }
 
     public void SetBuffer(bool set) => m_buffer = set;
-    public void SetRenderMode(GeometryRenderMode renderMode) => m_renderMode = renderMode;
 
     public void SetBufferCoverWall(bool set)
     {

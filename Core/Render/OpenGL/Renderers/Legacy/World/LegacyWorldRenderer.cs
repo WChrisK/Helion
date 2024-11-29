@@ -114,7 +114,7 @@ public class LegacyWorldRenderer : WorldRenderer
         if (!shouldRender)
             return;
 
-        m_geometryRenderer.SetTransferHeightView(renderInfo.TransferHeightView);
+        m_geometryRenderer.SetRenderMode(m_renderStatic ? GeometryRenderMode.Dynamic : GeometryRenderMode.All, renderInfo.TransferHeightView);
 
         m_renderData.ViewerEntity = renderInfo.ViewerEntity;
         m_renderData.ViewPosInterpolated = renderInfo.Camera.PositionInterpolated.XY.Double;
@@ -135,7 +135,6 @@ public class LegacyWorldRenderer : WorldRenderer
 
         Vec2D occluder = m_renderData.OccludePos ?? Vec2D.Zero;
         bool occlude = m_renderData.OccludePos.HasValue;
-        m_geometryRenderer.SetRenderMode(m_renderStatic ? GeometryRenderMode.Dynamic : GeometryRenderMode.All);
 
         var renderBlocks = world.RenderBlockmap.Blocks;
         var it = renderBlocks.CreateBoxIteration(box);

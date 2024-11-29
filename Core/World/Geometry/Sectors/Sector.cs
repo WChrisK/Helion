@@ -66,8 +66,6 @@ public sealed class Sector
     public int CheckCount;
     public bool MarkAutomap;
     public bool Flood;
-    public bool FloodOpposingFloor;
-    public bool FloodOpposingCeiling;
     public int ActivatedByLineId = -1;
     public WeakEntity SoundTarget = WeakEntity.Default;
     public InstantKillEffect KillEffect;

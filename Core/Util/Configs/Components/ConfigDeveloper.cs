@@ -22,9 +22,6 @@ public class ConfigDeveloper: ConfigElement<ConfigDeveloper>
     [ConfigInfo("Log marked special info.", save: true)]
     public readonly ConfigValue<bool> LogMarkSpecials = new(false);
 
-    [ConfigInfo("Flood opposing testing.", save: true)]
-    public readonly ConfigValue<bool> FloodOpposing = new(false);
-
     [ConfigInfo("Use ReversedZ.", save: true, restartRequired: true)]
     public readonly ConfigValue<bool> UseReversedZ = new(false);
 

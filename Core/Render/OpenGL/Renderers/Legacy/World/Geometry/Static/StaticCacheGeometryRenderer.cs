@@ -341,7 +341,7 @@ public class StaticCacheGeometryRenderer : IDisposable
 
             if (!update)
             {
-                if ((side.FloodTextures & SideTexture.Upper) != 0 || side.PartnerSide!.Sector.FloodOpposingCeiling) 
+                if ((side.FloodTextures & SideTexture.Upper) != 0) 
                     m_geometryRenderer.Portals.AddStaticFloodFillSide(side, otherSide, otherSector, SideTexture.Upper, isFrontSide, m_floodFillRenderer);
             }
 
@@ -361,7 +361,7 @@ public class StaticCacheGeometryRenderer : IDisposable
 
             if (!update && skyVertices == null)
             {
-                if ((side.FloodTextures & SideTexture.Lower) != 0 || side.PartnerSide!.Sector.FloodOpposingFloor)
+                if ((side.FloodTextures & SideTexture.Lower) != 0)
                     m_geometryRenderer.Portals.AddStaticFloodFillSide(side, otherSide, otherSector, SideTexture.Lower, isFrontSide, m_floodFillRenderer);
             }
 
@@ -804,7 +804,7 @@ public class StaticCacheGeometryRenderer : IDisposable
         bool floor = plane.Facing == SectorPlaneFace.Floor;
         StaticDataApplier.ClearSectorDynamicMovement(world, plane);
         m_geometryRenderer.SetBuffer(false);
-        m_geometryRenderer.SetTransferHeightView(TransferHeightView.Middle);
+        m_geometryRenderer.SetRenderMode(GeometryRenderMode.Dynamic, TransferHeightView.Middle);
 
         if (floor)
             m_geometryRenderer.SetRenderFloor(plane);
@@ -834,7 +834,7 @@ public class StaticCacheGeometryRenderer : IDisposable
         ClearSideGeometryVertices(e.Side, e.Wall);
         m_freeManager.Add(e.PreviousTextureHandle, e.Wall.Static);
         e.Wall.Static.GeometryData = null;
-        m_geometryRenderer.SetTransferHeightView(TransferHeightView.Middle);
+        m_geometryRenderer.SetRenderMode(GeometryRenderMode.Dynamic, TransferHeightView.Middle);
         AddLine(e.Side.Line, update: true);
     }
 
@@ -845,7 +845,7 @@ public class StaticCacheGeometryRenderer : IDisposable
             m_freeManager.Add(e.PreviousTextureHandle, e.Plane.Static);
 
         e.Plane.Static.GeometryData = null;
-        m_geometryRenderer.SetTransferHeightView(TransferHeightView.Middle);
+        m_geometryRenderer.SetRenderMode(GeometryRenderMode.Dynamic, TransferHeightView.Middle);
         AddSectorPlane(e.Plane.Sector, e.Plane.Facing == SectorPlaneFace.Floor, update: true);
     }
 

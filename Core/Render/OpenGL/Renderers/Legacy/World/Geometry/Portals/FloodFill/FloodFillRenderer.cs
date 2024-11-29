@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using GlmSharp;
 using Helion.Geometry.Vectors;
 using Helion.Render.OpenGL.Buffer;
 using Helion.Render.OpenGL.Buffer.Array.Vertex;
@@ -11,7 +10,6 @@ using Helion.Render.OpenGL.Shared.World;
 using Helion.Render.OpenGL.Texture.Legacy;
 using Helion.Resources;
 using Helion.Util;
-using Helion.Util.Assertion;
 using Helion.Util.Container;
 using Helion.World;
 using Helion.World.Geometry.Sectors;
@@ -78,7 +76,7 @@ public class FloodFillRenderer(LegacyGLTextureManager glTextureManager, FloodFil
     public void UpdateStaticWall(int floodKey, SectorPlane floodPlane, WallVertices vertices, double minPlaneZ, double maxPlaneZ, 
         bool isFloodFillPlane = false)
     {
-        if (!TryGetFloodGeometry(floodKey, out var data) || m_renderMode == FloodFillRenderMode.Dynamic)
+        if (m_renderMode == FloodFillRenderMode.Dynamic || !TryGetFloodGeometry(floodKey, out var data))
         {
             AddStaticWall(floodPlane, vertices, minPlaneZ, maxPlaneZ, isFloodFillPlane);
             return;

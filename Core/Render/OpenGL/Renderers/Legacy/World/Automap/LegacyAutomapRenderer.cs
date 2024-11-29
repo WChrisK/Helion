@@ -399,18 +399,6 @@ public class LegacyAutomapRenderer : IDisposable
         if (markFlood && (line.FrontSector.Flood || line.BackSector != null && line.BackSector.Flood))
             return true;
 
-        if (markFlood && line.BackSector != null && (CheckFloodSide(line.Line.Front) || CheckFloodSide(line.Line.Back!)))
-            return true;
-
-        return false;
-    }
-
-    private static bool CheckFloodSide(Side side)
-    {
-        if (side.LowerFloodKeys.Key2 > 0 && side.PartnerSide!.Sector.FloodOpposingFloor)
-            return true;
-        if (side.UpperFloodKeys.Key2 > 0 && side.PartnerSide!.Sector.FloodOpposingCeiling)
-            return true;
         return false;
     }
 

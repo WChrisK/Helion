@@ -62,22 +62,33 @@ public class FloodFillRenderer(LegacyGLTextureManager glTextureManager, FloodFil
         return floodInfo;
     }
 
-    private bool TryGetFloodGeometry(int floodKey, out FloodGeometry geometry)
+
+    private FloodGeometry NoGeometry = default;
+
+    private ref FloodGeometry TryGetFloodGeometry(int floodKey, out bool success)
     {
         floodKey--;
         if (floodKey < 0 || floodKey >= m_floodGeometry.Length)
-        {
-            geometry = default;
-            return false;
+        {            
+            success = false;
+            return ref NoGeometry;
         }
-        geometry = m_floodGeometry[floodKey];
-        return true;
+
+        success = true;
+        return ref m_floodGeometry.Data[floodKey];
     }
 
     public void UpdateStaticWall(int floodKey, SectorPlane floodPlane, WallVertices vertices, double minPlaneZ, double maxPlaneZ, 
         bool isFloodFillPlane = false)
     {
-        if (m_renderMode == FloodFillRenderMode.Dynamic || !TryGetFloodGeometry(floodKey, out var data))
+        if (m_renderMode == FloodFillRenderMode.Dynamic)
+        {
+            AddStaticWall(floodPlane, vertices, minPlaneZ, maxPlaneZ, isFloodFillPlane);
+            return;
+        }
+
+        ref var data = ref TryGetFloodGeometry(floodKey, out var success);
+        if (!success)
         {
             AddStaticWall(floodPlane, vertices, minPlaneZ, maxPlaneZ, isFloodFillPlane);
             return;
@@ -240,7 +251,8 @@ public class FloodFillRenderer(LegacyGLTextureManager glTextureManager, FloodFil
         if (m_renderMode == FloodFillRenderMode.Dynamic)
             return;
 
-        if (TryGetFloodGeometry(floodKey, out var data))
+        ref var data = ref TryGetFloodGeometry(floodKey, out var success);
+        if (success)
         {
             int listIndex = m_textureHandleToFloodFillInfoIndex[data.TextureHandle];
             FloodFillInfo info = m_floodFillInfos[listIndex];

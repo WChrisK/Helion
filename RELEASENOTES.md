@@ -23,3 +23,4 @@
   - Fix colormaps for transfer heights not setting on two-sided lines
   - Fix cases where lines were being marked for automap when they weren't visible
   - Fix sprite x offset rendering (fixes small red torch and burning barrel twitching)
+  - Fix issue with bump use breaking on maps with voodoo dolls

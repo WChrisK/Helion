@@ -1384,12 +1384,9 @@ public abstract partial class WorldBase : IWorld
         Vec3D velocity = Vec3D.UnitSphere(angle, pitch) * speed;
         projectile.Velocity = velocity;
 
-        SoundContext? ctx = null;
-        if (player != null)
-        {
-            ctx = new SoundContext(SoundEventType.WeaponFired, 0, ushort.MaxValue, 100);
-        }
-        projectile.PlaySeeSound(ctx);
+        projectile.PlaySeeSound(player != null
+            ? new SoundContext(SoundEventType.WeaponFired, 0, ushort.MaxValue, 100)
+            : default);
 
         if (projectile.Flags.NoClip)
             return projectile;
@@ -1811,7 +1808,7 @@ public abstract partial class WorldBase : IWorld
             for (int i = 0; i < tryMove.ImpactSpecialLines.Length; i++)
                 ActivateSpecialLine(entity, tryMove.ImpactSpecialLines[i], ActivationContext.EntityImpactsWall, true);
 
-            if (entity.IsPlayer && Config.Game.BumpUse)
+            if (entity.PlayerObj != null && !entity.PlayerObj.IsVooDooDoll && Config.Game.BumpUse)
                 PlayerBumpUse(entity);
         }
 

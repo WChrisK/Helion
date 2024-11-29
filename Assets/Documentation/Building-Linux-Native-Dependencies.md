@@ -11,7 +11,7 @@ Note that the dependencies on ZMusic and FluidSynth imply a fairly extensive set
 
 We also depend upon, but do not provide our own copies of:
 1. libGLFW -- we distribute a version provided by OpenTK, which we use for windowing, input (except for gamepads--we use SDL2 for that), and OpenGL.
-2. OpenAL -- This seems to be installed by default on most desktop Linux distributions.
+2. OpenAL -- This seems to be installed by default on most desktop Linux distributions.  If not present, the package is named `libopenal1` on Ubuntu and similar Linuxes.
 
 # Prereqs (WSL Ubuntu 22.04 and 24.04)
 ```
@@ -20,6 +20,7 @@ sudo apt-get install cmake
 sudo apt-get install pkg-config
 sudo apt-get install glib-2.0
 sudo apt-get install libsndfile-dev
+sudo apt-get install libSDL2-2.0
 ```
 
 # Make output dir
@@ -40,17 +41,11 @@ make -j
 cp source/libzmusic.so ~/Helion-libs/
 ```
 
-# Build libSDL2
+# Obtain libSDL2
 ```
 cd ~
-git clone https://github.com/libsdl-org/SDL
-cd SDL
-git checkout release-2.30.9
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j
-cp libSDL2-2.0.so ~/Helion-libs/libSDL2.so
+sudo apt-get install libSDL2-2.0
+cp /usr/lib/x86_64-linux-gnu/libSDL2-2.0.so ~/Helion-libs/libSDL2.so
 ```
 
 # Build libfluidsynth

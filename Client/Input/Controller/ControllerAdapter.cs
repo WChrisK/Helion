@@ -218,9 +218,9 @@
                 return;
             }
 
-            if (evt.SoundParams.Context != null)
+            if (evt.SoundParams.Context.EventType != Audio.SoundEventType.Default)
             {
-                Audio.SoundContext ctx = evt.SoundParams.Context.Value;
+                Audio.SoundContext ctx = evt.SoundParams.Context;
                 m_activeController.Rumble(ctx.LowFrequencyIntensity, ctx.HighFrequencyIntensity, ctx.DurationMilliseconds);
             }
         }

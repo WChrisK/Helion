@@ -1484,20 +1484,17 @@ public class Player : Entity
 
     private void PlayPainSound(int damageAmount)
     {
-        if (!IsDead)
-        {
-            ushort effectIntensity = (ushort)Math.Min(ushort.MaxValue * damageAmount / 25, ushort.MaxValue);
-            SoundContext context = new SoundContext(SoundEventType.DamageReceived, effectIntensity, 0, 200);
+        ushort effectIntensity = (ushort)Math.Min(ushort.MaxValue * damageAmount / 10, ushort.MaxValue);
+        SoundContext context = new(SoundEventType.DamageReceived, effectIntensity, 0, Math.Clamp((uint)damageAmount * 10, 200, 1000));
 
-            if (Health < 26)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain25", new SoundParams(this, context: context));
-            else if (Health < 51)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain50", new SoundParams(this, context: context));
-            else if (Health < 76)
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain75", new SoundParams(this, context: context));
-            else
-                WorldStatic.SoundManager.CreateSoundOn(this, "*pain100", new SoundParams(this, context: context));
-        }
+        if (Health < 26)
+            WorldStatic.SoundManager.CreateSoundOn(this, "*pain25", new SoundParams(this, context: context));
+        else if (Health < 51)
+            WorldStatic.SoundManager.CreateSoundOn(this, "*pain50", new SoundParams(this, context: context));
+        else if (Health < 76)
+            WorldStatic.SoundManager.CreateSoundOn(this, "*pain75", new SoundParams(this, context: context));
+        else
+            WorldStatic.SoundManager.CreateSoundOn(this, "*pain100", new SoundParams(this, context: context));
     }
 
     public void PlayGruntSound()

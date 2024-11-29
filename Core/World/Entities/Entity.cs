@@ -565,7 +565,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     public void SetHealState() =>
         FrameState.SetState(Constants.FrameStates.Heal);
 
-    public void PlaySeeSound(SoundContext? ctx = null)
+    public void PlaySeeSound(SoundContext ctx = default)
     {
         if (Definition.Properties.SeeSound.Length == 0)
             return;

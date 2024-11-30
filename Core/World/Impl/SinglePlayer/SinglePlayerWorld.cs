@@ -1,31 +1,31 @@
-using System;
-using System.Linq;
 using Helion.Audio;
+using Helion.Geometry.Vectors;
 using Helion.Maps;
+using Helion.Models;
 using Helion.Resources.Archives.Collection;
 using Helion.Resources.Archives.Entries;
 using Helion.Resources.Definitions.MapInfo;
-using Helion.Models;
+using Helion.Resources.Definitions.SoundInfo;
 using Helion.Util;
 using Helion.Util.Configs;
-using Helion.World.Cheats;
-using Helion.World.Entities;
-using Helion.World.Entities.Players;
-using Helion.World.Geometry;
-using Helion.World.Physics;
-using NLog;
-using System.Collections.Generic;
-using Helion.Geometry.Vectors;
 using Helion.Util.Profiling;
+using Helion.Util.RandomGenerators;
 using Helion.Window;
 using Helion.Window.Input;
-using static Helion.Util.Assertion.Assert;
-using static Helion.World.Entities.EntityManager;
-using Helion.Util.RandomGenerators;
+using Helion.World.Cheats;
+using Helion.World.Entities;
+using Helion.World.Entities.Inventories.Powerups;
+using Helion.World.Entities.Players;
+using Helion.World.Geometry;
 using Helion.World.Geometry.Islands;
 using Helion.World.Geometry.Lines;
-using Helion.World.Entities.Inventories.Powerups;
-using Helion.Resources.Definitions.SoundInfo;
+using Helion.World.Physics;
+using NLog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using static Helion.Util.Assertion.Assert;
+using static Helion.World.Entities.EntityManager;
 
 namespace Helion.World.Impl.SinglePlayer;
 
@@ -585,7 +585,7 @@ public class SinglePlayerWorld : WorldBase
             m_gyroYawAngle = yaw;
         }
 
-        if ((!MapInfo.HasOption(MapOptions.NoFreelook) || IsChaseCamMode)
+        if (((Config.Mouse.Look && !MapInfo.HasOption(MapOptions.NoFreelook)) || IsChaseCamMode)
             && (input.Manager.AnalogAdapter?.TryGetGyroAbsolute(GyroAxis.Pitch, out double pitch) == true))
         {
             player.AddToPitch((float)((pitch - m_gyroPitchAngle) * Config.Controller.GyroAimVerticalSensitivity), true);

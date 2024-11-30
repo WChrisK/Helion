@@ -248,7 +248,9 @@ public partial class WorldLayer
             cmd.ForwardMoveSpeed = Math.Clamp(analogInput.X * m_config.Controller.GameControllerRunScale, -1, 1) * Player.GetForwardMovementSpeed();
             cmd.SideMoveSpeed = Math.Clamp(analogInput.Y * m_config.Controller.GameControllerStrafeScale, -1, 1) * Player.GetSideMovementSpeed();
             cmd.AngleTurn = analogInput.Z * Player.FastTurnSpeed * m_config.Controller.GameControllerTurnScale;
-            cmd.PitchTurn = analogInput.W * Player.FastTurnSpeed * m_config.Controller.GameControllerPitchScale;
+            cmd.PitchTurn = m_config.Mouse.Look
+                ? analogInput.W * Player.FastTurnSpeed * m_config.Controller.GameControllerPitchScale
+                : 0;
         }
 
         cmd.WeaponScroll = weaponScroll;

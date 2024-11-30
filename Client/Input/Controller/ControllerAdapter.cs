@@ -51,7 +51,10 @@
             }
             set
             {
-                ZeroGyroAbsolute();
+                if (!m_gyroEnabled)
+                {
+                    ZeroGyroAbsolute();
+                }
                 m_gyroEnabled = value;
             }
         }
@@ -204,7 +207,7 @@
 
         public bool TryGetGyroAbsolute(Helion.Window.Input.GyroAxis axis, out double value)
         {
-            if (!m_enabled || m_activeController == null || !m_activeController.HasGyro)
+            if (!m_enabled || !m_gyroEnabled || m_activeController == null || !m_activeController.HasGyro)
             {
                 value = 0;
                 return false;

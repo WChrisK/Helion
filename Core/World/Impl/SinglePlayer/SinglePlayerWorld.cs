@@ -40,8 +40,6 @@ public class SinglePlayerWorld : WorldBase
     private bool m_chaseCamMode;
     private WorldType m_worldType = WorldType.SinglePlayer;
     private int m_renderDistanceOverride;
-    private double m_gyroYawAngle;
-    private double m_gyroPitchAngle;
     private bool m_firstUpdate = true;
 
     public override WorldType WorldType => m_worldType;
@@ -579,17 +577,20 @@ public class SinglePlayerWorld : WorldBase
             return;
         }
 
-        if (input.Manager.AnalogAdapter?.TryGetGyroAbsolute((GyroAxis)(int)Config.Controller.GyroAimTurnAxis.Value, out double yaw) == true)
+        if (input.Manager.AnalogAdapter != null)
         {
-            player.AddToYaw((float)((yaw - m_gyroYawAngle) * Config.Controller.GyroAimHorizontalSensitivity), true);
-            m_gyroYawAngle = yaw;
-        }
+            if (input.Manager.AnalogAdapter.TryGetGyroAbsolute((GyroAxis)(int)Config.Controller.GyroAimTurnAxis.Value, out double yaw) == true)
+            {
+                player.AddToYaw((float)(yaw * Config.Controller.GyroAimHorizontalSensitivity), true);
+            }
 
-        if (((Config.Mouse.Look && !MapInfo.HasOption(MapOptions.NoFreelook)) || IsChaseCamMode)
-            && (input.Manager.AnalogAdapter?.TryGetGyroAbsolute(GyroAxis.Pitch, out double pitch) == true))
-        {
-            player.AddToPitch((float)((pitch - m_gyroPitchAngle) * Config.Controller.GyroAimVerticalSensitivity), true);
-            m_gyroPitchAngle = pitch;
+            if (((Config.Mouse.Look && !MapInfo.HasOption(MapOptions.NoFreelook)) || IsChaseCamMode)
+                && (input.Manager.AnalogAdapter.TryGetGyroAbsolute(GyroAxis.Pitch, out double pitch) == true))
+            {
+                player.AddToPitch((float)(pitch * Config.Controller.GyroAimVerticalSensitivity), true);
+            }
+
+            input.Manager.AnalogAdapter.ZeroGyroAbsolute();
         }
     }
 }

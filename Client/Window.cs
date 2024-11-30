@@ -303,11 +303,11 @@ public class Window : GameWindow, IWindow
 
     private void EnableGameController_OnChanged(object? sender, bool e)
     {
-        JoystickAdapter.SetEnabled(e);
+        JoystickAdapter.Enabled = e;
     }
     private void GameControllerRumble_OnChanged(object? sender, bool e)
     {
-        JoystickAdapter.SetRumbleEnabled(e);
+        JoystickAdapter.RumbleEnabled = e;
     }
 
     private void PerformDispose()

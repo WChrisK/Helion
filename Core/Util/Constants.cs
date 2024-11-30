@@ -232,6 +232,7 @@ public static class Constants
         Input.OptionsMenu,
         Input.Menu,
         Input.CenterView,
+        Input.GyroButton,
     };
 
     public static readonly HashSet<string> InGameCommands = new(StringComparer.OrdinalIgnoreCase)
@@ -260,6 +261,7 @@ public static class Constants
         Input.WeaponSlot6,
         Input.WeaponSlot7,
         Input.CenterView,
+        Input.GyroButton,
     };
 
     public static class ConsoleCommands

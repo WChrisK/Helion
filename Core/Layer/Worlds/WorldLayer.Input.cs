@@ -102,6 +102,12 @@ public partial class WorldLayer
         if (!input.HandleKeyInput)
             return;
 
+        if (input.Manager.AnalogAdapter != null)
+        {
+            input.Manager.AnalogAdapter.GyroEnabled = m_config.Controller.GyroAimOnByDefault
+                ^ IsCommandDown(Input.GyroButton, input, out _, out _);
+        }
+
         if (IsCommandPressed(Input.Pause, input))
             HandlePausePress();
 

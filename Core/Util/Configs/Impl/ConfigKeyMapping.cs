@@ -85,6 +85,8 @@ public partial class ConfigKeyMapping : IConfigKeyMapping
         (Key.DPadUp,            Constants.Input.NextWeapon),
         (Key.DPadDown,          Constants.Input.PreviousWeapon),
         (Key.ButtonStart,       Constants.Input.Menu),
+        (Key.ButtonLeftShoulder,Constants.Input.GyroButton),
+        (Key.LeftTriggerPlus,   Constants.Input.GyroButton),
     };
 
     public void SetInitialDefaultKeyBindings()

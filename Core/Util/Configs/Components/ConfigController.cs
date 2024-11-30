@@ -56,5 +56,9 @@ public class ConfigController : ConfigElement<ConfigController>
     [ConfigInfo("Horizontal aiming sensitivity for gyro input.")]
     [OptionMenu(OptionSectionType.Controller, "Gyro Aim Turn Sensitivity", sliderMin: 0, sliderMax: 10, sliderStep: .1)]
     public readonly ConfigValue<double> GyroAimHorizontalSensitivity = new(3.0, Clamp(0, 10.0));
+
+    [ConfigInfo("Whether gyro aiming is on or off by default.  This also inverts the function of the gyro button.")]
+    [OptionMenu(OptionSectionType.Controller, "Gyro On By Default")]
+    public readonly ConfigValue<bool> GyroAimOnByDefault = new(true);
 }
 

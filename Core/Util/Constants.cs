@@ -160,6 +160,7 @@ public static class Constants
         public const string OptionsMenu = "OptionsMenu";
         public const string Menu = "Menu";
         public const string GammaCorrection = "GammaCorrection";
+        public const string GyroButton = "GyroButton";
     }
 
     public static class Fonts

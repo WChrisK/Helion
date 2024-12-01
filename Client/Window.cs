@@ -66,13 +66,9 @@ public class Window : GameWindow, IWindow
             (float)m_config.Controller.GameControllerDeadZone.Value,
             m_config.Controller.EnableGameController,
             m_config.Controller.EnableRumble,
+            m_config.Controller.GyroNoise,
+            m_config.Controller.GyroDrift,
             m_inputManager);
-
-        m_config.Render.MaxFPS.OnChanged += OnMaxFpsChanged;
-        m_config.Render.VSync.OnChanged += OnVSyncChanged;
-        m_config.Controller.EnableGameController.OnChanged += EnableGameController_OnChanged;
-        m_config.Controller.GameControllerDeadZone.OnChanged += GameControllerDeadZone_OnChanged;
-        m_config.Controller.EnableRumble.OnChanged += GameControllerRumble_OnChanged;
     }
 
     public void SetMousePosition(Vec2I pos)
@@ -296,20 +292,6 @@ public class Window : GameWindow, IWindow
         RenderFrequency = maxFps;
     }
 
-    private void GameControllerDeadZone_OnChanged(object? sender, double e)
-    {
-        JoystickAdapter.AnalogDeadZone = (float)e;
-    }
-
-    private void EnableGameController_OnChanged(object? sender, bool e)
-    {
-        JoystickAdapter.Enabled = e;
-    }
-    private void GameControllerRumble_OnChanged(object? sender, bool e)
-    {
-        JoystickAdapter.RumbleEnabled = e;
-    }
-
     private void PerformDispose()
     {
         if (m_disposed || m_config == null)
@@ -325,9 +307,6 @@ public class Window : GameWindow, IWindow
 
         m_config.Render.MaxFPS.OnChanged -= OnMaxFpsChanged;
         m_config.Render.VSync.OnChanged -= OnVSyncChanged;
-        m_config.Controller.EnableGameController.OnChanged -= EnableGameController_OnChanged;
-        m_config.Controller.GameControllerDeadZone.OnChanged -= GameControllerDeadZone_OnChanged;
-        m_config.Controller.EnableRumble.OnChanged -= GameControllerRumble_OnChanged;
 
         Renderer.Dispose();
         JoystickAdapter.Dispose();

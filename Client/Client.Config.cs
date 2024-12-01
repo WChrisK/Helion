@@ -1,5 +1,5 @@
-using Helion.Client.Music;
 using Helion.Geometry;
+using Helion.Geometry.Vectors;
 using Helion.Util.Configs.Components;
 using Helion.World.Entities.Players;
 using OpenTK.Windowing.Common;
@@ -26,6 +26,12 @@ public partial class Client
         m_config.Hud.AutoScale.OnChanged += AutoScale_OnChanged;
 
         m_config.Compatibility.SessionCompatLevel.OnChanged += SessionCompatLevel_OnChanged;
+
+        m_config.Controller.EnableGameController.OnChanged += EnableGameController_OnChanged;
+        m_config.Controller.GameControllerDeadZone.OnChanged += GameControllerDeadZone_OnChanged;
+        m_config.Controller.EnableRumble.OnChanged += GameControllerRumble_OnChanged;
+        m_config.Controller.GyroNoise.OnChanged += GameControllerNoise_OnChanged;
+        m_config.Controller.GyroDrift.OnChanged += GameControllerDrift_OnChanged;
 
         CalculateHudScale();
     }
@@ -83,7 +89,25 @@ public partial class Client
     {
         m_config.Audio.MusicVolume.OnChanged -= MusicVolume_OnChanged;
         m_config.Audio.SoundVolume.OnChanged -= SoundVolume_OnChanged;
+
         m_config.Mouse.Look.OnChanged -= Look_OnChanged;
+
+        m_config.Window.State.OnChanged -= WindowState_OnChanged;
+        m_config.Window.Dimension.OnChanged -= WindowDimension_OnChanged;
+        m_config.Window.Border.OnChanged -= WindowBorder_OnChanged;
+        m_config.Window.Display.OnChanged -= WindowDisplay_OnChanged;
+        m_config.Window.Virtual.Enable.OnChanged -= WindowVirtualEnable_OnChanged;
+        m_config.Window.Virtual.Dimension.OnChanged -= WindowVirtualDimension_OnChanged;
+
+        m_config.Hud.AutoScale.OnChanged -= AutoScale_OnChanged;
+
+        m_config.Compatibility.SessionCompatLevel.OnChanged -= SessionCompatLevel_OnChanged;
+
+        m_config.Controller.EnableGameController.OnChanged -= EnableGameController_OnChanged;
+        m_config.Controller.GameControllerDeadZone.OnChanged -= GameControllerDeadZone_OnChanged;
+        m_config.Controller.EnableRumble.OnChanged -= GameControllerRumble_OnChanged;
+        m_config.Controller.GyroNoise.OnChanged -= GameControllerNoise_OnChanged;
+        m_config.Controller.GyroDrift.OnChanged -= GameControllerDrift_OnChanged;
     }
 
     private void SoundVolume_OnChanged(object? sender, double volume) => UpdateVolume();
@@ -100,5 +124,28 @@ public partial class Client
     {
         m_archiveCollection.Definitions.CompLevelDefinition.CompLevel = e;
         m_archiveCollection.Definitions.CompLevelDefinition.Apply(m_config, true);
+    }
+
+    private void GameControllerDeadZone_OnChanged(object? sender, double e)
+    {
+        m_window.JoystickAdapter.AnalogDeadZone = (float)e;
+    }
+
+    private void EnableGameController_OnChanged(object? sender, bool e)
+    {
+        m_window.JoystickAdapter.Enabled = e;
+    }
+    private void GameControllerRumble_OnChanged(object? sender, bool e)
+    {
+        m_window.JoystickAdapter.RumbleEnabled = e;
+    }
+
+    private void GameControllerNoise_OnChanged(object? sender, Vec3F e)
+    {
+        m_window.JoystickAdapter.SetGyroCalibration(m_config.Controller.GyroNoise, m_config.Controller.GyroDrift);
+    }
+    private void GameControllerDrift_OnChanged(object? sender, Vec3F e)
+    {
+        m_window.JoystickAdapter.SetGyroCalibration(m_config.Controller.GyroNoise, m_config.Controller.GyroDrift);
     }
 }

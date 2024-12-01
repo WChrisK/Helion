@@ -1,6 +1,7 @@
 ﻿namespace Helion.Client.Input.Controller
 {
     using Helion.Audio.Sounds;
+    using Helion.Geometry.Vectors;
     using Helion.Window.Input;
     using SDLControllerWrapper;
     using System;
@@ -14,6 +15,8 @@
         private SDLControllerWrapper m_controllerWrapper;
         private bool m_disposedValue;
         private bool m_gyroEnabled;
+        private Vec3F m_gyroNoise;
+        private Vec3F m_gyroDrift;
 
         private Controller? m_activeController;
         public bool Enabled
@@ -59,7 +62,7 @@
             }
         }
 
-        public ControllerAdapter(float analogDeadZone, bool enabled, bool rumbleEnabled, InputManager inputManager)
+        public ControllerAdapter(float analogDeadZone, bool enabled, bool rumbleEnabled, Vec3F gyroNoise, Vec3F gyroDrift, InputManager inputManager)
         {
             AnalogDeadZone = analogDeadZone;
             m_enabled = enabled;
@@ -69,6 +72,8 @@
 
             m_controllerWrapper = new SDLControllerWrapper(HandleConfigChange);
             m_activeController = m_controllerWrapper.Controllers.FirstOrDefault();
+
+            SetGyroCalibration(gyroNoise, gyroDrift);
         }
 
         private void HandleConfigChange(object? sender, ConfigurationEvent configEvent)
@@ -83,6 +88,7 @@
                 && m_activeController == null)
             {
                 m_activeController = m_controllerWrapper.Controllers.First();
+                ApplyGyroCalibration();
             }
         }
 
@@ -152,6 +158,30 @@
                     }
                 }
             }
+        }
+
+        public void SetGyroCalibration(Vec3F gyroNoise, Vec3F gyroDrift)
+        {
+            m_gyroNoise = gyroNoise;
+            m_gyroDrift = gyroDrift;
+
+            ApplyGyroCalibration();
+        }
+
+        private void ApplyGyroCalibration()
+        {
+            if (m_activeController == null)
+            {
+                return;
+            }
+
+            m_activeController.GyroNoise[0] = m_gyroNoise.X;
+            m_activeController.GyroNoise[1] = m_gyroNoise.Y;
+            m_activeController.GyroNoise[2] = m_gyroNoise.Z;
+
+            m_activeController.GyroDrift[0] = m_gyroDrift.X;
+            m_activeController.GyroDrift[1] = m_gyroDrift.Y;
+            m_activeController.GyroDrift[2] = m_gyroDrift.Z;
         }
 
         public bool TryGetAnalogValueForAxis(Key key, out float axisAnalogValue)

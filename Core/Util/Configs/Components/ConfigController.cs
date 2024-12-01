@@ -1,5 +1,6 @@
 ﻿namespace Helion.Util.Configs.Components;
 
+using Helion.Geometry.Vectors;
 using Helion.Util.Configs.Impl;
 using Helion.Util.Configs.Options;
 using Helion.Util.Configs.Values;
@@ -60,5 +61,11 @@ public class ConfigController : ConfigElement<ConfigController>
     [ConfigInfo("Whether gyro aiming is on or off by default.  Holding the gyro button on the controller will temporarily switch this.")]
     [OptionMenu(OptionSectionType.Controller, "Gyro On By Default")]
     public readonly ConfigValue<bool> GyroAimOnByDefault = new(true);
+
+    [ConfigInfo("Learned value for gyro noise threshold")]
+    public readonly ConfigValue<Vec3F> GyroNoise = new((0, 0, 0));
+
+    [ConfigInfo("Learned value for gyro drift per sample")]
+    public readonly ConfigValue<Vec3F> GyroDrift = new((0, 0, 0));
 }
 

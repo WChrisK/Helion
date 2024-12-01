@@ -8,6 +8,7 @@
   - Frustum culling for the automap
   - Controller gyroscope support (tested with PS DualShock 4, should work with other SDL-supported controllers)
   - Emulate boom behavior that let player move out of one-sided lines
+  - Controller rumble feedback
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch

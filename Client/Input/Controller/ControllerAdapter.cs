@@ -10,18 +10,60 @@
     {
         public float AnalogDeadZone;
         private bool m_enabled;
-        private bool m_rumbleEnabled;
         private readonly InputManager m_inputManager;
         private SDLControllerWrapper m_controllerWrapper;
         private bool m_disposedValue;
+        private bool m_gyroEnabled;
 
         private Controller? m_activeController;
+        public bool Enabled
+        {
+            get
+            {
+                return m_enabled;
+            }
+            set
+            {
+                if (value)
+                {
+                    m_controllerWrapper.DetectControllers();
+                    m_activeController = m_controllerWrapper.Controllers.FirstOrDefault();
+                }
+                else
+                {
+                    // Ensure no buttons are "stuck" when we disable the controller.
+                    for (Key k = Key.LeftYPlus; k <= Key.DPadRight; k++)
+                    {
+                        m_inputManager.SetKeyUp(k);
+                    }
+                }
+                m_enabled = value;
+            }
+        }
+
+        public bool RumbleEnabled { get; set; }
+
+        public bool GyroEnabled
+        {
+            get
+            {
+                return m_gyroEnabled;
+            }
+            set
+            {
+                if (!m_gyroEnabled)
+                {
+                    ZeroGyroAbsolute();
+                }
+                m_gyroEnabled = value;
+            }
+        }
 
         public ControllerAdapter(float analogDeadZone, bool enabled, bool rumbleEnabled, InputManager inputManager)
         {
             AnalogDeadZone = analogDeadZone;
             m_enabled = enabled;
-            m_rumbleEnabled = rumbleEnabled;
+            RumbleEnabled = rumbleEnabled;
             m_inputManager = inputManager;
             inputManager.AnalogAdapter = this;
 
@@ -42,29 +84,6 @@
             {
                 m_activeController = m_controllerWrapper.Controllers.First();
             }
-        }
-
-        public void SetEnabled(bool enable)
-        {
-            if (enable)
-            {
-                m_controllerWrapper.DetectControllers();
-                m_activeController = m_controllerWrapper.Controllers.FirstOrDefault();
-            }
-            else
-            {
-                // Ensure no buttons are "stuck" when we disable the controller.
-                for (Key k = Key.LeftYPlus; k <= Key.DPadRight; k++)
-                {
-                    m_inputManager.SetKeyUp(k);
-                }
-            }
-            m_enabled = enable;
-        }
-
-        public void SetRumbleEnabled(bool enable)
-        {
-            m_rumbleEnabled = enable;
         }
 
         public void Poll()
@@ -154,7 +173,7 @@
 
         public bool TryGetGyroAxis(GyroOrAccelAxis axis, out float value)
         {
-            if (!m_enabled || m_activeController == null || !m_activeController.HasGyro)
+            if (!m_enabled || !m_gyroEnabled || m_activeController == null || !m_activeController.HasGyro)
             {
                 value = 0;
                 return false;
@@ -188,7 +207,7 @@
 
         public bool TryGetGyroAbsolute(Helion.Window.Input.GyroAxis axis, out double value)
         {
-            if (!m_enabled || m_activeController == null || !m_activeController.HasGyro)
+            if (!m_enabled || !m_gyroEnabled || m_activeController == null || !m_activeController.HasGyro)
             {
                 value = 0;
                 return false;
@@ -205,7 +224,7 @@
 
         public void Rumble(ushort lowFrequency, ushort highFrequency, uint durationms)
         {
-            if (m_enabled && m_rumbleEnabled && m_activeController?.HasRumble == true)
+            if (m_enabled && RumbleEnabled && m_activeController?.HasRumble == true)
             {
                 m_activeController.Rumble(lowFrequency, highFrequency, durationms);
             }
@@ -213,7 +232,7 @@
 
         public void RumbleForSoundCreated(object? sender, SoundCreatedEventArgs evt)
         {
-            if (!m_enabled || !m_rumbleEnabled || m_activeController?.HasRumble != true)
+            if (!m_enabled || !RumbleEnabled || m_activeController?.HasRumble != true)
             {
                 return;
             }

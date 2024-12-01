@@ -74,7 +74,14 @@ public interface IGameControlAdapter
     bool TryGetGyroAbsolute(GyroAxis axis, out double absoluteValue);
 
     /// <summary>
-    /// Reset estimated absolute positions for the controller's onboard gyroscope
+    /// Reset estimated absolute orientations for the controller's onboard gyroscope
     /// </summary>
     void ZeroGyroAbsolute();
+
+    /// <summary>
+    /// Gets or sets whether the controller should _try_ to report gyro and accelerometer values (if it has a gyro)
+    /// Toggling this on and off should also re-zero any absolute orientation values reported by the gyro,
+    /// as these have likely become out-of-date.
+    /// </summary>
+    bool GyroEnabled { get; set; }
 }

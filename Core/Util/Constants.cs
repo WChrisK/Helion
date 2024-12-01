@@ -160,6 +160,7 @@ public static class Constants
         public const string OptionsMenu = "OptionsMenu";
         public const string Menu = "Menu";
         public const string GammaCorrection = "GammaCorrection";
+        public const string GyroButton = "GyroButton";
     }
 
     public static class Fonts
@@ -231,6 +232,7 @@ public static class Constants
         Input.OptionsMenu,
         Input.Menu,
         Input.CenterView,
+        Input.GyroButton,
     };
 
     public static readonly HashSet<string> InGameCommands = new(StringComparer.OrdinalIgnoreCase)
@@ -259,6 +261,7 @@ public static class Constants
         Input.WeaponSlot6,
         Input.WeaponSlot7,
         Input.CenterView,
+        Input.GyroButton,
     };
 
     public static class ConsoleCommands

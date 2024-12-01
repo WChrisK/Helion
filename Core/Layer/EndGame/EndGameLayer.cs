@@ -86,11 +86,19 @@ public partial class EndGameLayer : IGameLayer
         NextMapInfo = nextMapInfo;
         var language = archiveCollection.Definitions.Language;
 
-        IList<string> clusterText = currentCluster.ExitText.Count > 0 ? currentCluster.ExitText : Array.Empty<string>();
-        if (isNextMapSecret)
-            clusterText = currentCluster.SecretExitText.Count > 0 ? currentCluster.SecretExitText : Array.Empty<string>();
-        if (clusterText.Count == 0 && nextCluster != null && nextCluster.EnterText.Count > 0)
+        IList<string> clusterText = Array.Empty<string>();
+        if (nextCluster != null && nextCluster.EnterText.Count > 0)
+        {
+            currentCluster = nextCluster;
             clusterText = nextCluster.EnterText;
+        }
+        else
+        {
+            if (isNextMapSecret)
+                clusterText = currentCluster.SecretExitText;
+            if (clusterText.Count == 0)
+                clusterText = currentCluster.ExitText;
+        }
 
         m_archiveCollection = archiveCollection;
         m_musicPlayer = musicPlayer;

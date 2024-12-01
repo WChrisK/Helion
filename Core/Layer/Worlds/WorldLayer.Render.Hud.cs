@@ -329,15 +329,18 @@ public partial class WorldLayer
         if (!Player.Cheats.IsCheatActive(Helion.World.Cheats.CheatType.ShowPosition))
             return;
 
-        DrawCoordinate(hud, 'X', Player.Position.X, ref topRightY);
-        DrawCoordinate(hud, 'Y', Player.Position.Y, ref topRightY);
-        DrawCoordinate(hud, 'Z', Player.Position.Z, ref topRightY);
-        DrawCoordinate(hud, 'A', Player.AngleRadians % Math.PI * 180 / MathHelper.Pi, ref topRightY);
-        DrawCoordinate(hud, 'P', Player.PitchRadians % Math.PI * 180 / MathHelper.Pi, ref topRightY);
+        DrawCoordinate(hud, "X", Player.Position.X, ref topRightY);
+        DrawCoordinate(hud, "Y", Player.Position.Y, ref topRightY);
+        DrawCoordinate(hud, "Z", Player.Position.Z, ref topRightY);
+        DrawCoordinate(hud, "A", Player.AngleRadians % Math.PI * 180 / MathHelper.Pi, ref topRightY);
+        DrawCoordinate(hud, "P", Player.PitchRadians % Math.PI * 180 / MathHelper.Pi, ref topRightY);
+        DrawCoordinate(hud, "VX", Player.Velocity.X, ref topRightY);
+        DrawCoordinate(hud, "VY", Player.Velocity.Y, ref topRightY);
+        DrawCoordinate(hud, "VZ", Player.Velocity.Z, ref topRightY);
         topRightY += m_padding;
     }
 
-    void DrawCoordinate(IHudRenderContext hud, char axis, double position, ref int y)
+    void DrawCoordinate(IHudRenderContext hud, string axis, double position, ref int y)
     {
         hud.Text($"{axis}: {Math.Floor(position * 10000) / 10000,9:#####.000}", FixedNumberFont, m_infoFontSize,
             (-m_padding - m_hudPaddingX, y), out Dimension area, TextAlign.Right, both: Align.TopRight,

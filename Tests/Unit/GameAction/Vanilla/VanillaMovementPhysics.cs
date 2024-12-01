@@ -41,7 +41,7 @@ public class VanillaMovementPhysics
     }
 
     [Fact(DisplayName = "Velocity is not cleared when hitting line while hitting thing")]
-    public void VanillaPhysicsVelocityNotClearedThingAndLine()
+    public void VanillaPhysicsOnVelocityNotClearedThingAndLine()
     {
         Player.Velocity = (30, 30, 0);
         GameActions.TickWorld(World, 2);
@@ -49,7 +49,7 @@ public class VanillaMovementPhysics
     }
 
     [Fact(DisplayName = "Velocity is cleared when hitting line while hitting thing  (vanilla movement physics off)")]
-    public void VanillaPhysicsVelocityClearedThingAndLine()
+    public void VanillaPhysicsOffVelocityClearedThingAndLine()
     {
         World.Config.Compatibility.VanillaMovementPhysics.Set(false);
         Player.Velocity = (30, 30, 0);

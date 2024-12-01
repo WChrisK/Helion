@@ -637,8 +637,11 @@ public sealed class PhysicsManager
 
     private unsafe LineBlock LineBlocksEntity(Entity entity, double x, double y, BlockLine* line, TryMoveData? tryMove)
     {
-        if (Line.BlocksEntity(entity, line->OneSided, line->Flags, WorldStatic.Mbf21))
+        if (Line.BlocksEntity(entity, x, y, line->Segment, line->OneSided, line->Flags, WorldStatic.Mbf21))
             return LineBlock.BlockStopChecking;
+
+        if (line->OneSided)
+            return LineBlock.NoBlock;
 
         LineOpening opening;
         if (tryMove != null)
@@ -1029,7 +1032,7 @@ public sealed class PhysicsManager
                             if (line->Segment.Intersects(box))
                             {
                                 // Doomism: Ignore for moving sectors if blocked by flags only.
-                                if (Line.BlocksEntity(entity, line->OneSided, line->Flags, WorldStatic.Mbf21))
+                                if (Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, line->Segment, line->OneSided, line->Flags, WorldStatic.Mbf21))
                                     goto doneLinkToSectors;
 
                                 if (line->FrontSector.CheckCount != checkCounter)
@@ -1134,6 +1137,12 @@ doneLinkToSectors:
                 continue;
             }
 
+            if (entity.BlockingLine != null && Line.CanMoveOutOf(entity, nextX, nextY, entity.BlockingLine.Segment, entity.BlockingLine.Back == null))
+            {
+                TryMoveData.BlockedLineClearsVelocity = false;
+                continue;
+            }
+
             if (entity.Flags.SlidesOnWalls && slidesLeft > 0)
             {
                 // BlockingLine and BlockingEntity will get cleared on HandleSlide(IsPositionValid) calls.
@@ -1153,7 +1162,7 @@ doneLinkToSectors:
             }
 
             success = false;
-            if (ShouldClearSlide(entity, TryMoveData))
+            if (ShouldClearSlide(TryMoveData))
                 ClearVelocityXY(entity);
             break;
         }
@@ -1305,7 +1314,7 @@ doneLinkToSectors:
                             }
 
                             tryMove.IntersectSectors.Data[intersectSectorLength++] = blockLine->FrontSector;
-                            if (blockLine->BackSector != blockLine->FrontSector)
+                            if (blockLine->BackSector != null && blockLine->BackSector != blockLine->FrontSector)
                                 tryMove.IntersectSectors.Data[intersectSectorLength++] = blockLine->BackSector!;
                         }
                     }
@@ -1317,7 +1326,8 @@ doneLinkToSectors:
     doneIsPositionValid:
         tryMove.IntersectSectors.Length = intersectSectorLength;
 
-        if (entity.BlockingLine != null && Line.BlocksEntity(entity, entity.BlockingLine.Back == null, entity.BlockingLine.Flags, WorldStatic.Mbf21))
+        if (entity.BlockingLine != null && Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, entity.BlockingLine.Segment, 
+            entity.BlockingLine.Back == null, entity.BlockingLine.Flags, WorldStatic.Mbf21))
         {
             tryMove.Subsector = null;
             tryMove.Success = false;
@@ -1422,7 +1432,7 @@ doneLinkToSectors:
 
         // If we cannot find the line or thing that is blocking us, then we
         // are fully done moving horizontally.
-        if (ShouldClearSlide(entity, tryMove))
+        if (ShouldClearSlide(tryMove))
             ClearVelocityXY(entity);
         stepDelta.X = 0;
         stepDelta.Y = 0;
@@ -1621,7 +1631,7 @@ doneLinkToSectors:
             if (IsPositionValid(entity, nextX, entity.Position.Y, tryMove))
             {
                 MoveTo(entity, nextX, entity.Position.Y, tryMove);
-                if (ShouldClearSlide(entity, tryMove))
+                if (ShouldClearSlide(tryMove))
                     entity.Velocity.Y = 0;
                 stepDelta.Y = 0;
                 return true;
@@ -1633,7 +1643,7 @@ doneLinkToSectors:
             if (IsPositionValid(entity, entity.Position.X, nextY, tryMove))
             {
                 MoveTo(entity, entity.Position.X, nextY, tryMove);
-                if (ShouldClearSlide(entity, tryMove))
+                if (ShouldClearSlide(tryMove))
                     entity.Velocity.X = 0;
                 stepDelta.X = 0;
                 return true;
@@ -1643,13 +1653,15 @@ doneLinkToSectors:
         return false;
     }
 
-    private static bool ShouldClearSlide(Entity entity, TryMoveData tryMove)
+    private static bool ShouldClearSlide(TryMoveData tryMove)
     {
-        // Don't clear for voodoo dolls on lines issue #790
-        if (entity.PlayerObj != null && entity.PlayerObj.IsVooDooDoll)
-            return !WorldStatic.VanillaMovementPhysics || tryMove.BlockingEntity == null;
+        if (!tryMove.BlockedLineClearsVelocity)
+            return false;
 
-        return !WorldStatic.VanillaMovementPhysics && tryMove.BlockingEntity != null;
+        if (!WorldStatic.VanillaMovementPhysics)
+            return true;
+
+        return tryMove.BlockingEntity == null;
     }
 
     private void MoveXY(Entity entity)

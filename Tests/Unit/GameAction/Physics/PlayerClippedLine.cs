@@ -17,15 +17,16 @@ public class PlayerClippedLine
 
     public PlayerClippedLine()
     {
-        World = WorldAllocator.LoadMap("Resources/box.zip", "box.WAD", "MAP01", GetType().Name, (world) => { }, IWadType.Doom2);
+        World = WorldAllocator.LoadMap("Resources/clipline.zip", "clipline.WAD", "MAP01", GetType().Name, (world) => { }, IWadType.Doom2);
     }
 
-    [Fact(DisplayName = "Player can mouve out of single clipped line")]
+    [Fact(DisplayName = "Player can move out of single clipped line")]
     public void PlayerCanMoveOutOfSingleClippedLine()
     {
         var startPos = new Vec3D(-320, -632, 0);
         GameActions.SetEntityPosition(World, Player, startPos);
 
+        Player.Velocity = Vec3D.Zero;
         Player.AngleRadians = GameActions.GetAngle(Bearing.North);
 
         int startTick = World.Gametick;
@@ -45,6 +46,7 @@ public class PlayerClippedLine
         var startPos = new Vec3D(-5, -635, 0);
         GameActions.SetEntityPosition(World, Player, startPos);
 
+        Player.Velocity = Vec3D.Zero;
         Player.AngleRadians = GameActions.GetAngle(Bearing.NorthWest);
 
         int startTick = World.Gametick;
@@ -54,23 +56,138 @@ public class PlayerClippedLine
         GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return Player.Position.Y < -624 && Player.Position.X > -18; }, TimeSpan.FromSeconds(5));
     }
 
-    [Fact(DisplayName = "Player can't move out clipped corner")]
-    public void PlayerCantMoveOutOfClippedCorner()
+    [Fact(DisplayName = "Player can move out extremely clipped corner")]
+    public void PlayerCanMoveOutOfExtremelyClippedCornerSR40()
     {
         // Player can't move out of this line with normal forward movement
         var startPos = new Vec3D(-4, -636, 0);
         GameActions.SetEntityPosition(World, Player, startPos);
 
+        Player.Velocity = Vec3D.Zero;
         Player.AngleRadians = GameActions.GetAngle(Bearing.NorthWest);
 
-        int startTick = World.Gametick;
-        GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
-        Player.Position.Should().Be(startPos);
-
         // Can move out with SR40
-        startTick = World.Gametick;
+        int startTick = World.Gametick;
         Player.AngleRadians = MathHelper.ToRadians(95);
         GameActions.RunPlayerCommands(World, Player.AngleRadians, [TickCommands.Forward, TickCommands.Left], 35 * 3);
         Player.Position.Should().NotBe(startPos);
+    }
+
+    [Fact(DisplayName = "Player can move out extremely clipped corner forward")]
+    public void PlayerCanMoveOutOfExtremelyClippedCornerForward()
+    {
+        // Player can't move out of this line with normal forward movement
+        var startPos = new Vec3D(-4, -636, 0);
+        GameActions.SetEntityPosition(World, Player, startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        Player.AngleRadians = GameActions.GetAngle(Bearing.NorthWest);
+
+        // Original doom behavior did not allow this section to pass. Boom behavior does...
+        int startTick = World.Gametick;
+        GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+    }
+
+    [Fact(DisplayName = "Player can move with clipped line in north/south direction")]
+    public void PlayerCanMoveWithClippedLineNorthSouth()
+    {
+        var startPos = new Vec3D(0, -320, 0);
+        GameActions.SetEntityPosition(World, Player, startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        Player.AngleRadians = GameActions.GetAngle(Bearing.North);
+
+        int startTick = World.Gametick;
+        GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        startPos = Player.Position;
+        startTick = World.Gametick;
+        GameActions.PlayerRunBackward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+
+        // Can't strafe right
+        Player.Velocity = Vec3D.Zero;
+        startPos = Player.Position;
+        startTick = World.Gametick;
+        GameActions.PlayerStrafeRight(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().Be(startPos);
+
+        // Can strafe left
+        Player.Velocity = Vec3D.Zero;
+        startPos = Player.Position;
+        startTick = World.Gametick;
+        GameActions.PlayerStrafeLeft(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+    }
+
+    [Fact(DisplayName = "Player can move with clipped line in east/west direction")]
+    public void PlayerCanMoveWithClippedLineEastWest()
+    {
+        var startPos = new Vec3D(-320, -640, 0);
+        GameActions.SetEntityPosition(World, Player, startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        Player.AngleRadians = GameActions.GetAngle(Bearing.East);
+
+        int startTick = World.Gametick;
+        GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        startPos = Player.Position;
+        startTick = World.Gametick;
+        GameActions.PlayerRunBackward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        startPos = Player.Position;
+        startTick = World.Gametick;
+        GameActions.PlayerStrafeRight(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().Be(startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        startPos = Player.Position;
+        startTick = World.Gametick;
+        GameActions.PlayerStrafeLeft(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+    }
+
+    [Fact(DisplayName = "Player can move out of two-sided clipped line")]
+    void PlayerCanMoveOutOfTwoSidedClippedLine()
+    {
+        var startPos = new Vec3D(-320, -386, 0);
+        GameActions.SetEntityPositionInit(World, Player, startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        Player.AngleRadians = GameActions.GetAngle(Bearing.South);
+
+        int startTick = World.Gametick;
+        GameActions.PlayerRunBackward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().Be(startPos);
+
+        startTick = World.Gametick;
+        GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+    }
+
+    [Fact(DisplayName = "Player can't move out of two-sided clipped line")]
+    void PlayerCantMoveOutOfTwoSidedClippedLine()
+    {
+        var startPos = new Vec3D(-320, -384, 0);
+        GameActions.SetEntityPositionInit(World, Player, startPos);
+
+        Player.Velocity = Vec3D.Zero;
+        Player.AngleRadians = GameActions.GetAngle(Bearing.South);
+
+        int startTick = World.Gametick;
+        GameActions.PlayerRunBackward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().Be(startPos);
+
+        startTick = World.Gametick;
+        GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().Be(startPos);
     }
 }

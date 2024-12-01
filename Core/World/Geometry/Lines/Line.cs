@@ -188,10 +188,35 @@ public sealed class Line
         DataChanges |= LineDataTypes.Alpha;
     }
 
-    public static bool BlocksEntity(Entity entity, bool oneSided, in LineFlags flags, bool mbf21)
+    public static bool CanMoveOutOf(Entity entity, double x, double y, in Seg2D seg, bool oneSided)
+    {
+        if (entity.PlayerObj == null || entity.PlayerObj.IsVooDooDoll)
+            return false;
+
+        // Boom appears to check if the player was previously clipped with the line
+        // If the player is moving out of the line then do not count the line as blocking. Boom things...
+        if (!seg.Intersects(entity.Position.X - entity.Radius, entity.Position.Y - entity.Radius,
+            entity.Position.X + entity.Radius, entity.Position.Y + entity.Radius))
+        {
+            return false;
+        }
+
+        if (!oneSided)
+            return true;
+
+        var newPos = new Vec2D(x, y);
+        if (!seg.OnRight(newPos))
+            return false;
+
+        var oldPos = entity.Position.XY;
+        var linePoint = seg.FromTime(seg.ToTime(oldPos));
+        return linePoint.DistanceSquared(oldPos) <= linePoint.DistanceSquared(newPos);        
+    }
+
+    public static bool BlocksEntity(Entity entity, double x, double y, in Seg2D seg, bool oneSided, in LineFlags flags, bool mbf21)
     {
         if (oneSided)
-            return true;
+            return !CanMoveOutOf(entity, x, y, seg, oneSided);
 
         bool isPlayerOrFriendly = entity.IsPlayer || entity.Flags.Friendly;
         if (!isPlayerOrFriendly && !entity.Flags.Missile &&

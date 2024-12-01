@@ -12,6 +12,7 @@ public class TryMoveData
     public Vec2D Position;
     public bool Success;
     public bool CanFloat;
+    public bool BlockedLineClearsVelocity;
     public double LowestCeilingZ;
     public double HighestFloorZ;
     public double DropOffZ;
@@ -35,6 +36,7 @@ public class TryMoveData
         Position.X = x;
         Position.Y = y;
         CanFloat = false;
+        BlockedLineClearsVelocity = true;
         IntersectEntities2D.Clear();
         IntersectSpecialLines.Clear();
         ImpactSpecialLines.Clear();

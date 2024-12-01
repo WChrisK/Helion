@@ -7,6 +7,7 @@
   - Autosave timer that automatically writes a quicksave every x seconds
   - Frustum culling for the automap
   - Controller gyroscope support (tested with PS DualShock 4, should work with other SDL-supported controllers)
+  - Emulate boom behavior that let player move out of one-sided lines
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch
@@ -24,3 +25,4 @@
   - Fix cases where lines were being marked for automap when they weren't visible
   - Fix sprite x offset rendering (fixes small red torch and burning barrel twitching)
   - Fix issue with bump use breaking on maps with voodoo dolls
+  - Fix issue with emulating vanilla behavior that didn't clear velocity when stuck in walls causing issues with slide moving code

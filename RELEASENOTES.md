@@ -27,3 +27,4 @@
   - Fix sprite x offset rendering (fixes small red torch and burning barrel twitching)
   - Fix issue with bump use breaking on maps with voodoo dolls
   - Fix issue with emulating vanilla behavior that didn't clear velocity when stuck in walls causing issues with slide moving code
+  - Fix custom map name not taking priority and entertext for changing clusters with mapinfo

@@ -116,13 +116,15 @@ public partial class MapInfoDefinition
 
         ConsumeBrace(parser, true);
 
+        bool specifiedTitlePatch = false;
+
         while (!IsBlockComplete(parser, true))
         {
             int line = parser.GetCurrentLine();
             string item = parser.ConsumeString();
             if (MapNames.Contains(item))
             {
-                ParseMapDefFields(parser, mapDef, item);
+                ParseMapDefFields(parser, mapDef, item, ref specifiedTitlePatch);
             }
             else if (item.Equals("nosoundclipping", StringComparison.OrdinalIgnoreCase))
                 continue; // Deprecated, no longer used
@@ -181,6 +183,9 @@ public partial class MapInfoDefinition
                     parser.ConsumeLine();
             }
         }
+
+        if (!specifiedTitlePatch && mapDef.NiceName.Length > 0)
+            mapDef.TitlePatch = string.Empty;
 
         ConsumeBrace(parser, false);
         return mapDef;
@@ -282,7 +287,7 @@ public partial class MapInfoDefinition
         return mapDef;
     }
 
-    private void ParseMapDefFields(SimpleParser parser, MapInfoDef mapDef, string item)
+    private void ParseMapDefFields(SimpleParser parser, MapInfoDef mapDef, string item, ref bool specifiedTitlePatch)
     {
         ConsumeEquals(parser);
 

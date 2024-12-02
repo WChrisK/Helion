@@ -1090,12 +1090,6 @@ doneLinkToSectors:
             return TryMoveData;
         }
 
-        if (entity.IsCrushing())
-        {
-            TryMoveData.Success = false;
-            return TryMoveData;
-        }
-
         // We advance in small steps that are smaller than the radius of
         // the actor so we don't skip over any lines or things due to fast
         // entity speed.

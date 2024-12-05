@@ -155,6 +155,7 @@ public partial class Client : IDisposable, IInputManagement
     {
         GLInfo.ClipControlSupported = GlVersion.IsVersionSupported(4, 5) || GLExtensions.Supports("GL_ARB_clip_control");
         GLInfo.MapPersistentBitSupported = GlVersion.IsVersionSupported(4, 4);
+        GLInfo.BlendEquationiSupported = GlVersion.IsVersionSupported(4, 0);
     }
 
     private static void SetIcon(Window window)

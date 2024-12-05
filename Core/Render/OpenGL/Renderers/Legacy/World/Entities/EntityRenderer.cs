@@ -21,6 +21,8 @@ public class EntityRenderer : IDisposable
     private readonly IConfig m_config;
     private readonly LegacyGLTextureManager m_textureManager;
     private readonly EntityProgram m_program = new();
+    private readonly EntityTransparentProgram m_programTransparent = new();
+    private readonly EntityCompositeProgram m_programComposite = new();
     private readonly RenderDataManager<EntityVertex> m_dataManager;
     private readonly Dictionary<Vec2D, int> m_renderPositions = new(1024, new Vec2DCompararer());
     private readonly HashSet<SpritePosKey> m_spriteRenderPositions = new(1024);
@@ -195,6 +197,8 @@ public class EntityRenderer : IDisposable
             }
         }
 
+        //entity.Alpha = 0.5f;
+
         int colorMapIndex = entity.Properties.ColormapIndex ?? entity.GetTranslationColorMap();
         SpriteRotation spriteRotation = spriteDef == null ? m_nullSpriteRotation : GetSpriteRotation(spriteDef, entity.Frame.Frame, rotation, colorMapIndex);
         GLLegacyTexture texture = (spriteRotation.RenderStore as GLLegacyTexture) ?? m_textureManager.NullTexture;
@@ -203,7 +207,7 @@ public class EntityRenderer : IDisposable
         float offsetZ = GetOffsetZ(entity, texture);
 
         bool useAlpha = entity.Flags.Shadow || (m_spriteAlpha && entity.Alpha < 1.0f);
-        RenderData<EntityVertex> renderData = useAlpha ? m_dataManager.GetAlpha(texture) : m_dataManager.GetNonAlpha(texture);
+        var renderData = useAlpha ? m_dataManager.GetAlpha(texture) : m_dataManager.GetNonAlpha(texture);
         float alpha = useAlpha ? entity.Alpha : 1.0f;
         float fuzz = 0.0f;
         if (entity.Flags.Shadow)
@@ -249,56 +253,75 @@ public class EntityRenderer : IDisposable
         m_lastViewerEntityId = renderInfo.ViewerEntity.Id;
     }
 
-    private void SetUniforms(RenderInfo renderInfo)
+    private void SetUniforms(EntityProgram program, RenderInfo renderInfo)
     {
-        m_program.BoundTexture(TextureUnit.Texture0);
-        m_program.ColormapTexture(TextureUnit.Texture2);
-        m_program.SectorColormapTexture(TextureUnit.Texture3);
-        m_program.ExtraLight(renderInfo.Uniforms.ExtraLight);
-        m_program.HasInvulnerability(renderInfo.Uniforms.DrawInvulnerability);
-        m_program.LightLevelMix(renderInfo.Uniforms.Mix);
-        m_program.Mvp(renderInfo.Uniforms.Mvp);
-        m_program.MvpNoPitch(renderInfo.Uniforms.MvpNoPitch);
-        m_program.FuzzFrac(renderInfo.Uniforms.TimeFrac);
-        m_program.TimeFrac(renderInfo.TickFraction);
-        m_program.ViewRightNormal(m_viewRightNormal);
-        m_program.PrevViewRightNormal(m_prevViewRightNormal);
-        m_program.DistanceOffset(Renderer.GetDistanceOffset(renderInfo));
-        m_program.ColorMix(renderInfo.Uniforms.ColorMix.Global);
-        m_program.FuzzDiv(renderInfo.Uniforms.FuzzDiv);
-        m_program.PaletteIndex((int)renderInfo.Uniforms.PaletteIndex);
-        m_program.ColorMapIndex(renderInfo.Uniforms.ColorMapUniforms.GlobalIndex);
-        m_program.LightMode(renderInfo.Uniforms.LightMode);
-        m_program.GammaCorrection(renderInfo.Uniforms.GammaCorrection);
-        m_program.ViewPos(renderInfo.Camera.Position);
+        program.BoundTexture(TextureUnit.Texture0);
+        program.ColormapTexture(TextureUnit.Texture2);
+        program.SectorColormapTexture(TextureUnit.Texture3);
+        program.ExtraLight(renderInfo.Uniforms.ExtraLight);
+        program.HasInvulnerability(renderInfo.Uniforms.DrawInvulnerability);
+        program.LightLevelMix(renderInfo.Uniforms.Mix);
+        program.Mvp(renderInfo.Uniforms.Mvp);
+        program.MvpNoPitch(renderInfo.Uniforms.MvpNoPitch);
+        program.FuzzFrac(renderInfo.Uniforms.TimeFrac);
+        program.TimeFrac(renderInfo.TickFraction);
+        program.ViewRightNormal(m_viewRightNormal);
+        program.PrevViewRightNormal(m_prevViewRightNormal);
+        program.DistanceOffset(Renderer.GetDistanceOffset(renderInfo));
+        program.ColorMix(renderInfo.Uniforms.ColorMix.Global);
+        program.FuzzDiv(renderInfo.Uniforms.FuzzDiv);
+        program.PaletteIndex((int)renderInfo.Uniforms.PaletteIndex);
+        program.ColorMapIndex(renderInfo.Uniforms.ColorMapUniforms.GlobalIndex);
+        program.LightMode(renderInfo.Uniforms.LightMode);
+        program.GammaCorrection(renderInfo.Uniforms.GammaCorrection);
+        program.ViewPos(renderInfo.Camera.Position);
 
         // The fade distance calculations work using squared distances
         float maxDistanceSquared = renderInfo.Uniforms.MaxDistance * renderInfo.Uniforms.MaxDistance;
-        m_program.MaxDistanceSquared(maxDistanceSquared);
-        m_program.FadeDistance(maxDistanceSquared / 2);
+        program.MaxDistanceSquared(maxDistanceSquared);
+        program.FadeDistance(maxDistanceSquared / 2);
+
+        if (program is EntityCompositeProgram)
+        {
+            program.AccumTexture(TextureUnit.Texture4);
+            program.RevealTexture(TextureUnit.Texture5);
+            program.AccumCountTextre(TextureUnit.Texture6);
+        }
     }
 
-    public void RenderAlpha(RenderInfo renderInfo)
-    {
-        Render(renderInfo, true);
-    }
-
-    public void RenderNonAlpha(RenderInfo renderInfo)
-    {
-        Render(renderInfo, false);
-    }
-    
-    private void Render(RenderInfo renderInfo, bool alpha)
+    public void RenderOpaque(RenderInfo renderInfo)
     {
         m_program.Bind();
         GL.ActiveTexture(TextureUnit.Texture0);
-        SetUniforms(renderInfo);
+        SetUniforms(m_program, renderInfo);
+        m_dataManager.RenderNonAlpha(PrimitiveType.Points);
+        m_program.Unbind();
+    }
 
-        if (alpha)
-            m_dataManager.RenderAlpha(PrimitiveType.Points);
-        else
-            m_dataManager.RenderNonAlpha(PrimitiveType.Points);
+    public void RenderOitTransparentPass(RenderInfo renderInfo)
+    {
+        m_programTransparent.Bind();
+        GL.ActiveTexture(TextureUnit.Texture0);
+        SetUniforms(m_programTransparent ,renderInfo);
+        m_dataManager.RenderAlpha(PrimitiveType.Points);
+        m_programTransparent.Unbind();
+    }
 
+    public void RenderOitCompositePass(RenderInfo renderInfo)
+    {
+        m_programComposite.Bind();
+        GL.ActiveTexture(TextureUnit.Texture0);
+        SetUniforms(m_programComposite, renderInfo);
+        m_dataManager.RenderAlpha(PrimitiveType.Points);
+        m_programComposite.Unbind();
+    }
+
+    public void RenderTransparent(RenderInfo renderInfo)
+    {
+        m_program.Bind();
+        GL.ActiveTexture(TextureUnit.Texture0);
+        SetUniforms(m_program, renderInfo);
+        m_dataManager.RenderAlpha(PrimitiveType.Points);
         m_program.Unbind();
     }
 

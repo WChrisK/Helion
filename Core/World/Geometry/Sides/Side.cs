@@ -14,7 +14,7 @@ public record class SideColormaps(Colormap? Upper, Colormap? Middle, Colormap? L
 
 public record struct FloodKeys(int Key1, int Key2);
 
-public sealed class Side : IRenderObject
+public sealed class Side
 {
     public static readonly FloodKeys NoFloodKeys = new(0, 0);
 
@@ -41,8 +41,6 @@ public sealed class Side : IRenderObject
     public SideColormaps? Colormaps;
     public StaticSideSkyData? SkyGeometry;
 
-    public double RenderDistanceSquared { get; set; }
-    public RenderObjectType Type => RenderObjectType.Side;
     public int LastRenderGametick;
     public int LastRenderGametickAlpha;
     public int BlockmapCount;

@@ -36,7 +36,6 @@ public class GeometryRenderer : IDisposable
     private const double MaxSky = 16384;
     private static readonly Sector DefaultSector = CreateDefault();
 
-    public readonly List<IRenderObject> AlphaSides = [];
     public readonly PortalRenderer Portals;
     private readonly IConfig m_config;
     private readonly RenderProgram m_program;
@@ -308,7 +307,6 @@ public class GeometryRenderer : IDisposable
         if (newTick)
             m_skyRenderer.Clear();
         m_lineDrawnTracker.ClearDrawnLines();
-        AlphaSides.Clear();
     }
 
     public void RenderStaticGeometryWalls() =>
@@ -519,11 +517,8 @@ public class GeometryRenderer : IDisposable
         m_drawnSides[side.Id] = WorldStatic.CheckCounter;
         if (m_config.Render.TextureTransparency && side.Line.Alpha < 1)
         {
-            var lineCenter = side.Line.Segment.FromTime(0.5);
-            double dx = Math.Max(lineCenter.X - pos2D.X, Math.Max(0, pos2D.X - lineCenter.X));
-            double dy = Math.Max(lineCenter.Y - pos2D.Y, Math.Max(0, pos2D.Y - lineCenter.Y));
-            side.RenderDistanceSquared = dx * dx + dy * dy;
-            AlphaSides.Add(side);
+            RenderAlphaSide(side, onFrontSide);
+            return;
         }
 
         bool transferHeights = false;
@@ -1078,6 +1073,7 @@ public class GeometryRenderer : IDisposable
         float alpha = m_config.Render.TextureTransparency ? facingSide.Line.Alpha : 1.0f;
         DynamicVertex[]? data = m_vertexLookup[facingSide.Id];
         var geometryType = alpha < 1 ? GeometryType.AlphaWall : GeometryType.TwoSidedMiddleWall;
+
         RenderWorldData renderData = m_worldDataManager.GetRenderData(texture, m_program, geometryType);
 
         if (facingSide.OffsetChanged || m_sectorChangedLine || data == null)

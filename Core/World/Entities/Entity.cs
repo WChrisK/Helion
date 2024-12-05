@@ -31,7 +31,7 @@ namespace Helion.World.Entities;
 /// <summary>
 /// An actor in a world.
 /// </summary>
-public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObject
+public partial class Entity : IDisposable, ITickable, ISoundSource
 {
     private const double Speed = 47000 / 65536.0;
     private const int ForceGibDamage = ushort.MaxValue;
@@ -106,12 +106,10 @@ public partial class Entity : IDisposable, ITickable, ISoundSource, IRenderObjec
     public float Alpha;
 
     public int LastRenderGametick;
-    public double RenderDistanceSquared { get; set; } = double.MaxValue;
+    public double RenderDistanceSquared = double.MaxValue;
     public int SlowTickMultiplier = 1;
     public int ChaseFailureSkipCount;
     public double ClosetChaseSpeed = DefaultClosetChaseSpeed;
-    public RenderObjectType Type => RenderObjectType.Entity;
-
     public virtual SoundChannel WeaponSoundChannel => SoundChannel.Default;
     public virtual int ProjectileKickBack => Properties.ProjectileKickBack;
 

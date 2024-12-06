@@ -29,3 +29,4 @@
   - Fix issue with emulating vanilla behavior that didn't clear velocity when stuck in walls causing issues with slide moving code
   - Fix custom map name not taking priority and entertext for changing clusters with mapinfo
   - Fix minimum x/y velocity to match vanilla behavior
+  - Added sprites and sounds for mbf helper dog

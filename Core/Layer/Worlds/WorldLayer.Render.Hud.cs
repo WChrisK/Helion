@@ -285,7 +285,13 @@ public partial class WorldLayer
 
         IPowerup? powerup = Player.Inventory.PowerupEffectColor;
         if (powerup?.DrawColor != null && powerup.DrawPowerupEffect)
-            hud.Clear(powerup.DrawColor.Value, powerup.DrawAlpha);
+        {
+            var alpha = powerup.DrawAlpha;
+            if (powerup.PowerupType == PowerupType.Strength)
+                alpha *= (float)m_config.Game.BerserkIntensity;
+
+            hud.Clear(powerup.DrawColor.Value, alpha);
+        }
 
         if (Player.BonusCount > 0)
             hud.Clear(PickupColor, 0.2f);

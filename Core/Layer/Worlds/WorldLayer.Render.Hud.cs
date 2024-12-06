@@ -540,9 +540,9 @@ public partial class WorldLayer
         int HalfWidth = Math.Max(Width / 2, 1);
         int Length = (int)(5 * m_scale * m_config.Hud.CrosshairScale.Value);
 
-        Color color = ToColor(m_config.Hud.CrosshairColor);
+        Color color;
         bool target = Player.CrosshairTarget.Entity != null;
-        int crosshairLength = target ? (int)(Length * 0.8f) : Length;
+        int crosshairLength = target && m_config.Hud.CrosshairTargetShrink.Value ? (int)(Length * 0.8f) : Length;
 
         if (m_config.Hud.CrosshairHealthIndicator.Value)
         {

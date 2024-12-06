@@ -129,6 +129,10 @@ public class ConfigHud: ConfigElement<ConfigHud>
     [OptionMenu(OptionSectionType.Hud, "Crosshair Target Color")]
     public readonly ConfigValue<CrossColor> CrosshairTargetColor = new(CrossColor.Red);
 
+    [ConfigInfo("Crosshair shinks on target.")]
+    [OptionMenu(OptionSectionType.Hud, "Crosshair Target Shrink")]
+    public readonly ConfigValue<bool> CrosshairTargetShrink = new(true);
+
     [ConfigInfo("Use crosshair as health indicator.  Crosshair gets redder as player loses health.")]
     [OptionMenu(OptionSectionType.Hud, "Crosshair Health Indicator")]
     public readonly ConfigValue<bool> CrosshairHealthIndicator = new(false);

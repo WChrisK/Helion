@@ -10,6 +10,7 @@
   - Emulate boom behavior that let player move out of one-sided lines
   - Controller rumble feedback
   - Add option for berserk intensity
+  - Add option to disable crosshair shrinking on target
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch

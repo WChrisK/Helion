@@ -1,5 +1,4 @@
 using System;
-using System.Security.Cryptography;
 using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Grids;
@@ -7,7 +6,6 @@ using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Maps.Specials;
 using Helion.Maps.Specials.ZDoom;
-using Helion.Resources.Archives.Entries;
 using Helion.Util;
 using Helion.Util.Container;
 using Helion.Util.RandomGenerators;

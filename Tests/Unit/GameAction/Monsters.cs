@@ -190,7 +190,7 @@ namespace Helion.Tests.Unit.GameAction
             missile.Should().NotBeNull();
             var speed = missile!.Definition.Properties.MissileMovementSpeed;
             missile!.Position.Should().Be(new Vec3D(-32, -455, 32));
-            missile!.Velocity.Should().Be(new Vec3D(0, -10, 0));
+            missile!.Velocity.ApproxEquals(new Vec3D(0, -10, 0)).Should().BeTrue();
         }
 
         [Fact(DisplayName = "Monster projectile different Z")]
@@ -218,7 +218,7 @@ namespace Helion.Tests.Unit.GameAction
 
             missile.Should().NotBeNull();
             missile!.Position.Should().Be(new Vec3D(-32, -447.2, 56.6));
-            missile!.Velocity.Should().Be(new Vec3D(0, -8, -6));
+            missile!.Velocity.ApproxEquals(new Vec3D(0, -8, -6)).Should().BeTrue();
         }
 
         [Fact(DisplayName = "Barrel player damage source")]

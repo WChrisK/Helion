@@ -11,6 +11,7 @@
   - Controller rumble feedback
   - Add option for berserk intensity
   - Add option to disable crosshair shrinking on target
+  - Add use command to allow for separate bindings for shotgun/super shotgun [bind x "use shotgun"] [bind y "use supershotgun"]
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch

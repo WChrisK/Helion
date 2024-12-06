@@ -22,6 +22,7 @@ using Helion.Util.RandomGenerators;
 using Helion.World;
 using Helion.World.Cheats;
 using Helion.World.Entities.Definition;
+using Helion.World.Entities.Inventories;
 using Helion.World.Entities.Players;
 using Helion.World.Save;
 using Helion.World.Util;
@@ -38,7 +39,7 @@ public partial class Client
 {
     private const string StatFile = "levelstat.txt";
 
-    private readonly List<Tuple<Action<ConsoleCommandEventArgs>, ConsoleCommandEventArgs>> m_resumeCommands = [];
+    private readonly List<Tuple<Action<ConsoleCommandEventArgs>, ConsoleCommandEventArgs>> m_tickCommands = [];
     private GlobalData m_globalData = new();
     private readonly Zdbsp m_zdbsp = new();
     private WorldModel? m_lastWorldModel;
@@ -452,19 +453,19 @@ public partial class Client
 
     [ConsoleCommand("inventory.clear", "Clears the players inventory")]
     private void CommandInventoryClear(ConsoleCommandEventArgs args) =>
-        AddWorldResumeCommand(DoInventoryClear, args);
+        AddWorldTickCommand(DoInventoryClear, args);
 
     [ConsoleCommand("inventory.remove", "Removes the item from the players inventory")]
     private void CommandInventoryRemove(ConsoleCommandEventArgs args) =>
-        AddWorldResumeCommand(DoInventoryRemove, args);
+        AddWorldTickCommand(DoInventoryRemove, args);
 
     [ConsoleCommand("inventory.add", "Adds the item to the players inventory")]
     private void CommandInventoryAdd(ConsoleCommandEventArgs args) =>
-        AddWorldResumeCommand(DoInventoryAdd, args);
+        AddWorldTickCommand(DoInventoryAdd, args);
 
     [ConsoleCommand("inventory.setamount", "Sets the item amount in the players inventory (player must own the item)")]
     private void CommandInventorySetAmount(ConsoleCommandEventArgs args) =>
-        AddWorldResumeCommand(DoInventorySetAmount, args);
+        AddWorldTickCommand(DoInventorySetAmount, args);
 
     [ConsoleCommand("nojump", "Disables player jumping")]
     private void NoJump(ConsoleCommandEventArgs args) =>
@@ -511,6 +512,28 @@ public partial class Client
         }
 
         HelionLog.Error("Invalid complvl");
+    }
+
+    [ConsoleCommand("Use", "Uses an item. Mainly used for binding specific weapons to keys.")]
+    private void Use(ConsoleCommandEventArgs args) =>
+        AddWorldTickCommand(DoUseCommand, args);
+
+    private void DoUseCommand(ConsoleCommandEventArgs args)
+    {        
+        if (m_layerManager.WorldLayer == null || args.Args.Count == 0)
+            return;
+
+        var world = m_layerManager.WorldLayer.World;
+        var def = world.EntityManager.DefinitionComposer.GetByName(args.Args[0]);
+        if (def == null)
+            return;
+
+        if (def.IsType(Inventory.WeaponClassName))
+        {
+            var weapon = world.Player.Inventory.Weapons.GetWeapon(def.Name);
+            if (weapon != null)
+                world.Player.ChangeWeapon(weapon);
+        }
     }
 
     private void ToggleMapOption(MapOptions option, ConsoleCommandEventArgs args)
@@ -566,24 +589,14 @@ public partial class Client
         }
     }
 
-    private void AddWorldResumeCommand(Action<ConsoleCommandEventArgs> action, ConsoleCommandEventArgs args)
+    private void AddWorldTickCommand(Action<ConsoleCommandEventArgs> action, ConsoleCommandEventArgs args)
     {
-        if (m_layerManager.WorldLayer == null)
-            return;
-
-        if (!m_layerManager.WorldLayer.World.Paused)
-        {
-            action(args);
-            return;
-        }
-
         if (m_layerManager.WorldLayer != null)
-            m_resumeCommands.Add(new Tuple<Action<ConsoleCommandEventArgs>, ConsoleCommandEventArgs>(action, args));
+            m_tickCommands.Add(new Tuple<Action<ConsoleCommandEventArgs>, ConsoleCommandEventArgs>(action, args));
     }
 
     private void Console_OnCommand(object? sender, ConsoleCommandEventArgs args)
     {
-
         if (TryHandleCheatCommand(args))
             return;
 
@@ -761,7 +774,7 @@ public partial class Client
         }
 
         m_window.InputManager.Clear();
-        m_resumeCommands.Clear();
+        m_tickCommands.Clear();
 
         if (map == null)
         {
@@ -826,7 +839,7 @@ public partial class Client
     private void RegisterWorldEvents(WorldLayer newLayer)
     {
         newLayer.World.LevelExit += World_LevelExit;
-        newLayer.World.WorldResumed += World_WorldResumed;
+        newLayer.World.OnTick += World_OnTick;
         newLayer.World.ClearConsole += World_ClearConsole;
     }
 
@@ -841,16 +854,16 @@ public partial class Client
             return;
 
         m_layerManager.WorldLayer.World.LevelExit -= World_LevelExit;
-        m_layerManager.WorldLayer.World.WorldResumed -= World_WorldResumed;
+        m_layerManager.WorldLayer.World.OnTick -= World_OnTick;
         m_layerManager.WorldLayer.World.ClearConsole -= World_ClearConsole;
     }
 
-    private void World_WorldResumed(object? sender, EventArgs e)
+    private void World_OnTick(object? sender, EventArgs e)
     {
-        foreach (var cmd in m_resumeCommands)
+        foreach (var cmd in m_tickCommands)
             cmd.Item1(cmd.Item2);
 
-        m_resumeCommands.Clear();
+        m_tickCommands.Clear();
     }
 
     private void World_LevelExit(object? sender, LevelChangeEvent e)

@@ -22,7 +22,7 @@ public static class MapInfoDefExtensions
         mapInfo.DisplayName = ReplaceMapNamePrefix(mapInfo, displayName);
         mapInfo.DisplayNameWithPrefix = displayName;
         if (ShouldAddMapPrefix(mapInfo, displayName))
-            mapInfo.DisplayNameWithPrefix = $"{mapInfo.MapName}: {displayName}";
+            mapInfo.DisplayNameWithPrefix = $"{mapInfo.Label}: {displayName}";
         return mapInfo.DisplayNameWithPrefix;
     }
 

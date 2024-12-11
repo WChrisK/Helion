@@ -2,6 +2,7 @@
 using System.IO;
 using FluentAssertions;
 using Helion.Maps.Specials.Vanilla;
+using Helion.Resources.Definitions.Language;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Resources.IWad;
 using Xunit;
@@ -275,10 +276,10 @@ public class UMapInfo
 
         var language = new LanguageDefinition();
         var e1m1 = mapInfoDef.MapInfo.GetMap("e1m1").MapInfo;
-        e1m1.GetDisplayNameWithPrefix(language).Should().Be("E1M1 Label: Chemical Circumstances");
+        e1m1!.GetDisplayNameWithPrefix(language).Should().Be("E1M1 Label: Chemical Circumstances");
 
         // this one has clear
         var e1m2 = mapInfoDef.MapInfo.GetMap("e1m2").MapInfo;
-        e1m1.GetDisplayNameWithPrefix(language).Should().Be("Chemical Storage");
+        e1m2!.GetDisplayNameWithPrefix(language).Should().Be("Chemical Storage");
     }
 }

@@ -387,7 +387,7 @@ public partial class Client
     private void ListMaps(ConsoleCommandEventArgs args)
     {
         foreach (var map in m_archiveCollection.MapInfo.MapInfo.Maps)
-            HelionLog.Info(map.GetDisplayNameWithPrefix(m_archiveCollection));
+            HelionLog.Info(map.GetDisplayNameWithPrefix(m_archiveCollection.Language));
     }
 
     [ConsoleCommand("printmap", "Prints the current map")]
@@ -395,7 +395,7 @@ public partial class Client
     {
         var map = m_layerManager.WorldLayer?.CurrentMap;
         if (map != null)
-            HelionLog.Info(map.GetDisplayNameWithPrefix(m_archiveCollection));
+            HelionLog.Info(map.GetDisplayNameWithPrefix(m_archiveCollection.Language));
         else
             HelionLog.Info("No map loaded");
     }

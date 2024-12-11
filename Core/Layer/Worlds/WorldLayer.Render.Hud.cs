@@ -177,7 +177,7 @@ public partial class WorldLayer
         };
         pos.Y -= offsetY;
 
-        string text = World.MapInfo.GetDisplayNameWithPrefix(World.ArchiveCollection);
+        string text = World.MapInfo.GetDisplayNameWithPrefix(World.ArchiveCollection.Language);
         hud.Text(text, SmallHudFont, m_mapHeaderFontSize, pos, both: Align.BottomLeft);
     }
 

@@ -220,7 +220,7 @@ public class SaveMenu : Menu
                         m_previousDisplayName = savedGameRow.Text;
 
                         m_defaultSavedGameName = (GetWorld(out IWorld? world) && world != null)
-                            ? world.MapInfo.GetMapNameWithPrefix(world.ArchiveCollection)
+                            ? world.MapInfo.GetMapNameWithPrefix(world.ArchiveCollection.Language)
                             : UnknownSavedGameName;
 
                         if (savedGameRow.Text == EmptySlotText || savedGameRow.Text == savedGameRow.MapName)

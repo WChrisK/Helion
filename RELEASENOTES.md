@@ -33,3 +33,4 @@
   - Fix custom map name not taking priority and entertext for changing clusters with mapinfo
   - Fix minimum x/y velocity to match vanilla behavior
   - Added sprites and sounds for mbf helper dog
+  - Fix label clear in UMAPINFO

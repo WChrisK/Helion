@@ -239,7 +239,10 @@ public partial class MapInfoDefinition
         mapDef.MapName = mapName;
         MapInfoDef? existing = MapInfo.GetMap(mapDef.MapName).MapInfo;
         if (existing == null)
+        {
+            mapDef.Label = mapDef.MapName;
             return mapDef;
+        }
 
         if (hasDefaultMap)
         {

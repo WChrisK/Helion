@@ -266,4 +266,19 @@ public class UMapInfo
         cluster!.SecretExitText[0].Should().Be("secret exit");
         cluster!.ExitText.Count.Should().Be(0);
     }
+
+    [Fact(DisplayName = "UMapInfo label")]
+    public void Label()
+    {
+        var mapInfoDef = new MapInfoDefinition();
+        mapInfoDef.ParseUniversalMapInfo(IWadBaseType.Doom1, File.ReadAllText("Resources/UMAPINFO1.TXT"));
+
+        var language = new LanguageDefinition();
+        var e1m1 = mapInfoDef.MapInfo.GetMap("e1m1").MapInfo;
+        e1m1.GetDisplayNameWithPrefix(language).Should().Be("E1M1 Label: Chemical Circumstances");
+
+        // this one has clear
+        var e1m2 = mapInfoDef.MapInfo.GetMap("e1m2").MapInfo;
+        e1m1.GetDisplayNameWithPrefix(language).Should().Be("Chemical Storage");
+    }
 }

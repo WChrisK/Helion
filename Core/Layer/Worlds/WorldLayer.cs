@@ -158,7 +158,7 @@ public partial class WorldLayer : IGameLayerParent
         FpsTracker fpsTracker, Profiler profiler, MapInfoDef mapInfoDef, SkillDef skillDef, IMap map,
         Player? existingPlayer, WorldModel? worldModel, IRandom? random)
     {
-        string displayName = mapInfoDef.GetMapNameWithPrefix(archiveCollection);
+        string displayName = mapInfoDef.GetMapNameWithPrefix(archiveCollection.Language);
 
         bool sameAsPreviousMap = mapInfoDef.MapName.EqualsIgnoreCase(LastMapName); if (!sameAsPreviousMap)
             HelionLog.Info(displayName);

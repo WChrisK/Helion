@@ -216,6 +216,8 @@ public partial class Renderer : IDisposable
         {
             if (damageCount == player.DamageCount)
                 damageCount = (int)(player.DamageCount * config.Game.PainIntensity);
+            else
+                damageCount = (int)(damageCount * config.Game.BerserkIntensity);
 
             palette = GetDamagePalette(damageCount);
         }

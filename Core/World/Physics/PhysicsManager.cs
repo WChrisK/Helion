@@ -1,5 +1,4 @@
 using System;
-using System.Security.Cryptography;
 using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Grids;
@@ -7,7 +6,6 @@ using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Maps.Specials;
 using Helion.Maps.Specials.ZDoom;
-using Helion.Resources.Archives.Entries;
 using Helion.Util;
 using Helion.Util.Container;
 using Helion.Util.RandomGenerators;
@@ -35,7 +33,7 @@ public sealed class PhysicsManager
 {
     private const int MaxSlides = 3;
     private const double SlideStepBackTime = 1.0 / 32.0;
-    private const double MinMovementThreshold = 0.01;
+    private const double MinMovement = 0.0625;
     private const double SetEntityToFloorSpeedMax = 8;
     private const double MinMoveFactor = 32 / 65536.0;
     private const double DefaultMoveFactor = 1.0;
@@ -611,21 +609,6 @@ public sealed class PhysicsManager
                 current = pusher.OnEntity.Entity;
             }
         }
-    }
-
-    private static void ApplyFriction(Entity entity)
-    {
-        double sectorFriction = GetFrictionFromSectors(entity);
-        entity.Velocity.X *= sectorFriction;
-        entity.Velocity.Y *= sectorFriction;
-    }
-
-    private static void StopXYMovementIfSmall(Entity entity)
-    {
-        if (Math.Abs(entity.Velocity.X) < MinMovementThreshold)
-            entity.Velocity.X = 0;
-        if (Math.Abs(entity.Velocity.Y) < MinMovementThreshold)
-            entity.Velocity.Y = 0;
     }
 
     private enum LineBlock
@@ -1680,9 +1663,36 @@ doneLinkToSectors:
         }
 
         TryMoveXY(entity, entity.Position.X + entity.Velocity.X, entity.Position.Y + entity.Velocity.Y);
-        if (entity.ShouldApplyFriction())
-            ApplyFriction(entity);
-        StopXYMovementIfSmall(entity);
+
+        bool shouldClear = false;
+        if (entity.Velocity.X > -MinMovement && entity.Velocity.X < MinMovement &&
+            entity.Velocity.Y > -MinMovement && entity.Velocity.Y < MinMovement)
+        {
+            if (entity.PlayerObj == null)
+            {
+                shouldClear = true;
+            }
+            else
+            {
+                var player = entity.PlayerObj;
+                if (entity.PlayerObj.IsVooDooDoll)
+                    player = m_world.EntityManager.GetRealPlayer(entity.PlayerObj.PlayerNumber);
+
+                shouldClear = player != null && player.TickCommand.SideMoveSpeed == 0 && player.TickCommand.ForwardMoveSpeed == 0;
+            }
+        }
+
+        if (shouldClear)
+        {
+            entity.Velocity.X = 0;
+            entity.Velocity.Y = 0;
+        }
+        else if (entity.ShouldApplyFriction())
+        {
+            double sectorFriction = GetFrictionFromSectors(entity);
+            entity.Velocity.X *= sectorFriction;
+            entity.Velocity.Y *= sectorFriction;
+        }
     }
 
     private static double GetFrictionFromSectors(Entity entity)

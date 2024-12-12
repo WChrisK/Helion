@@ -670,7 +670,7 @@ public class GameLayerManager : IGameLayerManager
         var world = WorldLayer!.World;
         if (isRotating)
         {
-            string name = $"Quick: {world.MapInfo.GetMapNameWithPrefix(world.ArchiveCollection)}";
+            string name = $"Quick: {world.MapInfo.GetMapNameWithPrefix(world.ArchiveCollection.Language)}";
             var saveEvent = m_saveGameManager.WriteSaveGame(world, name, null, quickSave: true);
             HandleSaveEvent(saveEvent, world);
         }
@@ -681,7 +681,7 @@ public class GameLayerManager : IGameLayerManager
             bool isCustomizedName = existingSave.Model?.MapName != existingSave.Model?.Text;
             string name = isCustomizedName
                 ? existingSave.Model?.Text ?? "Unnamed"
-                : world.MapInfo.GetMapNameWithPrefix(world.ArchiveCollection);
+                : world.MapInfo.GetMapNameWithPrefix(world.ArchiveCollection.Language);
             var saveEvent = m_saveGameManager.WriteSaveGame(world, name, existingSave);
             HandleSaveEvent(saveEvent, world, SaveMenu.SaveMessage);
         }

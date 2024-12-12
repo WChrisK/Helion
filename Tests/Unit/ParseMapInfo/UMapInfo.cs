@@ -2,6 +2,7 @@
 using System.IO;
 using FluentAssertions;
 using Helion.Maps.Specials.Vanilla;
+using Helion.Resources.Definitions.Language;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Resources.IWad;
 using Xunit;
@@ -265,5 +266,20 @@ public class UMapInfo
         cluster = map03.ClusterDef;
         cluster!.SecretExitText[0].Should().Be("secret exit");
         cluster!.ExitText.Count.Should().Be(0);
+    }
+
+    [Fact(DisplayName = "UMapInfo label")]
+    public void Label()
+    {
+        var mapInfoDef = new MapInfoDefinition();
+        mapInfoDef.ParseUniversalMapInfo(IWadBaseType.Doom1, File.ReadAllText("Resources/UMAPINFO1.TXT"));
+
+        var language = new LanguageDefinition();
+        var e1m1 = mapInfoDef.MapInfo.GetMap("e1m1").MapInfo;
+        e1m1!.GetDisplayNameWithPrefix(language).Should().Be("E1M1 Label: Chemical Circumstances");
+
+        // this one has clear
+        var e1m2 = mapInfoDef.MapInfo.GetMap("e1m2").MapInfo;
+        e1m2!.GetDisplayNameWithPrefix(language).Should().Be("Chemical Storage");
     }
 }

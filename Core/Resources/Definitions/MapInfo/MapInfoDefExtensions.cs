@@ -1,4 +1,5 @@
 using Helion.Resources.Archives.Collection;
+using Helion.Resources.Definitions.Language;
 using System.Text.RegularExpressions;
 
 namespace Helion.Resources.Definitions.MapInfo;
@@ -12,25 +13,25 @@ public static class MapInfoDefExtensions
          new(@"^map .+[:-]", RegexOptions.IgnoreCase | RegexOptions.Compiled)
     };
 
-    public static string GetDisplayNameWithPrefix(this MapInfoDef mapInfo, ArchiveCollection archiveCollection)
+    public static string GetDisplayNameWithPrefix(this MapInfoDef mapInfo, LanguageDefinition language)
     {
         if (mapInfo.DisplayNameWithPrefix != null)
             return mapInfo.DisplayNameWithPrefix;
 
-        string displayName = mapInfo.GetNiceNameOrLookup(archiveCollection);
+        string displayName = mapInfo.GetNiceNameOrLookup(language);
         mapInfo.DisplayName = ReplaceMapNamePrefix(mapInfo, displayName);
         mapInfo.DisplayNameWithPrefix = displayName;
         if (ShouldAddMapPrefix(mapInfo, displayName))
-            mapInfo.DisplayNameWithPrefix = $"{mapInfo.MapName}: {displayName}";
+            mapInfo.DisplayNameWithPrefix = $"{mapInfo.Label}: {displayName}";
         return mapInfo.DisplayNameWithPrefix;
     }
 
-    public static string GetMapNameWithPrefix(this MapInfoDef mapInfo, ArchiveCollection archiveCollection)
+    public static string GetMapNameWithPrefix(this MapInfoDef mapInfo, LanguageDefinition language)
     {
-        return mapInfo.GetDisplayNameWithPrefix(archiveCollection);    
+        return mapInfo.GetDisplayNameWithPrefix(language);    
     }
 
-    private static string GetNiceNameOrLookup(this MapInfoDef mapInfo, ArchiveCollection archiveCollection)
+    private static string GetNiceNameOrLookup(this MapInfoDef mapInfo, LanguageDefinition language)
     {
         if (mapInfo.DisplayName != null)
             return mapInfo.DisplayName;
@@ -39,7 +40,7 @@ public static class MapInfoDefExtensions
         if (mapInfo.NiceName.Length > 0)
             displayName = mapInfo.NiceName;
         else if (mapInfo.LookupName.Length > 0)
-            displayName = archiveCollection.Definitions.Language.GetMessage(mapInfo.LookupName);
+            displayName = language.GetMessage(mapInfo.LookupName);
 
         if (string.IsNullOrWhiteSpace(displayName))
             displayName = "Unknown";
@@ -49,6 +50,9 @@ public static class MapInfoDefExtensions
 
     private static bool ShouldAddMapPrefix(MapInfoDef mapInfo, string displayName)
     {
+        if (string.IsNullOrEmpty(mapInfo.Label))
+            return false;
+
         foreach (Regex regex in PrefixRegex)
         {
             Match match = regex.Match(displayName);

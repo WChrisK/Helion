@@ -74,7 +74,7 @@ public class Nightmare
         var fireball = GameActions.GetEntity(World, "DoomImpBall");
         fireball.Should().NotBeNull();
         // Fireball should be twice as fast (10 -> 20)
-        fireball.Velocity.Should().Be(new Vec3D(0, -20, 0));
+        fireball.Velocity.ApproxEquals(new Vec3D(0, -20, 0)).Should().BeTrue();
     }
 
     [Fact(DisplayName = "Nightmare respawn")]

@@ -103,7 +103,7 @@ public partial class Renderer : IDisposable
     }
 
     private GLFramebuffer GenerateMainFramebuffer() => new("Main", Window.Dimension, 1);
-    private GLFramebuffer GenerateVirtualFramebuffer() => new("Virtual", RenderDimension, 1, GLFrameBufferOptions.DepthStencil);
+    private GLFramebuffer GenerateVirtualFramebuffer() => new("Virtual", RenderDimension, 1, GLFrameBufferOptions.DepthStencilAttachment);
 
     public unsafe void UploadColorMap()
     {

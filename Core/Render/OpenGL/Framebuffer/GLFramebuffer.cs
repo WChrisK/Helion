@@ -11,7 +11,7 @@ namespace Helion.Render.OpenGL.Framebuffer;
 public enum GLFrameBufferOptions
 {
     None,
-    DepthStencil
+    DepthStencilAttachment
 }
 
 public class GLFramebuffer : IDisposable
@@ -37,7 +37,7 @@ public class GLFramebuffer : IDisposable
         Bind();
         GLHelper.ObjectLabel(ObjectLabelIdentifier.Framebuffer, m_name, $"Framebuffer: {Label}");
         CreateColorAttachments(numColorAttachments, dimension, label);
-        if (options.HasFlag(GLFrameBufferOptions.DepthStencil))
+        if (options.HasFlag(GLFrameBufferOptions.DepthStencilAttachment))
             CreateDepthStencilAttachment(dimension, label);
         CheckFramebufferOrThrow();
         Unbind();
@@ -73,7 +73,7 @@ public class GLFramebuffer : IDisposable
     {
         GLTexture2D depthTexture = new($"(Framebuffer {label}) Depth Stencil Attachment", dimension);
         depthTexture.Bind();
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthStencil, dimension.Width, Dimension.Height, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Depth32fStencil8, dimension.Width, Dimension.Height, 0, PixelFormat.DepthStencil, PixelType.Float32UnsignedInt248Rev, IntPtr.Zero);
         GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, depthTexture.Name, 0);
         depthTexture.Unbind();
 

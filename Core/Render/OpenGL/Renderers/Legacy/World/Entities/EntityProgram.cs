@@ -32,7 +32,6 @@ public class EntityProgram : RenderProgram
     private readonly int m_fadeDistanceLocation;
     private readonly int m_viewPosLocation;
     private readonly int m_accumTextureLocation;
-    private readonly int m_revealTextureLocation;
     private readonly int m_accumCountTextureLocation;
 
     public EntityProgram() : base("Entity")
@@ -60,7 +59,6 @@ public class EntityProgram : RenderProgram
         m_fadeDistanceLocation = Uniforms.GetLocation("fadeDistance");
         m_viewPosLocation = Uniforms.GetLocation("viewPos");
         m_accumTextureLocation = Uniforms.GetLocation("accum");
-        m_revealTextureLocation = Uniforms.GetLocation("reveal");
         m_accumCountTextureLocation = Uniforms.GetLocation("accumCount");
     }
     
@@ -68,7 +66,6 @@ public class EntityProgram : RenderProgram
     public void ColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_colormapTextureLocation);
     public void SectorColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_sectorColormapTextureLocation);
     public void AccumTexture(TextureUnit unit) => Uniforms.Set(unit, m_accumTextureLocation);
-    public void RevealTexture(TextureUnit unit) => Uniforms.Set(unit, m_revealTextureLocation);
     public void AccumCountTextre(TextureUnit unit) => Uniforms.Set(unit, m_accumCountTextureLocation);
     public void ExtraLight(int extraLight) => Uniforms.Set(extraLight, m_extraLightLocation);
     public void HasInvulnerability(bool invul) => Uniforms.Set(invul, m_hasInvulnerabilityLocation);

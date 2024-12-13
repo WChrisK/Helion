@@ -229,8 +229,7 @@ public class LegacyWorldRenderer : WorldRenderer
         m_spriteTransparency = m_config.Render.SpriteTransparency;
         Clear(world, renderInfo);
 
-        if (GLInfo.BlendEquationiSupported)
-            m_oitFrameBuffer.CreateOrUpdate((renderInfo.Viewport.Width, renderInfo.Viewport.Height));
+        m_oitFrameBuffer.CreateOrUpdate((renderInfo.Viewport.Width, renderInfo.Viewport.Height));
 
         if (m_lastTicker != world.GameTicker)
             m_entityRenderer.Start(renderInfo);
@@ -321,21 +320,6 @@ public class LegacyWorldRenderer : WorldRenderer
 
     private unsafe void RenderTransparent(RenderInfo renderInfo, GLFramebuffer framebuffer)
     {
-        if (!GLInfo.BlendEquationiSupported)
-        {
-            // OIT is dependent on glBlendEquationi. Just render in whatever order for 3.3.
-            GL.DepthMask(false);
-            m_interpolationProgram.Bind();
-            SetInterpolationUniforms(m_interpolationProgram, renderInfo);
-            m_interpolationProgram.Bind();
-            GL.ActiveTexture(TextureUnit.Texture0);
-            m_worldDataManager.RenderAlphaWalls();
-            GL.DepthMask(true);
-
-            m_entityRenderer.RenderTransparent(renderInfo);
-            return;
-        }
-
         GL.DepthMask(false);
 
         m_oitFrameBuffer.StartRender(framebuffer);
@@ -353,7 +337,7 @@ public class LegacyWorldRenderer : WorldRenderer
 
         framebuffer.Bind();
 
-        m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5, TextureUnit.Texture6);
+        m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5);
         m_entityRenderer.RenderOitCompositePass(renderInfo);
 
         m_interpolationCompositeProgram.Bind();
@@ -363,7 +347,6 @@ public class LegacyWorldRenderer : WorldRenderer
         m_worldDataManager.RenderAlphaWalls();
 
         GL.DepthMask(true);
-        GL.DepthFunc(DepthFunction.Less);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
     }
 
@@ -482,8 +465,7 @@ public class LegacyWorldRenderer : WorldRenderer
         if (program is InterpolationCompositeShader)
         {
             program.AccumTexture(TextureUnit.Texture4);
-            program.RevealTexture(TextureUnit.Texture5);
-            program.AccumCountTextre(TextureUnit.Texture6);
+            program.AccumCountTextre(TextureUnit.Texture5);
         }
     }
 

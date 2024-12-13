@@ -30,7 +30,6 @@ public static class GLInfo
     public static readonly string Renderer;
     public static bool ClipControlSupported = true;
     public static bool MapPersistentBitSupported = true;
-    public static bool BlendEquationiSupported = true;
 
     static GLInfo()
     {

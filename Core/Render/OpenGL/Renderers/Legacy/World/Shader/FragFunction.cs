@@ -30,21 +30,11 @@ public class FragFunction
             case OitOptions.OitTransparentPass:
                 return @"
                   layout (location = 0) out vec4 accum;
-                  layout (location = 1) out float reveal;
-                  layout (location = 2) out float accumCount;";
+                  layout (location = 1) out vec2 accumCount;";
             case OitOptions.OitCompositePass:
                 return @"
                     uniform sampler2D accum;
-                    uniform sampler2D reveal;
                     uniform sampler2D accumCount;
-                    // epsilon number
-                    const float EPSILON = 0.00001f;
-
-                    // calculate floating point numbers equality accurately
-                    bool isApproximatelyEqual(float a, float b)
-                    {
-	                    return abs(a - b) <= (abs(a) < abs(b) ? abs(b) : abs(a)) * EPSILON;
-                    }
 
                     // get the max value between three values
                     float max3(vec3 v) 
@@ -153,7 +143,7 @@ public class FragFunction
     }
 
     public static string FragColorFunction(FragColorFunctionOptions options, ColorMapFetchContext ctx = ColorMapFetchContext.Default, 
-        OitOptions oitOptions = OitOptions.None, string optional = "")
+        OitOptions oitOptions = OitOptions.None, string postProcess = "")
     {
         var fragColor = "fragColor = texture(boundTexture, uvFrag.st);";
         if (oitOptions == OitOptions.OitTransparentPass)
@@ -180,7 +170,7 @@ public class FragFunction
             + (ShaderVars.PaletteColorMode ? "" : "fragColor.xyz *= min(sectorColorMapIndexFrag, 1);")
             + InvulnerabilityFragColor
             + GammaCorrection()
-            + optional
+            + postProcess
             + Oit(oitOptions);
     }
 
@@ -192,29 +182,21 @@ public class FragFunction
         if (options == OitOptions.OitTransparentPass)
             return @"
                 //Equation 8
-                float weight = clamp(10 / (1e-5 + pow(dist/500, 3)) + pow(dist/2000, 6), 1e-2, 500.0);
+                //float weight = clamp(10 / (1e-5 + pow(dist/500, 3)) + pow(dist/2000, 6), 5.0, 500.0);
                 //float weight = clamp(10 / (1e-5 + pow(z/5, 3)) + pow(z/200, 6), 1e-2, 3e3);
 
                 // Equation 7
-                //float weight = clamp(10 / (1e-5 + pow(dist/1000, 2)) + pow(dist/16384, 6), 1e-2, 500.0);
+                float weight = clamp(10 / (1e-5 + pow(dist/1000, 2)) + pow(dist/8192, 6), 1e-2, 1000.0);
 
                 // Equation 9
-                //float weight = clamp(0.03 / (1e-5 + pow(dist / 2000, 4.0)), 1e-2, 3e3);
+                //float weight = clamp(0.03 / (1e-5 + pow(dist / 2000, 4.0)), 1e-2, 500.0);
 
                 accum = vec4(fragColor.rgb * fragColor.a, fragColor.a) * weight;
-                reveal = fragColor.a;
-                accumCount = 1;
+                accumCount = vec2(fragColor.a, 1);
             ";
 
         return @"
             ivec2 coords = ivec2(gl_FragCoord.xy);
-
-	        // fragment revealage
-	        float revealage = texelFetch(reveal, coords, 0).r;
-	
-	        // save the blending and color texture fetch cost if there is not a transparent fragment
-	        if (isApproximatelyEqual(revealage, 1.0f)) 
-		        discard;
  
 	        // fragment color
 	        vec4 accumulation = texelFetch(accum, coords, 0);
@@ -224,13 +206,13 @@ public class FragFunction
 		        accumulation.rgb = vec3(accumulation.a);
 
 	        // prevent floating point precision bug
-	        vec3 average_color = accumulation.rgb / max(accumulation.a, EPSILON);
-
-            float counter = min(texelFetch(accumCount, coords, 0).r, 3);
-            counter = mix(counter, counter, 1);
-	        // blend pixels
-            float revealFactor = (1 - revealage)/counter;
-	        fragColor = vec4(average_color, revealFactor);";
+	        vec3 average_color = accumulation.rgb / max(accumulation.a, 0.00001f);
+            // r is accumulated alpha, g is accumulation count
+            vec2 counter = texelFetch(accumCount, coords, 0).rg;
+            float alphaComponent = counter.r;
+            float countComponent = counter.g;
+            
+	        fragColor = vec4(average_color, alphaComponent/countComponent);";
     }
 
     public static string GammaCorrection() => "fragColor.rgb = pow(fragColor.rgb, vec3(1.0/gammaCorrection));";

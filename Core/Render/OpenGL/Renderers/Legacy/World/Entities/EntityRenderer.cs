@@ -282,8 +282,7 @@ public class EntityRenderer : IDisposable
         if (program is EntityCompositeProgram)
         {
             program.AccumTexture(TextureUnit.Texture4);
-            program.RevealTexture(TextureUnit.Texture5);
-            program.AccumCountTextre(TextureUnit.Texture6);
+            program.AccumCountTextre(TextureUnit.Texture5);
         }
     }
 

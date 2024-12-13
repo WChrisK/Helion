@@ -27,7 +27,6 @@ public class InterpolationShader : RenderProgram
     private readonly int m_lightModeLocation;
     private readonly int m_gammaCorrectionLocation;
     private readonly int m_accumTextureLocation;
-    private readonly int m_revealTextureLocation;
     private readonly int m_accumCountTextureLocation;
 
     public InterpolationShader() : base("World")
@@ -49,7 +48,6 @@ public class InterpolationShader : RenderProgram
         m_lightModeLocation = Uniforms.GetLocation("lightMode");
         m_gammaCorrectionLocation = Uniforms.GetLocation("gammaCorrection");
         m_accumTextureLocation = Uniforms.GetLocation("accum");
-        m_revealTextureLocation = Uniforms.GetLocation("reveal");
         m_accumCountTextureLocation = Uniforms.GetLocation("accumCount");
     }
 
@@ -58,7 +56,6 @@ public class InterpolationShader : RenderProgram
     public void ColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_colormapTextureLocation);
     public void SectorColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_sectorColormapTextureLocation);
     public void AccumTexture(TextureUnit unit) => Uniforms.Set(unit, m_accumTextureLocation);
-    public void RevealTexture(TextureUnit unit) => Uniforms.Set(unit, m_revealTextureLocation);
     public void AccumCountTextre(TextureUnit unit) => Uniforms.Set(unit, m_accumCountTextureLocation);
 
     public void HasInvulnerability(bool invul) => Uniforms.Set(invul, m_hasInvulnerabilityLocation);

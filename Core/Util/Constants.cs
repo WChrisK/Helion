@@ -139,6 +139,10 @@ public static class Constants
         public const string WeaponSlot5 = "WeaponSlot5";
         public const string WeaponSlot6 = "WeaponSlot6";
         public const string WeaponSlot7 = "WeaponSlot7";
+        public const string WeaponGroup1 = "WeaponGroup1";
+        public const string WeaponGroup2 = "WeaponGroup2";
+        public const string WeaponGroup3 = "WeaponGroup3";
+        public const string WeaponGroup4 = "WeaponGroup4";
         public const string Screenshot = "Screenshot";
         public const string HudIncrease = "HudIncrease";
         public const string HudDecrease = "HudDecrease";
@@ -212,6 +216,10 @@ public static class Constants
         Input.WeaponSlot5,
         Input.WeaponSlot6,
         Input.WeaponSlot7,
+        Input.WeaponGroup1,
+        Input.WeaponGroup2,
+        Input.WeaponGroup3,
+        Input.WeaponGroup4,
         Input.Screenshot,
         Input.HudIncrease,
         Input.HudDecrease,

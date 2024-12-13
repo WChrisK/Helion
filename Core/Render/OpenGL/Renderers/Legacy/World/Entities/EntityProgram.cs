@@ -129,7 +129,7 @@ public class EntityProgram : RenderProgram
         }
     "
     .Replace("${SectorColorMapVar}", ShaderVars.PaletteColorMode ? "out int sectorColorMapIndexOut;" : "out vec3 sectorColorMapIndexOut;")
-    .Replace("${SectorColorMap}", ShaderVars.PaletteColorMode ? 
+    .Replace("${SectorColorMap}", ShaderVars.PaletteColorMode ?
         "sectorColorMapIndexOut = int(texelFetch(sectorColormapTexture, int(sectorIndex)).r);" :
         "sectorColorMapIndexOut = texelFetch(sectorColormapTexture, int(sectorIndex)).rgb;");
 
@@ -279,20 +279,24 @@ public class EntityProgram : RenderProgram
             ${LightLevelFragFunction}
             ${SectorColorMapFragFunction}
             ${FragColorFunction}
-
-            //if (renderDistSquared > maxDistanceSquared - fadeDistance) {
-            //    float fade = (maxDistanceSquared - renderDistSquared) / fadeDistance;
-            //    fragColor.a *= fade;
-            //}
         }
     "
     .Replace("${LightLevelFragFunction}", LightLevel.FragFunction)
     .Replace("${FuzzFunction}", FragFunction.FuzzFunction)
-    .Replace("${FragColorFunction}", FragFunction.FragColorFunction(FragColorFunctionOptions.Fuzz | FragColorFunctionOptions.Alpha | FragColorFunctionOptions.Colormap, ColorMapFetchContext.Entity, GetOitOptions()))
+    .Replace("${FragColorFunction}", FragFunction.FragColorFunction(FragColorFunctionOptions.Fuzz | FragColorFunctionOptions.Alpha | FragColorFunctionOptions.Colormap, ColorMapFetchContext.Entity, GetOitOptions(), GetAlphaFade()))
     .Replace("${SectorColorMapFragVariables}", SectorColorMap.FragVariables)
     .Replace("${SectorColorMapFragFunction}", SectorColorMap.FragFunction)
     .Replace("${OitVariables}", FragFunction.OitFragVariables(GetOitOptions()))
     .Replace("${OutFragColor}", GetOutFragColor());
+
+    static string GetAlphaFade() 
+    {
+        return @"
+        if (renderDistSquared > maxDistanceSquared - fadeDistance) {
+            float fade = (maxDistanceSquared - renderDistSquared) / fadeDistance;
+            fragColor.a *= fade;
+        }";
+    }
 
     private OitOptions GetOitOptions()
     {

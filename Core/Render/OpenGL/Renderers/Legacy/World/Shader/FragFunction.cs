@@ -152,7 +152,8 @@ public class FragFunction
                 .Replace("${IndexAdd}", indexAdd);
     }
 
-    public static string FragColorFunction(FragColorFunctionOptions options, ColorMapFetchContext ctx = ColorMapFetchContext.Default, OitOptions oitOptions = OitOptions.None)
+    public static string FragColorFunction(FragColorFunctionOptions options, ColorMapFetchContext ctx = ColorMapFetchContext.Default, 
+        OitOptions oitOptions = OitOptions.None, string optional = "")
     {
         var fragColor = "fragColor = texture(boundTexture, uvFrag.st);";
         if (oitOptions == OitOptions.OitTransparentPass)
@@ -179,6 +180,7 @@ public class FragFunction
             + (ShaderVars.PaletteColorMode ? "" : "fragColor.xyz *= min(sectorColorMapIndexFrag, 1);")
             + InvulnerabilityFragColor
             + GammaCorrection()
+            + optional
             + Oit(oitOptions);
     }
 

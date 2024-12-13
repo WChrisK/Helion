@@ -197,8 +197,6 @@ public class EntityRenderer : IDisposable
             }
         }
 
-        //entity.Alpha = 0.5f;
-
         int colorMapIndex = entity.Properties.ColormapIndex ?? entity.GetTranslationColorMap();
         SpriteRotation spriteRotation = spriteDef == null ? m_nullSpriteRotation : GetSpriteRotation(spriteDef, entity.Frame.Frame, rotation, colorMapIndex);
         GLLegacyTexture texture = (spriteRotation.RenderStore as GLLegacyTexture) ?? m_textureManager.NullTexture;

@@ -33,6 +33,10 @@ public class ConfigGame: ConfigElement<ConfigGame>
     [OptionMenu(OptionSectionType.General, "Pain Intensity", spacer: true, sliderMin: 0, sliderMax: 5.0, sliderStep: .1)]
     public readonly ConfigValue<double> PainIntensity = new(1.0);
 
+    [ConfigInfo("Scale red amount drawn to screen when the player pickups up a berserk.")]
+    [OptionMenu(OptionSectionType.General, "Berserk Intensity", sliderMin: 0, sliderMax: 5.0, sliderStep: .1)]
+    public readonly ConfigValue<double> BerserkIntensity = new(1.0);
+
     [ConfigInfo("Transition effect between levels/screens.")]
     [OptionMenu(OptionSectionType.General, "Transition Type")]
     public readonly ConfigValue<World.TransitionType> TransitionType = new(World.TransitionType.Melt);

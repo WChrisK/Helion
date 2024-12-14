@@ -9,6 +9,9 @@
   - Controller gyroscope support (tested with PS DualShock 4, should work with other SDL-supported controllers)
   - Emulate boom behavior that let player move out of one-sided lines
   - Controller rumble feedback
+  - Add option for berserk intensity
+  - Add option to disable crosshair shrinking on target
+  - Add use command to allow for separate bindings for shotgun/super shotgun [bind x "use shotgun"] [bind y "use supershotgun"]
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch
@@ -27,3 +30,7 @@
   - Fix sprite x offset rendering (fixes small red torch and burning barrel twitching)
   - Fix issue with bump use breaking on maps with voodoo dolls
   - Fix issue with emulating vanilla behavior that didn't clear velocity when stuck in walls causing issues with slide moving code
+  - Fix custom map name not taking priority and entertext for changing clusters with mapinfo
+  - Fix minimum x/y velocity to match vanilla behavior
+  - Added sprites and sounds for mbf helper dog
+  - Fix label clear in UMAPINFO

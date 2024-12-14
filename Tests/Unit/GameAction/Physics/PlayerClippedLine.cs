@@ -156,7 +156,7 @@ public class PlayerClippedLine
     }
 
     [Fact(DisplayName = "Player can move out of two-sided clipped line")]
-    void PlayerCanMoveOutOfTwoSidedClippedLine()
+    public void PlayerCanMoveOutOfTwoSidedClippedLine()
     {
         var startPos = new Vec3D(-320, -386, 0);
         GameActions.SetEntityPositionInit(World, Player, startPos);
@@ -174,7 +174,7 @@ public class PlayerClippedLine
     }
 
     [Fact(DisplayName = "Player can't move out of two-sided clipped line")]
-    void PlayerCantMoveOutOfTwoSidedClippedLine()
+    public void PlayerCantMoveOutOfTwoSidedClippedLine()
     {
         var startPos = new Vec3D(-320, -384, 0);
         GameActions.SetEntityPositionInit(World, Player, startPos);
@@ -189,5 +189,29 @@ public class PlayerClippedLine
         startTick = World.Gametick;
         GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
         Player.Position.Should().Be(startPos);
+    }
+
+    [Fact(DisplayName = "Player can move out of two-sided clipped line while being crushed")]
+    public void PlayerCanMoveOutTwoSidedClippedLineCrusher()
+    {
+        var sector = GameActions.GetSector(World, 1);
+        var saveFloor = sector.Floor.Z;
+        var saveCeiling = sector.Ceiling.Z;
+        sector.Floor.Z = 0;
+        sector.Ceiling.Z = 48;
+
+        var startPos = new Vec3D(-320, -386, 0);
+        GameActions.SetEntityPosition(World, Player, startPos);
+        Player.IsCrushing().Should().BeTrue();
+
+        Player.Velocity = Vec3D.Zero;
+        Player.AngleRadians = GameActions.GetAngle(Bearing.South);
+
+        int startTick = World.Gametick;
+        GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 35; }, TimeSpan.FromSeconds(5));
+        Player.Position.Should().NotBe(startPos);
+
+        sector.Floor.Z = saveFloor;
+        sector.Ceiling.Z = saveCeiling;
     }
 }

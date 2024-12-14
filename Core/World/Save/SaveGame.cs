@@ -80,7 +80,7 @@ public class SaveGame
         SaveGameModel saveGameModel = new()
         {
             Text = title,
-            MapName = world.MapInfo.GetMapNameWithPrefix(world.ArchiveCollection),
+            MapName = world.MapInfo.GetMapNameWithPrefix(world.ArchiveCollection.Language),
             Date = DateTime.Now,
             WorldFile = "world.json",
             Files = world.GetGameFilesModel()

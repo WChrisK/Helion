@@ -177,7 +177,7 @@ public partial class WorldLayer
         };
         pos.Y -= offsetY;
 
-        string text = World.MapInfo.GetDisplayNameWithPrefix(World.ArchiveCollection);
+        string text = World.MapInfo.GetDisplayNameWithPrefix(World.ArchiveCollection.Language);
         hud.Text(text, SmallHudFont, m_mapHeaderFontSize, pos, both: Align.BottomLeft);
     }
 
@@ -285,7 +285,13 @@ public partial class WorldLayer
 
         IPowerup? powerup = Player.Inventory.PowerupEffectColor;
         if (powerup?.DrawColor != null && powerup.DrawPowerupEffect)
-            hud.Clear(powerup.DrawColor.Value, powerup.DrawAlpha);
+        {
+            var alpha = powerup.DrawAlpha;
+            if (powerup.PowerupType == PowerupType.Strength)
+                alpha *= (float)m_config.Game.BerserkIntensity;
+
+            hud.Clear(powerup.DrawColor.Value, alpha);
+        }
 
         if (Player.BonusCount > 0)
             hud.Clear(PickupColor, 0.2f);
@@ -534,9 +540,10 @@ public partial class WorldLayer
         int HalfWidth = Math.Max(Width / 2, 1);
         int Length = (int)(5 * m_scale * m_config.Hud.CrosshairScale.Value);
 
-        Color color = ToColor(m_config.Hud.CrosshairColor);
+        Color color;
         bool target = Player.CrosshairTarget.Entity != null;
-        int crosshairLength = target ? (int)(Length * 0.8f) : Length;
+        bool shouldShrink = m_config.Hud.CrosshairTargetShrink.Value && target;
+        int crosshairLength = shouldShrink ? (int)(Length * 0.8f) : Length;
 
         if (m_config.Hud.CrosshairHealthIndicator.Value)
         {
@@ -594,7 +601,7 @@ public partial class WorldLayer
                 hud.FillBox((vertical.X, vertical.Y, vertical.X + HalfWidth, vertical.Y + totalCrosshairLength), color, alpha: alpha);
                 break;
             case CrosshairStyle.Dot:
-                var size = target ? 1 : 1.5;
+                var size = shouldShrink ? 1 : 1.5;
                 totalCrosshairLength = Math.Max((int)(size * m_scale * m_config.Hud.CrosshairScale.Value), 1);
                 hud.FillBox((center.X, center.Y, center.X + totalCrosshairLength, center.Y + totalCrosshairLength), color, alpha: alpha);
                 break;

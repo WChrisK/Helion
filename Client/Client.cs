@@ -296,7 +296,7 @@ public partial class Client : IDisposable, IInputManagement
             m_layerManager.Add(loadingLayer);
         }
 
-        loadingLayer.LoadingText = $"Loading {load.MapInfoDef.GetDisplayNameWithPrefix(m_archiveCollection)}...";
+        loadingLayer.LoadingText = $"Loading {load.MapInfoDef.GetDisplayNameWithPrefix(m_archiveCollection.Language)}...";
         loadingLayer.LoadingImage = m_layerManager.WorldLayer == null ? m_archiveCollection.GameInfo.TitlePage : string.Empty;
 
         var worldLayer = m_layerManager.WorldLayer;
@@ -361,7 +361,7 @@ public partial class Client : IDisposable, IInputManagement
         var worldLayer = result.WorldLayer;
         var mapInfoDef = worldLayer.CurrentMap;
 
-        string title = $"Auto: {mapInfoDef.GetMapNameWithPrefix(worldLayer.World.ArchiveCollection)}";
+        string title = $"Auto: {mapInfoDef.GetMapNameWithPrefix(worldLayer.World.ArchiveCollection.Language)}";
         var saveGameEvent = m_saveGameManager.WriteNewSaveGame(worldLayer.World, title, autoSave: true);
         if (saveGameEvent.Success)
             m_console.AddMessage($"Saved {saveGameEvent.FileName}");

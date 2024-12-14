@@ -50,8 +50,11 @@ public partial class MapInfoDefinition
             ConsumeBrace(parser, true);
 
             MapInfoDef? existing = MapInfo.GetMap(mapDef.MapName).MapInfo;
-            if (existing != null)
+            if (existing == null)
+                mapDef.Label = mapDef.MapName;
+            else
                 mapDef = existing;
+
             MapInfo.AddOrReplaceMap(mapDef);
 
             bool specifiedTitlePatch = false;

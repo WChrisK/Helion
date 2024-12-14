@@ -62,9 +62,9 @@ public class OpenALAudioSourceManager : IAudioSourceManager
 
     public void SetListener(Vec3D pos, double angle, double pitch)
     {
-        Vec3D vec = Vec3D.UnitSphere(angle, pitch);
-        Vector3 up = new Vector3(0, 0, 1);
-        Vector3 at = new Vector3((float)vec.X, (float)vec.Y, (float)vec.Z);
+        var vec = Vec2D.UnitCircle(angle);
+        var up = new Vector3(0, 0, 1);
+        var at = new Vector3((float)vec.X, (float)vec.Y, 0);
 
         OpenALDebug.Start("Setting source manager position and orientation");
         AL.Listener(ALListenerfv.Orientation, ref at, ref up);
@@ -72,7 +72,7 @@ public class OpenALAudioSourceManager : IAudioSourceManager
         OpenALDebug.End("Setting source manager position and orientation");
     }
 
-    public void SetListenerVelocity(System.Numerics.Vector3 velocity)
+    public void SetListenerVelocity(Vector3 velocity)
     {
         OpenALDebug.Start("Setting listener velocity");
         AL.Listener(ALListener3f.Velocity, velocity.X, velocity.Y, velocity.Z);

@@ -2,6 +2,7 @@
 {
     using Helion.Audio.Sounds;
     using Helion.Geometry.Vectors;
+    using Helion.Maps.Bsp.States.Miniseg;
     using Helion.Window.Input;
     using SDLControllerWrapper;
     using System;
@@ -63,6 +64,22 @@
         }
 
         public bool HasGyro => m_activeController?.HasGyro ?? false;
+
+        public bool CalibrateGyro(int durationMilliseconds, Action<Vec3F, Vec3F> callback)
+        {
+            return m_activeController?.CalibrateGyro(durationMilliseconds, () => GetCalibrationCallback(callback)) ?? false;
+        }
+
+        private void GetCalibrationCallback(Action<Vec3F, Vec3F> externalCallback)
+        {
+            if (m_activeController != null)
+            {
+                m_gyroNoise = new Vec3F(m_activeController.GyroNoise[0], m_activeController.GyroNoise[1], m_activeController.GyroNoise[2]);
+                m_gyroDrift = new Vec3F(m_activeController.GyroDrift[0], m_activeController.GyroDrift[1], m_activeController.GyroDrift[2]);
+            }
+
+            externalCallback(m_gyroNoise, m_gyroDrift);
+        }
 
         public ControllerAdapter(float analogDeadZone, bool enabled, bool rumbleEnabled, Vec3F gyroNoise, Vec3F gyroDrift, InputManager inputManager)
         {

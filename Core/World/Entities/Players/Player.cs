@@ -8,6 +8,7 @@ using Helion.Render.OpenGL.Shared;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Resources.Definitions.SoundInfo;
 using Helion.Util;
+using Helion.Util.Config.Components;
 using Helion.World.Blockmap;
 using Helion.World.Cheats;
 using Helion.World.Entities.Definition;
@@ -936,12 +937,27 @@ public class Player : Entity
         return TickCommands.None;
     }
 
-    private static readonly int[,] GroupAssignments = new int[4,3]
-    {
-        {2, 2, -1},
-        {5, 1, 1},
-        {6, 7, -1},
-        {4, 2, -1}
+    private ConfigWeaponSlots[,] GetWeaponGroups() => new ConfigWeaponSlots[4,3] {
+        {
+            WorldStatic.World.Config.Player.Group1Weapon1,
+            WorldStatic.World.Config.Player.Group1Weapon2,
+            WorldStatic.World.Config.Player.Group1Weapon3,
+        },
+        {
+            WorldStatic.World.Config.Player.Group2Weapon1,
+            WorldStatic.World.Config.Player.Group2Weapon2,
+            WorldStatic.World.Config.Player.Group2Weapon3,
+        },
+        {
+            WorldStatic.World.Config.Player.Group3Weapon1,
+            WorldStatic.World.Config.Player.Group3Weapon2,
+            WorldStatic.World.Config.Player.Group3Weapon3,
+        },
+        {
+            WorldStatic.World.Config.Player.Group4Weapon1,
+            WorldStatic.World.Config.Player.Group4Weapon2,
+            WorldStatic.World.Config.Player.Group4Weapon3,
+        },
     };
     private int CurrentGroup = -1;
     private int CurrentGroupIndex = -1;
@@ -949,17 +965,18 @@ public class Player : Entity
     private void ExecuteWeaponGroup(TickCommand tickCommand)
     {
         var groupNumber = GetWeaponGroupIndex(GetWeaponGroupCommand(tickCommand));
+        var weaponGroups = GetWeaponGroups();
         int current_index = -1;
         if (groupNumber == CurrentGroup) {
             current_index = CurrentGroupIndex;
         }
         int resulting_index = 0;
         Weapon? selected_weapon = null;
-        for (int slotIndex = 0; slotIndex < GroupAssignments.GetLength(1); slotIndex++) {
-            var slot = GroupAssignments[groupNumber,slotIndex];
-            if (slot != -1) {
+        for (int slotIndex = 0; slotIndex < weaponGroups.GetLength(1); slotIndex++) {
+            var slot = weaponGroups[groupNumber,slotIndex];
+            if (slot != ConfigWeaponSlots.None) {
                 Weapon? weapon = null;
-                if (WeaponSlot == slot)
+                if (WeaponSlot == (int)slot)
                 {
                     var nextSlot = Inventory.Weapons.GetNextSubSlot(this);
                     if (nextSlot.Slot != -1 && nextSlot.SubSlot != WeaponSubSlot)
@@ -967,7 +984,7 @@ public class Player : Entity
                 }
                 else
                 {
-                    weapon = Inventory.Weapons.GetWeapon(slot, Inventory.Weapons.GetBestSubSlot(slot));
+                    weapon = Inventory.Weapons.GetWeapon((int)slot, Inventory.Weapons.GetBestSubSlot((int)slot));
                 }
 
                 if (weapon != null) {

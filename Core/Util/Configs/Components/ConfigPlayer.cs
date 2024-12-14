@@ -1,3 +1,4 @@
+using Helion.Util.Config.Components;
 using Helion.Util.Configs.Impl;
 using Helion.Util.Configs.Options;
 using Helion.Util.Configs.Values;
@@ -15,4 +16,44 @@ public class ConfigPlayer: ConfigElement<ConfigPlayer>
     [ConfigInfo("Gender of the player.")]
     [OptionMenu(OptionSectionType.General, "Player Gender")]
     public readonly ConfigValue<PlayerGender> Gender = new(default, OnlyValidEnums<PlayerGender>());
+
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "Group 1 1st")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group1Weapon1 = new(ConfigWeaponSlots.ShotgunOrSuperShotgun, OnlyValidEnums<ConfigWeaponSlots>());
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "        2nd")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group1Weapon2 = new(ConfigWeaponSlots.ShotgunOrSuperShotgun, OnlyValidEnums<ConfigWeaponSlots>());
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "        3rd")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group1Weapon3 = new(ConfigWeaponSlots.None, OnlyValidEnums<ConfigWeaponSlots>());
+
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "Group 2 1st")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group2Weapon1 = new(ConfigWeaponSlots.RocketLauncher, OnlyValidEnums<ConfigWeaponSlots>());
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "        2nd")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group2Weapon2 = new(ConfigWeaponSlots.Melee, OnlyValidEnums<ConfigWeaponSlots>());
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "        3rd")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group2Weapon3 = new(ConfigWeaponSlots.Melee, OnlyValidEnums<ConfigWeaponSlots>());
+
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "Group 3 1st")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group3Weapon1 = new(ConfigWeaponSlots.PlasmaRifle, OnlyValidEnums<ConfigWeaponSlots>());
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "        2nd")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group3Weapon2 = new(ConfigWeaponSlots.BFG9000, OnlyValidEnums<ConfigWeaponSlots>());
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "        3rd")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group3Weapon3 = new(ConfigWeaponSlots.None, OnlyValidEnums<ConfigWeaponSlots>());
+
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "Group 4 1st")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group4Weapon1 = new(ConfigWeaponSlots.Chaingun, OnlyValidEnums<ConfigWeaponSlots>());
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "        2nd")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group4Weapon2 = new(ConfigWeaponSlots.Pistol, OnlyValidEnums<ConfigWeaponSlots>());
+    [ConfigInfo("")]
+    [OptionMenu(OptionSectionType.General, "        3rd")]
+    public readonly ConfigValue<ConfigWeaponSlots> Group4Weapon3 = new(ConfigWeaponSlots.None, OnlyValidEnums<ConfigWeaponSlots>());
 }

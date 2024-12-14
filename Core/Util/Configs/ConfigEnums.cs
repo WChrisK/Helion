@@ -1,8 +1,10 @@
 ﻿using Helion.Maps.Shared;
 using Helion.Render.Common.Textures;
 using Helion.Resources.Definitions;
+using Helion.Util.Config.Components;
 using Helion.Util.Configs.Components;
 using Helion.World;
+using Helion.World.Entities.Inventories;
 using Helion.World.Entities.Players;
 using Helion.World.StatusBar;
 using OpenTK.Windowing.Common;
@@ -40,6 +42,7 @@ namespace Helion.Util.Configs
             { typeof(RenderColorMode), Enum.GetValues<RenderColorMode>() },
             { typeof(BlitFilter), Enum.GetValues<BlitFilter>() },
             { typeof(GyroTurnAxis), Enum.GetValues<GyroTurnAxis>() },
+            { typeof(ConfigWeaponSlots), Enum.GetValues<ConfigWeaponSlots>() }
         };
 
         public static Dictionary<Type, Dictionary<Enum, string>> KnownEnumLabels { get; } = new Dictionary<Type, Dictionary<Enum, string>>()
@@ -61,6 +64,7 @@ namespace Helion.Util.Configs
             { typeof(RenderColorMode), GetDescriptions<RenderColorMode>() },
             { typeof(BlitFilter), GetDescriptions<BlitFilter>() },
             { typeof(GyroTurnAxis), GetDescriptions<GyroTurnAxis>() },
+            { typeof(ConfigWeaponSlots), GetDescriptions<ConfigWeaponSlots>()}
         };
 
         private static Dictionary<Enum, string> GetDescriptions<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T>() where T : struct, Enum

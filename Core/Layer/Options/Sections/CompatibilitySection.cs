@@ -4,13 +4,14 @@
     using Helion.Graphics;
     using Helion.Util.Configs;
     using Helion.Util.Configs.Options;
+    using Helion.Window;
 
     public class CompatibilitySection : ListedConfigSection
     {
         private const string HeaderText = "Items displayed in orange have been set automatically";
 
-        public CompatibilitySection(IConfig config, OptionSectionType optionType, SoundManager soundManager)
-            : base(config, optionType, soundManager)
+        public CompatibilitySection(IConfig config, OptionSectionType optionType, SoundManager soundManager, IInputManager inputManager)
+            : base(config, optionType, soundManager, inputManager)
         {
         }
 

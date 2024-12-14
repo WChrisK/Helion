@@ -44,6 +44,8 @@ public class GameLayerInput
 
         public bool GyroEnabled { get; set; }
 
+        public bool HasGyro => true; 
+
         public bool KeyIsAnalogAxis(Key key)
         {
             return key.ToString().StartsWith("Axis");

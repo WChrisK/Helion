@@ -62,6 +62,8 @@
             }
         }
 
+        public bool HasGyro => m_activeController?.HasGyro ?? false;
+
         public ControllerAdapter(float analogDeadZone, bool enabled, bool rumbleEnabled, Vec3F gyroNoise, Vec3F gyroDrift, InputManager inputManager)
         {
             AnalogDeadZone = analogDeadZone;

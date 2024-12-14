@@ -62,10 +62,14 @@ public class ConfigController : ConfigElement<ConfigController>
     [OptionMenu(OptionSectionType.Controller, "Gyro On By Default")]
     public readonly ConfigValue<bool> GyroAimOnByDefault = new(true);
 
-    [ConfigInfo("Learned value for gyro noise threshold")]
-    public readonly ConfigValue<Vec3F> GyroNoise = new((0, 0, 0));
+    [ConfigInfo("Perform gyro calibration, if controller has a gyro.")]
+    [OptionMenu(OptionSectionType.Controller, "Gyro Calibration", dialogType: DialogType.GyroCalibrationDialog)]
+    public readonly ConfigValue<string> GyroCalibrationDummy = new("Calibrate");
 
     [ConfigInfo("Learned value for gyro drift per sample")]
     public readonly ConfigValue<Vec3F> GyroDrift = new((0, 0, 0));
+
+    [ConfigInfo("Learned value for gyro noise threshold")]
+    public readonly ConfigValue<Vec3F> GyroNoise = new((0, 0, 0));
 }
 

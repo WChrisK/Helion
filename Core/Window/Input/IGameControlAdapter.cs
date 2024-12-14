@@ -84,4 +84,9 @@ public interface IGameControlAdapter
     /// as these have likely become out-of-date.
     /// </summary>
     bool GyroEnabled { get; set; }
+
+    /// <summary>
+    /// Whether the controller has a gyro
+    /// </summary>
+    bool HasGyro { get; }
 }

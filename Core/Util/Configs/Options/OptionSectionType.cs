@@ -8,6 +8,7 @@ public enum OptionSectionType
     Mouse,
     Controller,
     General,
+    Player,
     Video,
     Audio,
     Render,

@@ -146,7 +146,8 @@ public class ListedConfigSection : IOptionSection
             if (input.ConsumePressOrContinuousHold(Key.Down) || input.ConsumePressOrContinuousHold(Key.DPadDown))
                 AdvanceToValidRow(1);
 
-            if (input.ConsumeKeyPressed(Key.R) && m_currentRowIndex < m_configValues.Count)
+            if ((input.ConsumeKeyPressed(Key.R) || input.ConsumeKeyPressed(Key.Delete)) && 
+                m_currentRowIndex < m_configValues.Count)
             {
                 ResetSelectedRowDefaults();
                 return;

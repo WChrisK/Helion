@@ -165,7 +165,7 @@ public class ConfigHud: ConfigElement<ConfigHud>
 
     [ConfigInfo("Background texture for status bar when it doesn't fill the screen.")]
     [OptionMenu(OptionSectionType.Hud, "Status Bar Texture", dialogType: DialogType.TexturePicker)]
-    public readonly ConfigValue<string> BackgroundTexture = new("GRNROCK");
+    public readonly ConfigValue<string> BackgroundTexture = new("");
 
 
     // Formatting, scaling

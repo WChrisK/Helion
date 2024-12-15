@@ -954,22 +954,25 @@ public class Player : Entity
         m_WeaponGroups[3,2] = WorldStatic.World.Config.Player.Group4Weapon3;
         return m_WeaponGroups;
     }
-    private int CurrentGroup = -1;
-    private int CurrentGroupIndex = -1;
+    private int m_CurrentGroup = -1;
+    private int m_CurrentGroupIndex = -1;
 
     private void ExecuteWeaponGroup(TickCommand tickCommand)
     {
         var groupNumber = GetWeaponGroupIndex(GetWeaponGroupCommand(tickCommand));
         var weaponGroups = GetWeaponGroups();
-        int current_index = -1;
-        if (groupNumber == CurrentGroup) {
-            current_index = CurrentGroupIndex;
+        int currentIndex = -1;
+        if (groupNumber == m_CurrentGroup) 
+        {
+            currentIndex = m_CurrentGroupIndex;
         }
-        int resulting_index = 0;
-        Weapon? selected_weapon = null;
-        for (int slotIndex = 0; slotIndex < weaponGroups.GetLength(1); slotIndex++) {
+        int resultingIndex = 0;
+        Weapon? selectedWeapon = null;
+        for (int slotIndex = 0; slotIndex < weaponGroups.GetLength(1); slotIndex++) 
+        {
             var slot = weaponGroups[groupNumber,slotIndex];
-            if (slot != ConfigWeaponSlots.None) {
+            if (slot != ConfigWeaponSlots.None) 
+            {
                 Weapon? weapon = null;
                 if (WeaponSlot == (int)slot)
                 {
@@ -982,23 +985,27 @@ public class Player : Entity
                     weapon = Inventory.Weapons.GetWeapon((int)slot, Inventory.Weapons.GetBestSubSlot((int)slot));
                 }
 
-                if (weapon != null) {
-                    if (slotIndex > current_index) {
-                        selected_weapon = weapon;
-                        resulting_index = slotIndex;
+                if (weapon != null) 
+                {
+                    if (slotIndex > currentIndex) 
+                    {
+                        selectedWeapon = weapon;
+                        resultingIndex = slotIndex;
                         break;
-                    } else if (selected_weapon == null && slotIndex != current_index) { // Only grab the first result before the current index
-                        selected_weapon = weapon;
-                        resulting_index = slotIndex;
+                    } 
+                    else if (selectedWeapon == null && slotIndex != currentIndex) // Only grab the first result before the current index
+                    {
+                        selectedWeapon = weapon;
+                        resultingIndex = slotIndex;
                     }
                 }
             }
         }
-        if (selected_weapon != null)
+        if (selectedWeapon != null)
         {
-            ChangeWeapon(selected_weapon);
-            CurrentGroup = groupNumber;
-            CurrentGroupIndex = resulting_index;
+            ChangeWeapon(selectedWeapon);
+            m_CurrentGroup = groupNumber;
+            m_CurrentGroupIndex = resultingIndex;
         }
     }
 

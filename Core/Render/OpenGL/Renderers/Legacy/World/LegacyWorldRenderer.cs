@@ -264,7 +264,7 @@ public class LegacyWorldRenderer : WorldRenderer
 
             RenderTwoSidedMiddleWalls(renderInfo);
             m_entityRenderer.RenderOpaque(renderInfo);
-            RenderTransparent(renderInfo, framebuffer);
+            RenderTransparent(renderInfo, framebuffer, false);
             m_primitiveRenderer.Render(renderInfo);
             return;
         }
@@ -314,12 +314,15 @@ public class LegacyWorldRenderer : WorldRenderer
         GL.ColorMask(true, true, true, true);
 
         m_entityRenderer.RenderOpaque(renderInfo);
-        RenderTransparent(renderInfo, framebuffer);
+        RenderTransparent(renderInfo, framebuffer, true);
         m_primitiveRenderer.Render(renderInfo);
     }
 
-    private unsafe void RenderTransparent(RenderInfo renderInfo, GLFramebuffer framebuffer)
+    private unsafe void RenderTransparent(RenderInfo renderInfo, GLFramebuffer framebuffer, bool vanillaRender)
     {
+        if (vanillaRender)
+            RenderFlats(renderInfo);
+
         GL.DepthMask(false);
 
         m_oitFrameBuffer.StartRender(framebuffer);
@@ -336,7 +339,7 @@ public class LegacyWorldRenderer : WorldRenderer
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         framebuffer.Bind();
-
+        
         m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5);
         m_entityRenderer.RenderOitCompositePass(renderInfo);
 

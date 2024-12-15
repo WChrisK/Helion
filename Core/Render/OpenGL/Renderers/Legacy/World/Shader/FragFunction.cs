@@ -181,15 +181,7 @@ public class FragFunction
 
         if (options == OitOptions.OitTransparentPass)
             return @"
-                //Equation 8
-                //float weight = clamp(10 / (1e-5 + pow(dist/500, 3)) + pow(dist/2000, 6), 5.0, 500.0);
-                //float weight = clamp(10 / (1e-5 + pow(z/5, 3)) + pow(z/200, 6), 1e-2, 3e3);
-
-                // Equation 7
-                float weight = clamp(10 / (1e-5 + pow(dist/1000, 2)) + pow(dist/8192, 6), 1e-2, 1000.0);
-
-                // Equation 9
-                //float weight = clamp(0.03 / (1e-5 + pow(dist / 2000, 4.0)), 1e-2, 500.0);
+                float weight = clamp(10 / (1e-5 + pow(dist/1000, 2)) + pow(dist/8192, 6), 1.0, 1000.0);
 
                 accum = vec4(fragColor.rgb * fragColor.a, fragColor.a) * weight;
                 accumCount = vec2(fragColor.a, 1);

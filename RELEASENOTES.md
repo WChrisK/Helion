@@ -34,3 +34,4 @@
   - Fix minimum x/y velocity to match vanilla behavior
   - Added sprites and sounds for mbf helper dog
   - Fix label clear in UMAPINFO
+  - Fallback to status bar background texture (borderflat) defined in gameinfo

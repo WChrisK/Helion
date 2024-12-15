@@ -937,28 +937,23 @@ public class Player : Entity
         return TickCommands.None;
     }
 
-    private ConfigWeaponSlots[,] GetWeaponGroups() => new ConfigWeaponSlots[4,3] {
-        {
-            WorldStatic.World.Config.Player.Group1Weapon1,
-            WorldStatic.World.Config.Player.Group1Weapon2,
-            WorldStatic.World.Config.Player.Group1Weapon3,
-        },
-        {
-            WorldStatic.World.Config.Player.Group2Weapon1,
-            WorldStatic.World.Config.Player.Group2Weapon2,
-            WorldStatic.World.Config.Player.Group2Weapon3,
-        },
-        {
-            WorldStatic.World.Config.Player.Group3Weapon1,
-            WorldStatic.World.Config.Player.Group3Weapon2,
-            WorldStatic.World.Config.Player.Group3Weapon3,
-        },
-        {
-            WorldStatic.World.Config.Player.Group4Weapon1,
-            WorldStatic.World.Config.Player.Group4Weapon2,
-            WorldStatic.World.Config.Player.Group4Weapon3,
-        },
-    };
+    private ConfigWeaponSlots[,] m_WeaponGroups = new ConfigWeaponSlots[4,3];
+    private ConfigWeaponSlots[,] GetWeaponGroups()
+    {
+        m_WeaponGroups[0,0] = WorldStatic.World.Config.Player.Group1Weapon1;
+        m_WeaponGroups[0,1] = WorldStatic.World.Config.Player.Group1Weapon2;
+        m_WeaponGroups[0,2] = WorldStatic.World.Config.Player.Group1Weapon3;
+        m_WeaponGroups[1,0] = WorldStatic.World.Config.Player.Group2Weapon1;
+        m_WeaponGroups[1,1] = WorldStatic.World.Config.Player.Group2Weapon2;
+        m_WeaponGroups[1,2] = WorldStatic.World.Config.Player.Group2Weapon3;
+        m_WeaponGroups[2,0] = WorldStatic.World.Config.Player.Group3Weapon1;
+        m_WeaponGroups[2,1] = WorldStatic.World.Config.Player.Group3Weapon2;
+        m_WeaponGroups[2,2] = WorldStatic.World.Config.Player.Group3Weapon3;
+        m_WeaponGroups[3,0] = WorldStatic.World.Config.Player.Group4Weapon1;
+        m_WeaponGroups[3,1] = WorldStatic.World.Config.Player.Group4Weapon2;
+        m_WeaponGroups[3,2] = WorldStatic.World.Config.Player.Group4Weapon3;
+        return m_WeaponGroups;
+    }
     private int CurrentGroup = -1;
     private int CurrentGroupIndex = -1;
 

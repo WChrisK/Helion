@@ -36,7 +36,7 @@ public class OitFrameBuffer
         GL.GenTextures(1, out m_accumTexture);
         GL.BindTexture(TextureTarget.Texture2D, m_accumTexture);
         GLHelper.ObjectLabel(ObjectLabelIdentifier.Texture, (int)m_accumTexture, "OIT Accum Texture");
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba32f, width, height, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba16f, width, height, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
         GL.BindTexture(TextureTarget.Texture2D, 0);

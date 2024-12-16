@@ -320,9 +320,6 @@ public class LegacyWorldRenderer : WorldRenderer
 
     private unsafe void RenderTransparent(RenderInfo renderInfo, GLFramebuffer framebuffer, bool vanillaRender)
     {
-        if (vanillaRender)
-            RenderFlats(renderInfo);
-
         GL.DepthMask(false);
 
         m_oitFrameBuffer.StartRender(framebuffer);
@@ -343,11 +340,24 @@ public class LegacyWorldRenderer : WorldRenderer
         m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5);
         m_entityRenderer.RenderOitCompositePass(renderInfo);
 
-        m_interpolationCompositeProgram.Bind();
-        SetInterpolationUniforms(m_interpolationCompositeProgram, renderInfo);
-        m_interpolationCompositeProgram.Bind();
-        GL.ActiveTexture(TextureUnit.Texture0);
-        m_worldDataManager.RenderAlphaWalls();
+        if (m_worldDataManager.HasAlphaWalls())
+        {
+            if (vanillaRender)
+            {
+                // Render flats so two-sided middle alpha walls are clipped to flats
+                GL.DepthMask(true);
+                GL.ColorMask(false, false, false, false);
+                RenderFlats(renderInfo);
+                GL.ColorMask(true, true, true, true);
+                GL.DepthMask(false);
+            }
+
+            m_interpolationCompositeProgram.Bind();
+            SetInterpolationUniforms(m_interpolationCompositeProgram, renderInfo);
+            m_interpolationCompositeProgram.Bind();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            m_worldDataManager.RenderAlphaWalls();
+        }
 
         GL.DepthMask(true);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);

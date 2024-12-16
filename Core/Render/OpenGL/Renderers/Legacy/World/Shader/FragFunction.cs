@@ -200,22 +200,23 @@ public class FragFunction
 
         return @"
             ivec2 coords = ivec2(gl_FragCoord.xy);
- 
-	        // fragment color
+
+            // r is accumulated alpha, g is accumulation count
+            vec2 counter = texelFetch(accumCount, coords, 0).rg;
+            float alphaComponent = counter.r;
+            float countComponent = counter.g;
+
+            if (countComponent == 0)
+                discard;
+
 	        vec4 accumulation = texelFetch(accum, coords, 0);
-	
-	        // suppress overflow
 	        if (isinf(max3(abs(accumulation.rgb)))) 
 		        accumulation.rgb = vec3(accumulation.a);
 
 	        // prevent floating point precision bug
 	        vec3 average_color = accumulation.rgb / max(accumulation.a, 0.00001f);
-            // r is accumulated alpha, g is accumulation count
-            vec2 counter = texelFetch(accumCount, coords, 0).rg;
-            float alphaComponent = counter.r;
-            float countComponent = counter.g;
             
-	        fragColor = vec4(average_color, alphaComponent/countComponent);";
+	        fragColor = vec4(average_color, alphaComponent / countComponent);";
     }
 
     public static string GammaCorrection() => "fragColor.rgb = pow(fragColor.rgb, vec3(1.0/gammaCorrection));";

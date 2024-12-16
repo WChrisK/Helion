@@ -325,9 +325,11 @@ public class LegacyWorldRenderer : WorldRenderer
         m_oitFrameBuffer.StartRender(framebuffer);
         m_entityRenderer.RenderOitTransparentPass(renderInfo);
 
+        if (vanillaRender && m_worldDataManager.HasAlphaWalls())
+            RenderFlatsToDepth(renderInfo);
+
         m_interpolationTransparentProgram.Bind();
         SetInterpolationUniforms(m_interpolationTransparentProgram, renderInfo);
-        m_interpolationTransparentProgram.Bind();
         GL.ActiveTexture(TextureUnit.Texture0);
         m_worldDataManager.RenderAlphaWalls();
 
@@ -336,35 +338,30 @@ public class LegacyWorldRenderer : WorldRenderer
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         framebuffer.Bind();
-        
+
         m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5);
         m_entityRenderer.RenderOitCompositePass(renderInfo);
 
         if (m_worldDataManager.HasAlphaWalls())
         {
             if (vanillaRender)
-            {
-                // Render flats so two-sided middle alpha walls are clipped to flats
-                GL.DepthMask(true);
-                GL.ColorMask(false, false, false, false);
-                RenderFlats(renderInfo);
-                GL.ColorMask(true, true, true, true);
-                GL.DepthMask(false);
-            }
+                RenderFlatsToDepth(renderInfo);
 
             m_interpolationCompositeProgram.Bind();
             SetInterpolationUniforms(m_interpolationCompositeProgram, renderInfo);
-            m_interpolationCompositeProgram.Bind();
             GL.ActiveTexture(TextureUnit.Texture0);
             m_worldDataManager.RenderAlphaWalls();
         }
 
         GL.DepthMask(true);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
     }
 
-    private void RenderFlats(RenderInfo renderInfo)
+    private void RenderFlatsToDepth(RenderInfo renderInfo)
     {
+        // Render flats so two-sided middle alpha walls are clipped to flats
+        GL.DepthMask(true);
+        GL.ColorMask(false, false, false, false);
+
         m_staticProgram.Bind();
         GL.ActiveTexture(TextureUnit.Texture0);
         SetStaticUniforms(renderInfo);
@@ -374,6 +371,9 @@ public class LegacyWorldRenderer : WorldRenderer
         GL.ActiveTexture(TextureUnit.Texture0);
         SetInterpolationUniforms(m_interpolationProgram, renderInfo);
         m_worldDataManager.RenderFlats();
+
+        GL.DepthMask(false);
+        GL.ColorMask(true, true, true, true);
     }
 
     private void RenderTwoSidedMiddleWalls(RenderInfo renderInfo)

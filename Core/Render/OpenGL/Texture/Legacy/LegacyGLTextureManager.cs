@@ -60,9 +60,6 @@ public class LegacyGLTextureManager : GLTextureManager<GLLegacyTexture>
     {
         foreach (var key in tracker.GetKeys())
         {
-            if (key == ResourceNamespace.Sprites)
-                continue;
-
             foreach (var texture in tracker.GetValues(key))
             {
                 texture.Bind();
@@ -189,15 +186,7 @@ public class LegacyGLTextureManager : GLTextureManager<GLLegacyTexture>
         GL.TexParameter(targetType, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
         GL.TexParameter(targetType, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 
-        if (resourceNamespace == ResourceNamespace.Sprites)
-        {
-            GL.TexParameter(targetType, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(targetType, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-        }
-        else
-        {
-            SetTextureFilter(targetType);
-        }
+        SetTextureFilter(targetType);
     }
 
     public void SetTextureFilter(TextureTarget targetType)

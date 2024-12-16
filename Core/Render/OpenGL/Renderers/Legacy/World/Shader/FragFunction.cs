@@ -149,14 +149,17 @@ public class FragFunction
         if (oitOptions == OitOptions.OitTransparentPass)
             fragColor = "vec4 fragColor = texture(boundTexture, uvFrag.st);";
 
-        return 
+        return
             fragColor +
             (options.HasFlag(FragColorFunctionOptions.Colormap) ? ColorMapFetch(true, ctx) : "")
             + AlphaFlag(true) +
             (options.HasFlag(FragColorFunctionOptions.Fuzz) ? FuzzFragFunction : "") +
             (ShaderVars.PaletteColorMode ? "\n" : "fragColor.xyz *= lightLevel;\n") +
             (options.HasFlag(FragColorFunctionOptions.AddAlpha) ?
-                "fragColor.w = fragColor.w * alphaFrag + addAlphaFrag;\n" :
+                @"fragColor.w = fragColor.w * alphaFrag + addAlphaFrag;"
+                +
+                GetClearAlpha(oitOptions)
+                :
                 "") +
             (options.HasFlag(FragColorFunctionOptions.Alpha) ?
                 "fragColor.w *= alphaFrag;" :
@@ -172,6 +175,15 @@ public class FragFunction
             + GammaCorrection()
             + postProcess
             + Oit(oitOptions);
+    }
+
+    private static string GetClearAlpha(OitOptions oitOptions)
+    {
+        if (oitOptions != OitOptions.None)
+            return "";
+
+        return @"// Don't write partially transparent pixels for two-sided middle to fix issues with texture filtering.
+                fragColor.w = mix(fragColor.a > 0.5 ? 1.0 : 0.0, fragColor.w, addAlphaFrag);";
     }
 
     private static string Oit(OitOptions options)

@@ -280,15 +280,23 @@ public class EntityProgram : RenderProgram
     "
     .Replace("${LightLevelFragFunction}", LightLevel.FragFunction)
     .Replace("${FuzzFunction}", FragFunction.FuzzFunction)
-    .Replace("${FragColorFunction}", FragFunction.FragColorFunction(FragColorFunctionOptions.Fuzz | FragColorFunctionOptions.Alpha | FragColorFunctionOptions.Colormap, ColorMapFetchContext.Entity, GetOitOptions(), GetAlphaFade()))
+    .Replace("${FragColorFunction}", FragFunction.FragColorFunction(FragColorFunctionOptions.Fuzz | FragColorFunctionOptions.Alpha | FragColorFunctionOptions.Colormap, ColorMapFetchContext.Entity, GetOitOptions(), GetPostProcess()))
     .Replace("${SectorColorMapFragVariables}", SectorColorMap.FragVariables)
     .Replace("${SectorColorMapFragFunction}", SectorColorMap.FragFunction)
     .Replace("${OitVariables}", FragFunction.OitFragVariables(GetOitOptions()))
     .Replace("${OutFragColor}", GetOutFragColor());
 
-    static string GetAlphaFade() 
+    private string GetPostProcess() 
     {
-        return @"
+        string clearAlpha = @"        
+        fragColor.a = fragColor.a > 0.5 ? 1.0 : 0.0;
+        if (fragColor.a <= 0)
+            discard;";
+
+        if (GetOitOptions() != OitOptions.None)
+            clearAlpha = string.Empty;
+
+        return clearAlpha + @"
         if (renderDistSquared > maxDistanceSquared - fadeDistance) {
             float fade = (maxDistanceSquared - renderDistSquared) / fadeDistance;
             fragColor.a *= fade;

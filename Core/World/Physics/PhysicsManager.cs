@@ -122,16 +122,10 @@ public sealed class PhysicsManager
         return compare;
     }
 
-    /// <summary>
-    /// Links an entity to the world.
-    /// </summary>
-    /// <param name="entity">The entity to link.</param>
-    /// <param name="tryMove">Optional data used for when linking during movement.</param>
-    /// <param name="clampToLinkedSectors">If the entity should be clamped between linked sectors. If false then on the current Sector ceiling/floor will be used. (Doom compatibility).</param>
-    public void LinkToWorld(Entity entity, TryMoveData? tryMove = null, bool clampToLinkedSectors = true)
+    public void LinkToWorld(Entity entity, TryMoveData? tryMove = null, bool clampToLinkedSectors = true, bool checkLastBlock = false)
     {
         if (!entity.Flags.NoBlockmap)
-            m_blockmap.Link(entity);
+            m_blockmap.Link(entity, checkLastBlock);
 
         m_world.RenderBlockmap.RenderLink(entity);
 
@@ -1360,14 +1354,14 @@ doneLinkToSectors:
 
     public void MoveTo(Entity entity, double x, double y, TryMoveData tryMove)
     {
-        entity.UnlinkFromWorld();
+        entity.UnlinkFromWorld(unlinkBlockmapBlocks: false);
 
         double prevX = entity.Position.X;
         double prevY = entity.Position.Y;
         entity.Position.X = x;
         entity.Position.Y = y;
 
-        LinkToWorld(entity, tryMove);
+        LinkToWorld(entity, tryMove, checkLastBlock: true);
 
         if (entity.Flags.Teleport || entity.Flags.NoClip)
             return;

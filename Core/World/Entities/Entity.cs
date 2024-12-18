@@ -47,6 +47,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public Entity? RenderBlockNext;
     public Entity? RenderBlockPrevious;
     public Block? RenderBlock;
+    public BlockRange LastBlockRange;
 
     public int BlockmapCount;
     public EntityFlags Flags;
@@ -357,7 +358,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     /// everything except the entity list (which should be unlinked from
     /// when the entity is fully removed from the world).
     /// </remarks>
-    public unsafe void UnlinkFromWorld()
+    public unsafe void UnlinkFromWorld(bool unlinkBlockmapBlocks = true)
     {
         for (int i = 0; i < SectorNodes.Length; i++)
         {
@@ -368,6 +369,24 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         }
         SectorNodes.Clear();
 
+        if (unlinkBlockmapBlocks)
+            UnlinkBlockMapBlocks();
+
+        if (RenderBlock != null)
+        {
+            RenderBlock.RemoveLink(this);
+            RenderBlock = null;
+        }
+
+        IntersectSectors.Clear();
+        BlockingLine = null;
+        BlockingEntity = null;
+        BlockingSectorPlane = null;
+        SectorDamageSpecial = null;
+    }
+
+    public unsafe void UnlinkBlockMapBlocks()
+    {
         for (int blockIndex = 0; blockIndex < BlocksLength; blockIndex++)
         {
             var block = Blocks[blockIndex];
@@ -382,22 +401,10 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
                     break;
                 }
             }
-            
+
             Blocks[blockIndex] = null!;
         }
         BlocksLength = 0;
-
-        if (RenderBlock != null)
-        {
-            RenderBlock.RemoveLink(this);
-            RenderBlock = null;
-        }
-
-        IntersectSectors.Clear();
-        BlockingLine = null;
-        BlockingEntity = null;
-        BlockingSectorPlane = null;
-        SectorDamageSpecial = null;
     }
 
     public virtual void Tick()
@@ -978,6 +985,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         SlowTickMultiplier = 1;
         ChaseFailureSkipCount = 0;
         ClosetChaseSpeed = DefaultClosetChaseSpeed;
+        LastBlockRange = default;
     }
 
     private void Unlink()

@@ -76,22 +76,37 @@ public class BlockMap
         return m_blocks.Iterate(seg);
     }
 
-    /// <summary>
-    /// Links an entity to the grid.
-    /// </summary>
-    /// <param name="entity">The entity to link. Should be inside the map.
-    /// </param>
-    public void Link(Entity entity)
+    public void Link(Entity entity, bool checkLastBlock)
     {
-        Assert.Precondition(entity.BlocksLength == 0, "Forgot to unlink entity from blockmap");
+        Assert.Precondition(entity.BlocksLength == 0 || checkLastBlock, "Forgot to unlink entity from blockmap");
 
-        var it = m_blocks.CreateBoxIteration(entity.Position.X, entity.Position.Y, entity.Radius);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        var boxMinX = entity.Position.X - entity.Radius;
+        var boxMaxX = entity.Position.X + entity.Radius;
+        var boxMinY = entity.Position.Y - entity.Radius;
+        var boxMaxY = entity.Position.Y + entity.Radius;
+        var blockStartX = (short)Math.Max(0, (int)((boxMinX - m_blocks.Bounds.Min.X) / m_blocks.Dimension));
+        var blockStartY = (short)Math.Max(0, (int)((boxMinY - m_blocks.Bounds.Min.Y) / m_blocks.Dimension));
+        var blockEndX = (short)Math.Min((int)((boxMaxX - m_blocks.Bounds.Min.X) / m_blocks.Dimension), m_blocks.Width - 1);
+        var blockEndY = (short)Math.Min((int)((boxMaxY - m_blocks.Bounds.Min.Y) / m_blocks.Dimension), m_blocks.Height - 1);
+
+        ref var range = ref entity.LastBlockRange;
+        // If the block range matches then the entity will link to the same blocks.
+        // The block stores entities by id in an array so this saves the array copy to remove the index.
+        if (checkLastBlock && range.StartX == blockStartX && range.StartY == blockStartY && range.EndX == blockEndX && range.EndY == blockEndY)
+            return;
+
+        entity.LastBlockRange.StartX = blockStartX;
+        entity.LastBlockRange.StartY = blockStartY;
+        entity.LastBlockRange.EndX = blockEndX;
+        entity.LastBlockRange.EndY =  blockEndY;
+        entity.UnlinkBlockMapBlocks();
+
+        for (var by = blockStartY; by <= blockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (var bx = blockStartX; bx <= blockEndX; bx++)
             {
-                Block block = m_blocks[by * it.Width + bx];
-
+                var block = Blocks[by * m_blocks.Width + bx];
+                
                 if (block.EntityIndicesLength == block.EntityIndices.Length)                
                     Array.Resize(ref block.EntityIndices, block.EntityIndices.Length * 2);
 

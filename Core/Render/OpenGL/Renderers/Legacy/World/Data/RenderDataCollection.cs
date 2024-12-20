@@ -29,7 +29,9 @@ public class RenderDataCollection<[DynamicallyAccessedMembers(DynamicallyAccesse
     {
         Dispose(false);
     }
-    
+
+    public bool HasDataToRender() => m_dataToRender.Length > 0;
+
     public void Clear()
     {
         for (int i = 0; i < m_dataToRender.Length; i++)

@@ -11,6 +11,7 @@ public class OitFrameBuffer
     private uint m_accumTexture;
     private uint m_accumCountTexture;
     private uint m_oitDepthTexture;
+    private uint m_fuzzTexture;
     private Dimension m_oitDimension;
 
     public void CreateOrUpdate(Dimension dimension)
@@ -49,6 +50,14 @@ public class OitFrameBuffer
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
         GL.BindTexture(TextureTarget.Texture2D, 0);
 
+        GL.GenTextures(1, out m_fuzzTexture);
+        GL.BindTexture(TextureTarget.Texture2D, m_fuzzTexture);
+        GLHelper.ObjectLabel(ObjectLabelIdentifier.Texture, (int)m_fuzzTexture, "OIT Fuzz Texture");
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.R8, width, height, 0, PixelFormat.Red, PixelType.HalfFloat, IntPtr.Zero);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+        GL.BindTexture(TextureTarget.Texture2D, 0);
+
         GL.GenTextures(1, out m_oitDepthTexture);
         GL.BindTexture(TextureTarget.Texture2D, m_oitDepthTexture);
         GLHelper.ObjectLabel(ObjectLabelIdentifier.Texture, (int)m_oitDepthTexture, "OIT Depth Texture");
@@ -56,9 +65,10 @@ public class OitFrameBuffer
 
         GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, m_accumTexture, 0);
         GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment1, TextureTarget.Texture2D, m_accumCountTexture, 0);
+        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment2, TextureTarget.Texture2D, m_fuzzTexture, 0);
         GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, m_oitDepthTexture, 0);
 
-        GL.DrawBuffers(3, [DrawBuffersEnum.ColorAttachment0, DrawBuffersEnum.ColorAttachment1]);
+        GL.DrawBuffers(3, [DrawBuffersEnum.ColorAttachment0, DrawBuffersEnum.ColorAttachment1, DrawBuffersEnum.ColorAttachment2]);
 
         if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
             throw new Exception("Failed to complete oit framebuffer");
@@ -67,13 +77,13 @@ public class OitFrameBuffer
     public unsafe void StartRender(GLFramebuffer opaqueBuffer)
     {
         var zero = stackalloc float[4] { 0f, 0f, 0f, 0f };
-        GL.BindFramebuffer(FramebufferTarget.Framebuffer, m_oitFramebuffer);
+        BindFrameBuffer();
 
         GL.ClearBuffer(ClearBuffer.Color, 0, zero);
         GL.ClearBuffer(ClearBuffer.Color, 1, zero);
+        GL.ClearBuffer(ClearBuffer.Color, 2, zero);
 
-        GL.BlendEquation(BlendEquationMode.FuncAdd);
-        GL.BlendFunc(BlendingFactor.One, BlendingFactor.One);
+        SetBlendEquations();
 
         opaqueBuffer.BindRead();
         var width = m_oitDimension.Width;
@@ -82,11 +92,26 @@ public class OitFrameBuffer
         GL.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, ClearBufferMask.DepthBufferBit, BlitFramebufferFilter.Nearest);
     }
 
-    public void BindTextures(TextureUnit accumTexture, TextureUnit accumCountTexture)
+    public void SetBlendEquations()
+    {
+        GL.BlendEquation(BlendEquationMode.FuncAdd);
+        GL.BlendFunc(BlendingFactor.One, BlendingFactor.One);
+    }
+
+    public void BindFrameBuffer()
+    {
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, m_oitFramebuffer);
+    }
+
+    public void BindTextures(TextureUnit accumTexture, TextureUnit accumCountTexture, TextureUnit fuzzTexture, TextureUnit opaqueTexture, GLFramebuffer framebuffer)
     {
         GL.ActiveTexture(accumTexture);
         GL.BindTexture(TextureTarget.Texture2D, m_accumTexture);
         GL.ActiveTexture(accumCountTexture);
         GL.BindTexture(TextureTarget.Texture2D, m_accumCountTexture);
+        GL.ActiveTexture(fuzzTexture);
+        GL.BindTexture(TextureTarget.Texture2D, m_fuzzTexture);
+        GL.ActiveTexture(opaqueTexture);
+        GL.BindTexture(TextureTarget.Texture2D, framebuffer.Textures[0].Name);
     }
 }

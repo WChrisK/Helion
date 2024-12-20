@@ -33,6 +33,10 @@ public class EntityProgram : RenderProgram
     private readonly int m_viewPosLocation;
     private readonly int m_accumTextureLocation;
     private readonly int m_accumCountTextureLocation;
+    private readonly int m_fuzzTextureLocation;
+    private readonly int m_opaqueTextureLocation;
+    private readonly int m_renderFuzzLocation;
+    private readonly int m_renderFuzzRefractionColorLocation;
 
     public EntityProgram() : base("Entity")
     {
@@ -60,6 +64,10 @@ public class EntityProgram : RenderProgram
         m_viewPosLocation = Uniforms.GetLocation("viewPos");
         m_accumTextureLocation = Uniforms.GetLocation("accum");
         m_accumCountTextureLocation = Uniforms.GetLocation("accumCount");
+        m_fuzzTextureLocation = Uniforms.GetLocation("fuzzTexture");
+        m_opaqueTextureLocation = Uniforms.GetLocation("opaqueTexture");
+        m_renderFuzzLocation = Uniforms.GetLocation("renderFuzz");
+        m_renderFuzzRefractionColorLocation = Uniforms.GetLocation("renderFuzzRefractionColor");
     }
     
     public void BoundTexture(TextureUnit unit) => Uniforms.Set(unit, m_boundTextureLocation);
@@ -67,6 +75,8 @@ public class EntityProgram : RenderProgram
     public void SectorColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_sectorColormapTextureLocation);
     public void AccumTexture(TextureUnit unit) => Uniforms.Set(unit, m_accumTextureLocation);
     public void AccumCountTextre(TextureUnit unit) => Uniforms.Set(unit, m_accumCountTextureLocation);
+    public void FuzzTexture(TextureUnit unit) => Uniforms.Set(unit, m_fuzzTextureLocation);
+    public void OpaqueTexture(TextureUnit unit) => Uniforms.Set(unit, m_opaqueTextureLocation);
     public void ExtraLight(int extraLight) => Uniforms.Set(extraLight, m_extraLightLocation);
     public void HasInvulnerability(bool invul) => Uniforms.Set(invul, m_hasInvulnerabilityLocation);
     public void LightLevelMix(float lightLevelMix) => Uniforms.Set(lightLevelMix, m_lightLevelMixLocation);
@@ -86,6 +96,8 @@ public class EntityProgram : RenderProgram
     public void MaxDistanceSquared(float value) => Uniforms.Set(value, m_maxDistanceLocation);
     public void FadeDistance(float value) => Uniforms.Set(value, m_fadeDistanceLocation);
     public void ViewPos(Vec3F pos) => Uniforms.Set(pos, m_viewPosLocation);
+    public void RenderFuzz(bool value) => Uniforms.Set(value, m_renderFuzzLocation);
+    public void RenderFuzzRefractionColor(bool value) => Uniforms.Set(value, m_renderFuzzRefractionColorLocation);
 
     protected override string VertexShader() => @"
         #version 330
@@ -267,6 +279,8 @@ public class EntityProgram : RenderProgram
         uniform float gammaCorrection;
         uniform float maxDistanceSquared;
         uniform float fadeDistance;
+        uniform float renderFuzz;
+        uniform int renderFuzzRefractionColor;
 
         ${OitVariables}
         ${FuzzFunction}
@@ -309,6 +323,8 @@ public class EntityProgram : RenderProgram
             return OitOptions.OitTransparentPass;
         if (this is EntityCompositeProgram)
             return OitOptions.OitCompositePass;
+        if (this is EntityFuzzRefractionProgram)
+            return OitOptions.OitFuzzRefractionPass;
         return OitOptions.None;
     }
 

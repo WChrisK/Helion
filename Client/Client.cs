@@ -154,7 +154,8 @@ public partial class Client : IDisposable, IInputManagement
     private static void CheckOpenGLSupport()
     {
         GLInfo.ClipControlSupported = GlVersion.IsVersionSupported(4, 5) || GLExtensions.Supports("GL_ARB_clip_control");
-        GLInfo.MapPersistentBitSupported = GlVersion.IsVersionSupported(4, 4);
+        GLInfo.MapPersistentBitSupported = GlVersion.IsVersionSupported(4, 4) || GLExtensions.Supports("GL_ARB_buffer_storage");
+        GLInfo.MemoryBarrierSupported = GlVersion.IsVersionSupported(4, 2) || GLExtensions.Supports("GL_ARB_shader_image_load_store");
     }
 
     private static void SetIcon(Window window)

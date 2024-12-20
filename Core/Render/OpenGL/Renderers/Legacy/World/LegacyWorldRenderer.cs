@@ -320,10 +320,28 @@ public class LegacyWorldRenderer : WorldRenderer
 
     private unsafe void RenderTransparent(RenderInfo renderInfo, GLFramebuffer framebuffer, bool vanillaRender)
     {
+        bool fuzzData = m_entityRenderer.HasFuzz();
         GL.DepthMask(false);
 
         m_oitFrameBuffer.StartRender(framebuffer);
         m_entityRenderer.RenderOitTransparentPass(renderInfo);
+
+        if (fuzzData)
+        {
+            if (GLInfo.MemoryBarrierSupported)
+                GL.MemoryBarrier(MemoryBarrierFlags.FramebufferBarrierBit);
+
+            ResetBlendEquations();
+            framebuffer.Bind();
+            m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5, TextureUnit.Texture6, TextureUnit.Texture7, framebuffer);
+            // Refract pixels in the opaque framebuffer
+            m_entityRenderer.RenderOitFuzzRefractionPass(renderInfo, false);
+
+            m_oitFrameBuffer.SetBlendEquations();
+            m_oitFrameBuffer.BindFrameBuffer();
+
+            m_entityRenderer.RenderOitTransparentFuzzPass(renderInfo);
+        }
 
         if (vanillaRender && m_worldDataManager.HasAlphaWalls())
             RenderFlatsToDepth(renderInfo);
@@ -333,13 +351,9 @@ public class LegacyWorldRenderer : WorldRenderer
         GL.ActiveTexture(TextureUnit.Texture0);
         m_worldDataManager.RenderAlphaWalls();
 
-        GL.BlendEquation(BlendEquationMode.FuncAdd);
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
+        ResetBlendEquations();
         framebuffer.Bind();
 
-        m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5);
         m_entityRenderer.RenderOitCompositePass(renderInfo);
 
         if (m_worldDataManager.HasAlphaWalls())
@@ -353,7 +367,17 @@ public class LegacyWorldRenderer : WorldRenderer
             m_worldDataManager.RenderAlphaWalls();
         }
 
+        if (fuzzData)
+            m_entityRenderer.RenderOitFuzzRefractionPass(renderInfo, true);
+
         GL.DepthMask(true);
+    }
+
+    private static void ResetBlendEquations()
+    {
+        GL.BlendEquation(BlendEquationMode.FuncAdd);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
     }
 
     private void RenderFlatsToDepth(RenderInfo renderInfo)

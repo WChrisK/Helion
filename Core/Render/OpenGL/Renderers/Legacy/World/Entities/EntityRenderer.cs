@@ -23,6 +23,7 @@ public class EntityRenderer : IDisposable
     private readonly EntityProgram m_program = new();
     private readonly EntityTransparentProgram m_programTransparent = new();
     private readonly EntityCompositeProgram m_programComposite = new();
+    private readonly EntityFuzzRefractionProgram m_programFuzzRefraction = new();
     private readonly RenderDataManager<EntityVertex> m_dataManager;
     private readonly Dictionary<Vec2D, int> m_renderPositions = new(1024, new Vec2DCompararer());
     private readonly HashSet<SpritePosKey> m_spriteRenderPositions = new(1024);
@@ -58,6 +59,8 @@ public class EntityRenderer : IDisposable
     {
         PerformDispose();
     }
+
+    public bool HasFuzz() => m_dataManager.HasFuzz();
 
     public void UpdateTo(IWorld world)
     {
@@ -204,11 +207,17 @@ public class EntityRenderer : IDisposable
 
         float offsetZ = GetOffsetZ(entity, texture);
 
-        bool useAlpha = entity.Flags.Shadow || (m_spriteAlpha && entity.Alpha < 1.0f);
-        var renderData = useAlpha ? m_dataManager.GetAlpha(texture) : m_dataManager.GetNonAlpha(texture);
+        bool shadow = entity.Flags.Shadow;
+        bool useAlpha = m_spriteAlpha && entity.Alpha < 1.0f;
+        RenderData<EntityVertex> renderData;
+        if (shadow)
+            renderData = m_dataManager.GetFuzz(texture);
+        else
+            renderData = useAlpha ? m_dataManager.GetAlpha(texture) : m_dataManager.GetNonAlpha(texture);
+
         float alpha = useAlpha ? entity.Alpha : 1.0f;
         float fuzz = 0.0f;
-        if (entity.Flags.Shadow)
+        if (shadow)
         {
             fuzz = 1.0f;
             alpha = 0.99f;
@@ -284,6 +293,14 @@ public class EntityRenderer : IDisposable
             program.AccumTexture(TextureUnit.Texture4);
             program.AccumCountTextre(TextureUnit.Texture5);
         }
+
+        if (program is EntityFuzzRefractionProgram)
+        {
+            program.AccumTexture(TextureUnit.Texture4);
+            program.AccumCountTextre(TextureUnit.Texture5);
+            program.FuzzTexture(TextureUnit.Texture6);
+            program.OpaqueTexture(TextureUnit.Texture7);
+        }
     }
 
     public void RenderOpaque(RenderInfo renderInfo)
@@ -298,9 +315,21 @@ public class EntityRenderer : IDisposable
     public void RenderOitTransparentPass(RenderInfo renderInfo)
     {
         m_programTransparent.Bind();
+        m_programTransparent.RenderFuzz(false);
         GL.ActiveTexture(TextureUnit.Texture0);
-        SetUniforms(m_programTransparent ,renderInfo);
+        SetUniforms(m_programTransparent, renderInfo);
         m_dataManager.RenderAlpha(PrimitiveType.Points);
+        m_dataManager.RenderFuzz(PrimitiveType.Points);
+        m_programTransparent.Unbind();
+    }
+
+    public void RenderOitTransparentFuzzPass(RenderInfo renderInfo)
+    {
+        m_programTransparent.Bind();
+        m_programTransparent.RenderFuzz(true);
+        GL.ActiveTexture(TextureUnit.Texture0);
+        SetUniforms(m_programTransparent, renderInfo);
+        m_dataManager.RenderFuzz(PrimitiveType.Points);
         m_programTransparent.Unbind();
     }
 
@@ -310,7 +339,18 @@ public class EntityRenderer : IDisposable
         GL.ActiveTexture(TextureUnit.Texture0);
         SetUniforms(m_programComposite, renderInfo);
         m_dataManager.RenderAlpha(PrimitiveType.Points);
+        //m_dataManager.RenderFuzz(PrimitiveType.Points);
         m_programComposite.Unbind();
+    }
+
+    public void RenderOitFuzzRefractionPass(RenderInfo renderInfo, bool renderColor)
+    {
+        m_programFuzzRefraction.Bind();
+        GL.ActiveTexture(TextureUnit.Texture0);
+        m_programFuzzRefraction.RenderFuzzRefractionColor(renderColor);
+        SetUniforms(m_programFuzzRefraction, renderInfo);
+        m_dataManager.RenderFuzz(PrimitiveType.Points);
+        m_programFuzzRefraction.Unbind();
     }
 
     public void RenderTransparent(RenderInfo renderInfo)
@@ -319,6 +359,7 @@ public class EntityRenderer : IDisposable
         GL.ActiveTexture(TextureUnit.Texture0);
         SetUniforms(m_program, renderInfo);
         m_dataManager.RenderAlpha(PrimitiveType.Points);
+        m_dataManager.RenderFuzz(PrimitiveType.Points);
         m_program.Unbind();
     }
 

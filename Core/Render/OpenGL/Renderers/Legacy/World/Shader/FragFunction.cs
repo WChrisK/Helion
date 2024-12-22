@@ -198,7 +198,7 @@ public class FragFunction
     public static string FuzzRefractionFunction(FuzzRefractionOptions options)
     {
         return @"
-                ivec2 coords = ivec2(gl_FragCoord.xy);
+                ivec2 coords = ivec2(gl_FragCoord.x, gl_FragCoord.y);
 
                 float fuzzDistStep = ceil(((fuzzDiv/ " + FuzzScale(options) + @" )/(max(1, " + FuzzDist(options) + @" / 96))));
                 vec2 blockCoordinate = floor(coords / fuzzDistStep);
@@ -208,7 +208,9 @@ public class FragFunction
                 int flipX = int(mix(1, -1, int(fuzzAlpha > 0.5)));
                 int flipY = int(mix(1, -1, int(fuzzAlpha < 0.35)));
                 int clearOffset = int(mix(1, 0, int(fuzzAlpha < 0.25)));
-                ivec2 refractCoords = ivec2(coords.x + (offsetX*clearOffset*flipX), coords.y + (offsetY*clearOffset*flipY));
+                ivec2 refractCoords = ivec2(
+                    clamp(coords.x + (offsetX*clearOffset*flipX), 0, screenBounds.x), 
+                    clamp(coords.y + (offsetY*clearOffset*flipY), 0, screenBounds.y));
 
                 // Don't pull pixels where fuzz wasn't written
                 ${FuzzRefractTexture}

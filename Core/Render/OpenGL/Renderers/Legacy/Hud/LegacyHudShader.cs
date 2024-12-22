@@ -1,4 +1,5 @@
 using GlmSharp;
+using Helion.Geometry.Vectors;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Shader;
 using OpenTK.Graphics.OpenGL;
@@ -17,6 +18,7 @@ public class LegacyHudShader : RenderProgram
     private readonly int m_hasInvulnerabilityLocation;
     private readonly int m_gammaCorrectionLocation;
     private readonly int m_opaqueTextureLocation;
+    private readonly int m_screenBoundsLocation;
 
     public LegacyHudShader() : base("Hud")
     {
@@ -30,6 +32,7 @@ public class LegacyHudShader : RenderProgram
         m_hasInvulnerabilityLocation = Uniforms.GetLocation("hasInvulnerability");
         m_gammaCorrectionLocation = Uniforms.GetLocation("gammaCorrection");
         m_opaqueTextureLocation = Uniforms.GetLocation("opaqueTexture");
+        m_screenBoundsLocation = Uniforms.GetLocation("screenBounds");
     }
 
     public void BoundTexture(TextureUnit unit) => Uniforms.Set(unit, m_boundTextureLocation);
@@ -42,6 +45,7 @@ public class LegacyHudShader : RenderProgram
     public void HasInvulnerability(bool invul) => Uniforms.Set(invul, m_hasInvulnerabilityLocation);
     public void ColorMapIndex(int index) => Uniforms.Set(index, m_colorMapIndexLocation);
     public void GammaCorrection(float value) => Uniforms.Set(value, m_gammaCorrectionLocation);
+    public void ScreenBounds(Vec2I value) => Uniforms.Set(value, m_screenBoundsLocation);
 
     protected override string VertexShader() => @"
         #version 330
@@ -106,6 +110,7 @@ public class LegacyHudShader : RenderProgram
         uniform int colormapIndex;
         uniform int hasInvulnerability;
         uniform float gammaCorrection;
+        uniform ivec2 screenBounds;
 
         ${FuzzFunction}
 

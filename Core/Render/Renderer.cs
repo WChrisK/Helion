@@ -679,6 +679,9 @@ public partial class Renderer : IDisposable
 
     private void DrawHudImagesIfAnyQueued(Rectangle viewport, ShaderUniforms uniforms)
     {
+        // Bind main buffer for fuzz refraction sampling when player has partial invisibility
+        GL.ActiveTexture(TextureUnit.Texture7);
+        GL.BindTexture(TextureTarget.Texture2D, m_mainFramebuffer.Textures[0].Name);
         m_hudRenderer.Render(viewport, uniforms);
         m_hudRenderer.Clear();
     }

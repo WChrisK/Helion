@@ -37,6 +37,7 @@ public class EntityProgram : RenderProgram
     private readonly int m_opaqueTextureLocation;
     private readonly int m_renderFuzzLocation;
     private readonly int m_renderFuzzRefractionColorLocation;
+    private readonly int m_screenBoundsLocation;
 
     public EntityProgram() : base("Entity")
     {
@@ -68,6 +69,7 @@ public class EntityProgram : RenderProgram
         m_opaqueTextureLocation = Uniforms.GetLocation("opaqueTexture");
         m_renderFuzzLocation = Uniforms.GetLocation("renderFuzz");
         m_renderFuzzRefractionColorLocation = Uniforms.GetLocation("renderFuzzRefractionColor");
+        m_screenBoundsLocation = Uniforms.GetLocation("screenBounds");
     }
     
     public void BoundTexture(TextureUnit unit) => Uniforms.Set(unit, m_boundTextureLocation);
@@ -98,6 +100,7 @@ public class EntityProgram : RenderProgram
     public void ViewPos(Vec3F pos) => Uniforms.Set(pos, m_viewPosLocation);
     public void RenderFuzz(bool value) => Uniforms.Set(value, m_renderFuzzLocation);
     public void RenderFuzzRefractionColor(bool value) => Uniforms.Set(value, m_renderFuzzRefractionColorLocation);
+    public void ScreenBounds(Vec2I value) => Uniforms.Set(value, m_screenBoundsLocation);
 
     protected override string VertexShader() => @"
         #version 330
@@ -281,6 +284,7 @@ public class EntityProgram : RenderProgram
         uniform float fadeDistance;
         uniform float renderFuzz;
         uniform int renderFuzzRefractionColor;
+        uniform ivec2 screenBounds;
 
         ${OitVariables}
         ${FuzzFunction}

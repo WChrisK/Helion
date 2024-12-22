@@ -90,7 +90,7 @@ public class LegacyHudShader : RenderProgram
         }";
 
     private readonly string ShaderFrag = @"
-        #version 430
+        #version 330
 
         in vec2 uvFrag;
         flat in vec4 rgbMultiplierFrag;

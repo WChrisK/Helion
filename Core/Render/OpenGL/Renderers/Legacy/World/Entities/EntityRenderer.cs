@@ -216,12 +216,7 @@ public class EntityRenderer : IDisposable
             renderData = useAlpha ? m_dataManager.GetAlpha(texture) : m_dataManager.GetNonAlpha(texture);
 
         float alpha = useAlpha ? entity.Alpha : 1.0f;
-        float fuzz = 0.0f;
-        if (shadow)
-        {
-            fuzz = 1.0f;
-            alpha = 0.99f;
-        }
+        float fuzz = shadow ? 1.0f : 0.0f;
 
         var arrayData = renderData.ArrayData;
         int length = arrayData.Length;

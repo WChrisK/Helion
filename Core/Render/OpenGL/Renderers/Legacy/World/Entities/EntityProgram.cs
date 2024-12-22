@@ -252,7 +252,7 @@ public class EntityProgram : RenderProgram
     .Replace("${Depth}", ShaderVars.Depth);
 
     protected override string? FragmentShader() => @"
-        #version 430
+        #version 330
 
         in vec2 uvFrag;
         in float dist;

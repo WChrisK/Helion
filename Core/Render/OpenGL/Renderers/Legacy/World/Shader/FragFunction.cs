@@ -189,9 +189,6 @@ public class FragFunction
                 fragColor.w = mix(fragColor.a > 0.5 ? 1.0 : 0.0, fragColor.w, addAlphaFrag);";
     }
 
-    private static string FuzzScale(FuzzRefractionOptions options) =>
-        options == FuzzRefractionOptions.World ? "4" : "2";
-
     private static string FuzzDist(FuzzRefractionOptions options) =>
         options == FuzzRefractionOptions.World ? "fuzzDist" : "1";
 
@@ -200,14 +197,14 @@ public class FragFunction
         return @"
                 ivec2 coords = ivec2(gl_FragCoord.x, gl_FragCoord.y);
 
-                float fuzzDistStep = ceil(((fuzzDiv/ " + FuzzScale(options) + @" )/(max(1, " + FuzzDist(options) + @" / 96))));
+                float fuzzDistStep = ceil((fuzzDiv/(max(1, " + FuzzDist(options) + @" / 96))));
                 vec2 blockCoordinate = floor(coords / fuzzDistStep);
                 float fuzzAlpha = clamp(noise(blockCoordinate * fuzzFrac), 0.2, 0.65);
-                int offsetX = int(mix(-1, 1, int(fuzzAlpha > 0.3))) * int(fuzzDistStep * 4);
-                int offsetY = int(mix(1, -1, int(fuzzAlpha < 0.4))) * int(fuzzDistStep * 4);
-                int flipX = int(mix(1, -1, int(fuzzAlpha > 0.5)));
-                int flipY = int(mix(1, -1, int(fuzzAlpha < 0.35)));
-                int clearOffset = int(mix(1, 0, int(fuzzAlpha < 0.25)));
+                float offsetX = mix(-1, 1, float(fuzzAlpha > 0.3)) * int(fuzzDistStep * 4);
+                float offsetY = mix(1, -1, float(fuzzAlpha < 0.4)) * int(fuzzDistStep * 4);
+                float flipX = mix(1, -1, float(fuzzAlpha > 0.5));
+                float flipY = mix(1, -1, float(fuzzAlpha < 0.35));
+                float clearOffset = mix(1, 0, float(fuzzAlpha < 0.25));
                 ivec2 refractCoords = ivec2(
                     clamp(coords.x + (offsetX*clearOffset*flipX), 0, screenBounds.x), 
                     clamp(coords.y + (offsetY*clearOffset*flipY), 0, screenBounds.y));
@@ -231,6 +228,7 @@ public class FragFunction
                 @"  
                 if (renderFuzzRefractionColor > 0) {
                     vec4 fuzzColor = mix(vec4(color, 1), ${FuzzBlackColor}, fuzzAlpha);
+                    fragColor = fuzzColor;
                     vec2 counter = texelFetch(accumCount, refractCoords, 0).rg;
                     float alphaComponent = counter.r;
                     float countComponent = counter.g;
@@ -247,7 +245,7 @@ public class FragFunction
                       accumulation.rgb = vec3(accumulation.a);
                     
                     vec3 average_color = accumulation.rgb / max(accumulation.a, 0.00001f);
-                    fragColor = vec4(average_color, alphaComponent / countComponent * 0.8);
+                    fragColor = vec4(average_color, (alphaComponent / countComponent) * 1);
                 }"
                 :
                 @"fragColor = mix(vec4(color, 1), ${FuzzBlackColor}, fuzzAlpha * 0.6);")

@@ -160,7 +160,7 @@ public partial class Renderer : IDisposable
 
     public static float GetFuzzDiv(ConfigRender config, in Rectangle viewport)
     {
-        return viewport.Height / 480f * (float)config.FuzzAmount;
+        return viewport.Height / 480f / 2 * (float)config.FuzzAmount;
     }
 
     public static ShaderUniforms GetShaderUniforms(IConfig config, IWorld world, RenderInfo renderInfo)

@@ -2077,18 +2077,18 @@ public abstract partial class WorldBase : IWorld
         {
             for (int i = 0; i < dropItemDef.Value.Amount; i++)
             {
-                bool spawnInit = true;
+                bool initSpawn = true;
                 Vec3D pos = deathEntity.Position;
                 pos.Z = deathEntity.Sector.Floor.Z;
                 double addVelocity = 0;
                 if (!WorldStatic.NoTossDrops)
                 {
-                    spawnInit = false;
+                    initSpawn = false;
                     pos.Z = deathEntity.Position.Z + deathEntity.Definition.Properties.Height / 2;
                     addVelocity = 4;
                 }
                 
-                Entity? dropItem = EntityManager.Create(dropItemDef.Value.ClassName, pos, init: spawnInit);
+                Entity? dropItem = EntityManager.Create(dropItemDef.Value.ClassName, pos, initSpawn: initSpawn);
                 if (dropItem == null)
                     continue;
                 

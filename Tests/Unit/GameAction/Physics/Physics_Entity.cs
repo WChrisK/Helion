@@ -301,7 +301,7 @@ namespace Helion.Tests.Unit.GameAction
         {
             var sector = GameActions.GetSectorByTag(World, 3);
             sector.ActiveFloorMove.Should().BeNull();
-            var entity = GameActions.CreateEntity(World, "NonSolidMeat2", new Vec3D(-128, 216, 0));
+            var entity = GameActions.CreateEntity(World, "NonSolidMeat2", new Vec3D(-128, 216, 0), initSpawn: true);
             entity.OnGround.Should().BeFalse();
             entity.Position.Z.Should().Be(4012);
             GameActions.ActivateLine(World, Player, 23, ActivationContext.UseLine);

@@ -20,7 +20,6 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace Helion.World.Entities;
 
@@ -86,13 +85,13 @@ public class EntityManager : IDisposable
         return null;
     }
 
-    public Entity? Create(string className, in Vec3D pos, bool init = false)
+    public Entity? Create(string className, in Vec3D pos, bool initSpawn = false)
     {
         var def = DefinitionComposer.GetByName(className);
-        return def != null ? Create(def, pos, 0.0, 0.0, 0, init: init) : null;
+        return def != null ? Create(def, pos, 0.0, 0.0, 0, initSpawn: initSpawn) : null;
     }
 
-    public Entity Create(EntityDefinition definition, Vec3D position, double zHeight, double angle, int tid, bool init = false)
+    public Entity Create(EntityDefinition definition, Vec3D position, double zHeight, double angle, int tid, bool initSpawn = false)
     {
         var sector = World.ToSubsector(position.X, position.Y).Sector;
 
@@ -103,13 +102,13 @@ public class EntityManager : IDisposable
             entity.Properties.MonsterMovementSpeed = entity.Definition.Properties.FastSpeed;
 
         // This only needs to happen on map population
-        if (init && !ZHeightSet(zHeight))
+        if (initSpawn && !ZHeightSet(zHeight))
         {
             entity.Position.Z = entity.Sector.ToFloorZ(position);
             entity.PrevPosition = entity.Position;
         }
 
-        FinishCreatingEntity(entity, zHeight, false, true);
+        FinishCreatingEntity(entity, zHeight, false, true, initSpawn);
         return entity;
     }
 
@@ -220,7 +219,7 @@ public class EntityManager : IDisposable
             double angleRadians = MathHelper.ToRadians(mapThing.Angle);
             Vec3D position = mapThing.Position.Double;
             // position.Z is the potential zHeight variable, not the actual z position. We need to pass it to Create to ensure the zHeight is set
-            Entity entity = Create(definition, position, position.Z, angleRadians, mapThing.ThingId, init: true);
+            Entity entity = Create(definition, position, position.Z, angleRadians, mapThing.ThingId, initSpawn: true);
             if (mapThing.Flags.Ambush)
                 entity.Flags.Ambush = mapThing.Flags.Ambush;
             if (mapThing.Flags.Friendly)
@@ -352,7 +351,7 @@ public class EntityManager : IDisposable
         }
 
         PostProcessEntity(entity);
-        FinalizeEntity(entity, false);
+        FinalizeEntity(entity, false, initSpawn: false);
         if (setOnGround != null)
             entity.OnGround = setOnGround.Value;
 
@@ -439,9 +438,9 @@ public class EntityManager : IDisposable
         return position.Z;
     }
 
-    private static void FinalizeEntity(Entity entity, bool checkOnGround, double zHeight = 0)
+    private static void FinalizeEntity(Entity entity, bool checkOnGround, double zHeight = 0, bool initSpawn = true)
     {
-        if (entity.Flags.SpawnCeiling)
+        if (initSpawn && entity.Flags.SpawnCeiling)
         {
             // Need to always use Doom's old height here.
             double height = entity.GetClampHeight();
@@ -454,7 +453,7 @@ public class EntityManager : IDisposable
         entity.ResetInterpolation();
     }
 
-    private void FinishCreatingEntity(Entity entity, double zHeight, bool clamp, bool checkOnGround)
+    private void FinishCreatingEntity(Entity entity, double zHeight, bool clamp, bool checkOnGround, bool initSpawn)
     {
         AddEntityToList(entity);
 
@@ -463,7 +462,7 @@ public class EntityManager : IDisposable
         else
             World.Link(entity);
 
-        FinalizeEntity(entity, checkOnGround, zHeight);
+        FinalizeEntity(entity, checkOnGround, zHeight, initSpawn);
 
         entity.SpawnPoint = entity.Position;
         // Vanilla did not execute action functions on creation, it just set the state
@@ -504,7 +503,7 @@ public class EntityManager : IDisposable
         if (armor != null)
             player.Inventory.Add(armor, 0);
 
-        FinishCreatingEntity(player, zHeight, false, true);
+        FinishCreatingEntity(player, zHeight, false, true, true);
         return player;
     }
 

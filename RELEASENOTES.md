@@ -40,3 +40,5 @@
   - Fix label clear in UMAPINFO
   - Fallback to status bar background texture (borderflat) defined in gameinfo
   - Fix issue with two-sided middle walls and texture filtering causing edge pixels to render incorrectly
+  - Fix spawn ceiling being incorrectly applied after initial map start
+  - Fix ordering to set flags first when something dies before setting the death state to match original behavior

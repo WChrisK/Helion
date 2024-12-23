@@ -227,8 +227,7 @@ public class FragFunction
                 options == FuzzRefractionOptions.World ?
                 @"  
                 if (renderFuzzRefractionColor > 0) {
-                    vec4 fuzzColor = mix(vec4(color, 1), ${FuzzBlackColor}, fuzzAlpha);
-                    fragColor = fuzzColor;
+                    vec4 fuzzColor = vec4(mix(color, ${FuzzBlackColor}, fuzzAlpha), 1);
                     vec2 counter = texelFetch(accumCount, refractCoords, 0).rg;
                     float alphaComponent = counter.r;
                     float countComponent = counter.g;
@@ -245,15 +244,15 @@ public class FragFunction
                       accumulation.rgb = vec3(accumulation.a);
                     
                     vec3 average_color = accumulation.rgb / max(accumulation.a, 0.00001f);
-                    fragColor = vec4(average_color, (alphaComponent / countComponent) * 1);
+                    fragColor = vec4(average_color, alphaComponent / countComponent);
                 }"
                 :
-                @"fragColor = mix(vec4(color, 1), ${FuzzBlackColor}, fuzzAlpha * 0.6);")
+                @"fragColor = vec4(mix(color, ${FuzzBlackColor}, fuzzAlpha * 0.6), 1);")
             .Replace("${FuzzBlackColor}",
                 // Fetch black color from current palette. This takes the pre-blended black color with red/yellow/green palettes.
                 ShaderVars.PaletteColorMode ?
-                "vec4(texelFetch(colormapTexture, usePalette * paletteSize).rgb, 1)" :
-                "vec4(0, 0, 0, 1)");
+                "texelFetch(colormapTexture, usePalette * paletteSize).rgb" :
+                "vec3(0, 0, 0)");
     }
 
     private static string Oit(OitOptions options, FragColorFunctionOptions fragColorOptions)

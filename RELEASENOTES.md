@@ -15,6 +15,7 @@
   - Add custom weapon groups similar to the ones found in Woof!, with the added bonus of being assignable to any button.
   - Added order independent transparency to fix issues with multiple transparent sprites causing transparent textures not to render
   - Support texture filtering with sprites
+  - Refraction effect for spectres
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch

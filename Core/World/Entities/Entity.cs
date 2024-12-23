@@ -495,15 +495,15 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public void SetDeathState(Entity? source)
     {
         if (Definition.DeathState.HasValue)
-        {
-            if (Definition.DeathState != null)
-                FrameState.SetFrameIndex(Definition.DeathState.Value);
-            
+        {            
             if (!IsDisposed)
             {
                 SetDeathRandomizeTicks();
                 SetDeath(source, false);  
             }
+
+            if (Definition.DeathState != null)
+                FrameState.SetFrameIndex(Definition.DeathState.Value);
         }
     }
 

@@ -209,7 +209,6 @@ public class FragFunction
                     clamp(coords.x + (offsetX*clearOffset*flipX), 0, screenBounds.x), 
                     clamp(coords.y + (offsetY*clearOffset*flipY), 0, screenBounds.y));
 
-                // Don't pull pixels where fuzz wasn't written
                 ${FuzzRefractTexture}
                 
                 vec3 color = texelFetch(opaqueTexture, refractCoords, 0).rgb;
@@ -218,15 +217,18 @@ public class FragFunction
                 ${FuzzRefractFragColor}
             "
             .Replace("${FuzzRefractTexture}",
+                // Don't pull pixels where fuzz wasn't written and don't refract past threshold
                 options == FuzzRefractionOptions.World ?
                 @"float fuzz = texelFetch(fuzzTexture, refractCoords, 0).r;
-                refractCoords = ivec2(mix(coords, refractCoords, fuzz));"
+                refractCoords = ivec2(mix(coords, refractCoords, fuzz));
+                refractCoords = ivec2(mix(coords, refractCoords, float(dist < 800.0)));
+                "
                 :
                 "")
             .Replace("${FuzzRefractFragColor}",
                 options == FuzzRefractionOptions.World ?
                 @"  
-                if (renderFuzzRefractionColor > 0) {
+                if (renderFuzzRefractionColor > 0 && fuzzAlpha >= 0.4) {
                     vec4 fuzzColor = vec4(mix(color, ${FuzzBlackColor}, fuzzAlpha), 1);
                     vec2 counter = texelFetch(accumCount, refractCoords, 0).rg;
                     float alphaComponent = counter.r;

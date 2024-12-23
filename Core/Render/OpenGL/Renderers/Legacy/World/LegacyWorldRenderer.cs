@@ -326,6 +326,8 @@ public class LegacyWorldRenderer : WorldRenderer
         m_oitFrameBuffer.StartRender(framebuffer);
         m_entityRenderer.RenderOitTransparentPass(renderInfo);
 
+        m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5, TextureUnit.Texture6, TextureUnit.Texture7, framebuffer);
+
         if (fuzzData)
         {
             if (GLInfo.MemoryBarrierSupported)
@@ -333,7 +335,6 @@ public class LegacyWorldRenderer : WorldRenderer
 
             ResetBlendEquations();
             framebuffer.Bind();
-            m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5, TextureUnit.Texture6, TextureUnit.Texture7, framebuffer);
             // Refract pixels in the opaque framebuffer
             m_entityRenderer.RenderOitFuzzRefractionPass(renderInfo, false);
 

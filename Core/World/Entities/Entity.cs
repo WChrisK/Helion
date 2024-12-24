@@ -494,32 +494,27 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public void SetDeathState(Entity? source)
     {
-        if (Definition.DeathState.HasValue)
-        {            
-            if (!IsDisposed)
-            {
-                SetDeathRandomizeTicks();
-                SetDeath(source, false);  
-            }
+        // Doom didn't check null death states
+        var deathState = Definition.DeathState ?? 0;       
+        if (!IsDisposed)
+            SetDeath(source, false);
+                
+        FrameState.SetFrameIndex(deathState);
 
-            if (Definition.DeathState != null)
-                FrameState.SetFrameIndex(Definition.DeathState.Value);
-        }
+        if (!IsDisposed)
+            SetDeathRandomizeTicks();
     }
 
     public void SetXDeathState(Entity? source)
     {
+        if (!IsDisposed)
+            SetDeath(source, true);
+
         if (Definition.XDeathState.HasValue)
-        {
-            if (Definition.XDeathState != null)
-                FrameState.SetFrameIndex(Definition.XDeathState.Value);
-            
-            if (!IsDisposed)
-            {
-                SetDeathRandomizeTicks();
-                SetDeath(source, true);                
-            }
-        }
+            FrameState.SetFrameIndex(Definition.XDeathState.Value);
+
+        if (!IsDisposed)
+            SetDeathRandomizeTicks();
     }
 
     private void SetDeathRandomizeTicks()

@@ -49,6 +49,8 @@ public class GeometryRenderer : IDisposable
     private readonly LegacySkyRenderer m_skyRenderer;
     private readonly ArchiveCollection m_archiveCollection;
     private readonly MidTextureHack m_midTextureHack = new();
+    private readonly SectorPlane m_fakeFloor = new(SectorPlaneFace.Floor, 0, 0, 0);
+    private readonly SectorPlane m_fakeCeiling = new(SectorPlaneFace.Ceiling, 0, 0, 0);
     private double m_tickFraction;
     private bool m_floorChanged;
     private bool m_ceilingChanged;
@@ -569,10 +571,10 @@ public class GeometryRenderer : IDisposable
         if (side.Line.Flags.TwoSided && side.Line.Back != null)
             RenderTwoSided(side, isFrontSide);
         else if (m_renderMode == GeometryRenderMode.All || side.IsDynamic)
-            RenderOneSided(side, isFrontSide, out _, out _);
+            RenderOneSided(side, isFrontSide, out _, out _, out _);
     }
 
-    public void RenderOneSided(Side side, bool isFront, out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices)
+    public void RenderOneSided(Side side, bool isFront, out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices, out GLLegacyTexture texture)
     {
         m_sectorChangedLine = side.Sector.CheckRenderingChanged(side.LastRenderGametick);
         side.LastRenderGametick = m_world.Gametick;
@@ -585,7 +587,7 @@ public class GeometryRenderer : IDisposable
         }
 
         WallVertices wall = default;
-        GLLegacyTexture texture = m_glTextureManager.GetTexture(side.Middle.TextureHandle);
+        texture = m_glTextureManager.GetTexture(side.Middle.TextureHandle);
         DynamicVertex[]? data = m_vertexLookup[side.Id];
 
         var renderSector = side.Sector.GetRenderSector(m_transferHeightsView);
@@ -594,10 +596,14 @@ public class GeometryRenderer : IDisposable
         SectorPlane ceiling = renderSector.Ceiling;
         RenderSkySide(side, renderSector, null, texture, out skyVertices);
 
-        if (side.Middle.TextureHandle <= Constants.NullCompatibilityTextureIndex)
+        // One-sided walls without a texture would HOM and stop BSP traversal. Draw a black texture to block rendering.
+        if (skyVertices == null && side.Middle.TextureHandle <= Constants.NullCompatibilityTextureIndex)
         {
-            vertices = null;
-            return;
+            m_fakeFloor.Z = floor.Z - Constants.MaxTextureHeight;
+            m_fakeCeiling.Z = ceiling.Z + Constants.MaxTextureHeight;
+            floor = m_fakeFloor;
+            ceiling = m_fakeCeiling;
+            texture = m_glTextureManager.BlackTexture;
         }
 
         if (side.OffsetChanged || m_sectorChangedLine || data == null)

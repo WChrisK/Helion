@@ -26,8 +26,6 @@ using Helion.Util.Timing;
 using Helion.Window;
 using Helion.World;
 using Helion.World.Entities;
-using Helion.World.Entities.Inventories.Powerups;
-using Helion.World.Entities.Players;
 using Helion.World.Geometry.Sectors;
 using NLog;
 using OpenTK.Graphics.OpenGL;
@@ -44,7 +42,8 @@ public partial class Renderer : IDisposable
     public const float ZNearMax = 7.9f;
     public const float ZFar = 65536;
     public const float ReversedZNear = 0.01f;
-    public static readonly Color DefaultBackground = (16, 16, 16);
+    public static readonly Color OffBlackBackground = (16, 16, 16);
+    public static readonly Color BlackBackground = (0, 0, 0);
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
     private static bool InfoPrinted;
 
@@ -186,7 +185,7 @@ public partial class Renderer : IDisposable
             {
                 mix = 0.0f;
                 colorMapUniforms = GetColorMapUniforms(renderInfo.ViewerEntity, renderInfo.Camera);
-                paletteIndex = GetPalette(config, player);
+                paletteIndex = PaletteUtil.GetPalette(config, player);
                 if (!player.DrawInvulnerableColorMap() && player.DrawFullBright())
                     mix = 1.0f;
             }
@@ -201,60 +200,6 @@ public partial class Renderer : IDisposable
             GetTimeFrac(), drawInvulnerability, mix, extraLight, GetDistanceOffset(renderInfo),
             colorMix, GetFuzzDiv(renderInfo.Config, renderInfo.Viewport), colorMapUniforms, paletteIndex, config.Render.LightMode, 
             (float)config.Render.GammaCorrection, maxDistance);
-    }
-
-    private static PaletteIndex GetPalette(IConfig config, Player player)
-    {
-        var palette = PaletteIndex.Normal;
-        var powerup = player.Inventory.PowerupEffectColor;
-        int damageCount = player.DamageCount;
-
-        if (powerup != null && powerup.PowerupType == PowerupType.Strength)
-            damageCount = Math.Max(damageCount, 12 - (powerup.Ticks >> 6));
-
-        if (damageCount > 0)
-        {
-            if (damageCount == player.DamageCount)
-                damageCount = (int)(player.DamageCount * config.Game.PainIntensity);
-            else
-                damageCount = (int)(damageCount * config.Game.BerserkIntensity);
-
-            palette = GetDamagePalette(damageCount);
-        }
-        else if (player.BonusCount > 0)
-        {
-            palette = GetBonusPalette(player.BonusCount);
-        }
-
-        if (palette == PaletteIndex.Normal && powerup != null &&
-            powerup.PowerupType == PowerupType.IronFeet && powerup.DrawPowerupEffect)
-        {
-            palette = PaletteIndex.Green;
-        }
-
-        return palette;
-    }
-
-    private static PaletteIndex GetBonusPalette(int bonusCount)
-    {
-        const int BonusPals = 4;
-        const int StartBonusPals = 9;
-        int palette = (bonusCount + 7) >> 3;
-        if (palette >= BonusPals)
-            palette = BonusPals - 1;
-        palette += StartBonusPals;
-        return (PaletteIndex)palette;
-    }
-
-    private static PaletteIndex GetDamagePalette(int damageCount)
-    {
-        const int RedPals = 8;
-        const int StartRedPals = 1;
-        int palette = (damageCount + 7) >> 3;
-        if (palette >= RedPals)
-            palette = RedPals - 1;
-        palette += StartRedPals;
-        return (PaletteIndex)palette;
     }
 
     private static ColorMapUniforms GetColorMapUniforms(Entity viewer, OldCamera camera)

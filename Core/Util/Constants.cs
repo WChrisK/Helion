@@ -25,6 +25,8 @@ public static class Constants
     /// </summary>
     public const string NoTexture = "-";
 
+    public const string BlackTextureName = "__BLACK_TEX__";
+
     /// <summary>
     /// The index of a 'missing' texture in a map.
     /// </summary>

@@ -21,7 +21,6 @@ using OpenTK.Graphics.OpenGL;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Portals.FloodFill;
-using Helion.Resources;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Static;
 
@@ -255,7 +254,7 @@ public class StaticCacheGeometryRenderer : IDisposable
             return;
 
         m_geometryRenderer.SetRenderOneSided(side);
-        m_geometryRenderer.RenderOneSided(side, isFrontSide, out var sideVertices, out var skyVertices);
+        m_geometryRenderer.RenderOneSided(side, isFrontSide, out var sideVertices, out var skyVertices, out var texture);
 
         AddSkyGeometry(side, WallLocation.Middle, null, skyVertices, side.Sector, update);
 
@@ -263,7 +262,7 @@ public class StaticCacheGeometryRenderer : IDisposable
         {
             AddFloodFillPlane(side, sector, true);
             var wall = side.Middle;
-            UpdateVertices(wall.Static.GeometryData, wall.TextureHandle, wall.Static.Index, sideVertices, null, side, wall, true, sector);
+            UpdateVertices(wall.Static.GeometryData, wall.TextureHandle, wall.Static.Index, sideVertices, null, side, wall, true, sector, texture);
         }
     }
 
@@ -671,8 +670,10 @@ public class StaticCacheGeometryRenderer : IDisposable
         {
             var data = geometry[i];
 
-            GL.ActiveTexture(TextureUnit.Texture0); 
-            GLLegacyTexture texture = m_textureManager.GetTexture(data.TextureHandle, (data.Texture.Flags & TextureFlags.ClampY) == 0);
+            GL.ActiveTexture(TextureUnit.Texture0);
+            // Special case for one-sided walls with no texture. Uses black texture to block rendering so use directly.
+            var texture = data.TextureHandle <= Constants.NullCompatibilityTextureIndex ? data.Texture :
+                m_textureManager.GetTexture(data.TextureHandle, (data.Texture.Flags & TextureFlags.ClampY) == 0);
             texture.Bind();
 
             data.Vbo.UploadIfNeeded();
@@ -859,7 +860,7 @@ public class StaticCacheGeometryRenderer : IDisposable
     }
 
     private void UpdateVertices(GeometryData? geometryData, int textureHandle, int startIndex, DynamicVertex[] vertices,
-        SectorPlane? plane, Side? side, Wall? wall, bool repeat, Sector sector)
+        SectorPlane? plane, Side? side, Wall? wall, bool repeat, Sector sector, GLLegacyTexture? texture = null)
     {
         var geometryType = side != null && wall != null ? GetWallType(side, wall) : GeometryType.Flat;
         if (side != null && wall != null && geometryType != GeometryType.TwoSidedMiddleWall)
@@ -867,7 +868,7 @@ public class StaticCacheGeometryRenderer : IDisposable
 
         if (geometryData == null)
         {
-            AddNewGeometry(textureHandle, vertices, geometryType, plane, side, wall, repeat, sector);
+            AddNewGeometry(textureHandle, vertices, geometryType, plane, side, wall, repeat, sector, texture);
             return;
         }
 
@@ -940,7 +941,7 @@ public class StaticCacheGeometryRenderer : IDisposable
         }
     }
 
-    private void AddNewGeometry(int textureHandle, DynamicVertex[] vertices, GeometryType geometryType, SectorPlane? plane, Side? side, Wall? wall, bool repeat, Sector sector)
+    private void AddNewGeometry(int textureHandle, DynamicVertex[] vertices, GeometryType geometryType, SectorPlane? plane, Side? side, Wall? wall, bool repeat, Sector sector, GLLegacyTexture? texture = null)
     {
         if (m_freeManager.GetAndRemove(textureHandle, vertices.Length, out StaticGeometryData? existing))
         {
@@ -964,7 +965,7 @@ public class StaticCacheGeometryRenderer : IDisposable
             return;
         }
 
-        data = AllocateGeometryData(geometryType, textureHandle, repeat);
+        data = AllocateGeometryData(geometryType, textureHandle, repeat, overrideTexture: texture);
         SetRuntimeGeometryData(plane, side, wall, textureHandle, data, vertices, repeat);
         AddVertices(data.Vbo.Data, vertices);
         data.Vbo.SetNotUploaded();

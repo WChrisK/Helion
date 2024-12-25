@@ -24,6 +24,8 @@ public class Image
     public static readonly Image WhiteImage = CreateWhiteImage();
     public static readonly Image TransparentImage = CreateTransparentImage();
 
+    public static Image CreateBlackImage() => new([Color.Black.Value], (1, 1), ImageType.PaletteWithArgb, (0, 0), ResourceNamespace.Global, indices: [0]);
+
     public Dimension Dimension;
     public ImageType ImageType;
     public ImageType UploadType;

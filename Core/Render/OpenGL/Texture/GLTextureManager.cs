@@ -6,6 +6,7 @@ using Helion.Geometry.Boxes;
 using Helion.Graphics;
 using Helion.Graphics.Fonts;
 using Helion.Render.Common.Textures;
+using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Shared;
 using Helion.Resources;
 using Helion.Resources.Archives.Collection;
@@ -50,6 +51,8 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
     /// </summary>
     public GLTextureType WhiteTexture { get; }
 
+    public GLTextureType BlackTexture { get; }
+
     /// <summary>
     /// The null sprite rotation for when a sprite cannot be found.
     /// </summary>
@@ -66,6 +69,7 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
         ArchiveCollection = archiveCollection;
         NullTexture = config.Render.NullTexture ? CreateNullTexture() : CreateTransparentNullTexture();
         WhiteTexture = CreateWhiteTexture();
+        BlackTexture = GenerateTexture(Image.CreateBlackImage(), "NULLBLACK", ResourceNamespace.Global);
         NullSpriteRotation = CreateNullSpriteRotation();
         NullFont = CreateNullFont();
     }

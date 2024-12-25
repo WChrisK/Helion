@@ -35,6 +35,7 @@ public partial class TextureManager : ITickable
     private readonly HashSet<int> m_processedEntityDefinitions = [];
     private readonly Dictionary<int, Entry[]> m_spriteIndexEntries = [];
     private int m_skyIndex;
+    private int m_blackTextureIndex;
     private Texture? m_defaultSkyTexture;
     private readonly bool m_unitTest;
     private readonly bool m_cacheAllSprites;
@@ -262,7 +263,12 @@ public partial class TextureManager : ITickable
     public Texture GetTexture(string name, ResourceNamespace resourceNamespace, ResourceNamespace? priority = null)
     {
         if (name.Equals(Constants.NoTexture, StringComparison.OrdinalIgnoreCase))
+        {
+            if (priority == ResourceNamespace.Flats)
+                return m_textures[m_blackTextureIndex];
+
             return m_textures[Constants.NoTextureIndex];
+        }
 
         if (m_unitTest)
             HandleUnitTestAdd(name, resourceNamespace, priority);
@@ -606,6 +612,11 @@ public partial class TextureManager : ITickable
             index++;
         }
 
+        var blackTexture = CreateBlackTexture(index);
+        m_textures.Add(blackTexture);
+        m_textureLookup[blackTexture.Name] = blackTexture;
+        index++;
+
         string skyFlatName = m_archiveCollection.GameInfo.SkyFlatName;
         foreach (Entry flat in flatEntries)
         {
@@ -620,14 +631,24 @@ public partial class TextureManager : ITickable
         }
     }
 
+    private Texture CreateBlackTexture(int index)
+    {
+        m_blackTextureIndex = index;
+        return new Texture(Constants.BlackTextureName, ResourceNamespace.Textures, index)
+        {
+            Image = Image.CreateBlackImage()
+        };
+    }
+
     private Texture GetShittyTexture(List<TextureDefinition> textures)
     {
         // Load AASHITTY for information purposes - FloorRaiseByTexture needs it to emulate vanilla bug
         var texture = textures.FirstOrDefault(x => x.Name.EqualsIgnoreCase(ShittyTextureName));
         var ns = ResourceNamespace.Textures;
-        var shittyTexture = new Texture(ShittyTextureName, ns, Constants.NullCompatibilityTextureIndex);
-        shittyTexture.Image = texture == null ? Image.NullImage : m_archiveCollection.ImageRetriever.GetOnly(ShittyTextureName, ns);
-        return shittyTexture;
+        return new Texture(ShittyTextureName, ns, Constants.NullCompatibilityTextureIndex)
+        {
+            Image = texture == null ? Image.NullImage : m_archiveCollection.ImageRetriever.GetOnly(ShittyTextureName, ns)
+        };
     }
 
     private void LoadTextureImage(int textureIndex, GetImageOptions options = GetImageOptions.Default)

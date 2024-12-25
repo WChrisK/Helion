@@ -1,6 +1,8 @@
 using Helion.Audio.Sounds;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Vectors;
+using Helion.Graphics;
+using Helion.Graphics.Palettes;
 using Helion.Layer.Consoles;
 using Helion.Layer.EndGame;
 using Helion.Layer.Endoom;
@@ -737,7 +739,7 @@ public class GameLayerManager : IGameLayerManager
         m_hudContext.Dimension = m_renderer.RenderDimension;
         m_hudContext.DrawPalette = true;
         ctx.Viewport(m_renderer.RenderDimension.Box);
-        ctx.Clear(Renderer.DefaultBackground, true, true);
+        ctx.Clear(GetClearColor(), true, true);
 
         if (WorldLayer != null && WorldLayer.ShouldRender && (m_config.Hud.AutoMap.Overlay || !WorldLayer.DrawAutomap))
         {
@@ -754,6 +756,19 @@ public class GameLayerManager : IGameLayerManager
         m_profiler.Render.MiscLayers.Start();
         ctx.Hud(m_hudContext, m_renderHudAction);
         m_profiler.Render.MiscLayers.Stop();
+    }
+
+    private Color GetClearColor()
+    {
+        if (WorldLayer == null)
+            return Renderer.OffBlackBackground;
+
+        // Render gaps that are cleared in palette color mode need to be cleared with current palettes black color (0x0.wad)
+        // For example black is mixed with red in the red palette when player takes damage
+        if (ShaderVars.PaletteColorMode)
+            return PaletteUtil.GetBlackColor(m_archiveCollection, m_config, WorldLayer.World.Player);
+
+        return Renderer.BlackBackground;
     }
 
     private void RenderHud(IHudRenderContext hudCtx)

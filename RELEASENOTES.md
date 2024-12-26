@@ -16,6 +16,7 @@
   - Added order independent transparency to fix issues with multiple transparent sprites causing transparent textures not to render
   - Support texture filtering with sprites
   - Refraction effect for spectres
+  - Added nearest to bilinear and nearest to trilinear texture filter options
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch

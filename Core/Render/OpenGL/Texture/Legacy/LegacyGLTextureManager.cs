@@ -183,36 +183,25 @@ public class LegacyGLTextureManager : GLTextureManager<GLLegacyTexture>
 
     public void SetTextureFilter(TextureTarget targetType)
     {
-        (int minFilter, int maxFilter) = FindFilterValues(Config.Render.Filter.Texture.Value);
-        GL.TexParameter(targetType, TextureParameterName.TextureMinFilter, minFilter);
-        GL.TexParameter(targetType, TextureParameterName.TextureMagFilter, maxFilter);
+        (var magFilter, var minFilter) = FindFilterValues(Config.Render.Filter.Texture.Value);
+        GL.TexParameter(targetType, TextureParameterName.TextureMagFilter, (int)magFilter);
+        GL.TexParameter(targetType, TextureParameterName.TextureMinFilter, (int)minFilter);
     }
 
-    private (int minFilter, int maxFilter) FindFilterValues(FilterType filterType)
+    private static (TextureMagFilter magFilter, TextureMinFilter minFilter) FindFilterValues(FilterType filterType)
     {
         // Filtering must be nearest for colormap support
-        int minFilter = (int)TextureMinFilter.Nearest;
-        int magFilter = (int)TextureMagFilter.Nearest;
-
         if (ShaderVars.PaletteColorMode)
-            return (minFilter, magFilter);
+            return (TextureMagFilter.Nearest, TextureMinFilter.Nearest);
 
-        switch (filterType)
+        return filterType switch
         {
-        case FilterType.Nearest:
-            // Already set as the default!
-            break;
-        case FilterType.Bilinear:
-            minFilter = (int)TextureMinFilter.Linear;
-            magFilter = (int)TextureMagFilter.Linear;
-            break;
-        case FilterType.Trilinear:
-            minFilter = (int)TextureMinFilter.LinearMipmapLinear;
-            magFilter = (int)TextureMagFilter.Linear;
-            break;
-        }
-
-        return (minFilter, magFilter);
+            FilterType.Bilinear => (TextureMagFilter.Linear, TextureMinFilter.Linear),
+            FilterType.Trilinear => (TextureMagFilter.Linear, TextureMinFilter.LinearMipmapLinear),
+            FilterType.NeareastBilinear => (TextureMagFilter.Nearest, TextureMinFilter.Linear),
+            FilterType.NearestTrilinear => (TextureMagFilter.Nearest, TextureMinFilter.LinearMipmapLinear),
+            _ => (TextureMagFilter.Nearest, TextureMinFilter.Nearest),
+        };
     }
 
     public void SetAnisotropicFiltering(TextureTarget targetType)

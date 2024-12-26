@@ -43,3 +43,4 @@
   - Fix spawn ceiling being incorrectly applied after initial map start
   - Fix ordering to set flags first when something dies before setting the death state to match original behavior
   - Fix index check on setting death state to match original behavior. Fixes 0x0.wad spawn fall objects not being removed.
+  - Fix one-sided walls and flats with null texture rendering (fixes 0x0.wad) 

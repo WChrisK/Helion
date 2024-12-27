@@ -66,14 +66,14 @@
 
                 foreach (string library in libraryNames)
                 {
-                    // e.g. appdir/runtimes/linux-x64/native/fluidsynth.so
-                    if (NativeLibrary.TryLoad($"{baseDirectory}{runtimePath}{library}", out m_dllHandle))
+                    // e.g. appdir/libzmusic.so, appdir/zmusic.dll
+                    if (NativeLibrary.TryLoad($"{baseDirectory}{library}", out m_dllHandle))
                     {
                         return m_dllHandle;
                     }
 
-                    // e.g. appdir/fluidsynth.so
-                    if (NativeLibrary.TryLoad($"{baseDirectory}{library}", out m_dllHandle))
+                    // e.g. appdir/runtimes/linux-x64/native/libzmusic.so, appdir/runtims/win-x64/zmusic.dll
+                    if (NativeLibrary.TryLoad($"{baseDirectory}{runtimePath}{library}", out m_dllHandle))
                     {
                         return m_dllHandle;
                     }

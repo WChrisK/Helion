@@ -720,7 +720,7 @@ public partial class Client
         if (m_demoPlayer != null && demoMap != null)
             return new DoomRandom(demoMap.RandomIndex);
 
-        return new DoomRandom();
+        return new DoomRandom(Random.Shared.Next(byte.MaxValue));
     }
 
     private void QueueLoadMap(MapInfoDef mapInfoDef, WorldModel? worldModel, IWorld? previousWorld, Action<object?> onComplete, object? completeParam, LevelChangeEvent? eventContext = null, bool transition = true)

@@ -46,3 +46,4 @@
   - Fix index check on setting death state to match original behavior. Fixes 0x0.wad spawn fall objects not being removed.
   - Fix one-sided walls and flats with null texture rendering (fixes 0x0.wad)
   - Fix ranodomization for new map starts starting with the same value
+  - Fix two-sided boom generic door specials not being trigger by monsters when blocked (fixes Going Down Turbo MAP10)

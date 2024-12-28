@@ -476,14 +476,17 @@ public partial class Entity
         return WorldStatic.Random.NextByte() >= distance;
     }
 
-    private bool TryWalk()
+    public bool TryWalk()
     {
         if (!MoveEnemy(out TryMoveData? tryMove))
         {
-            if (tryMove != null && tryMove.ImpactSpecialLines.Length > 0)
+            if (tryMove != null)
             {
                 for (int i = 0; i < tryMove.ImpactSpecialLines.Length; i++)
                     WorldStatic.World.ActivateSpecialLine(this, tryMove.ImpactSpecialLines[i], ActivationContext.UseLine, true);
+
+                for (int i = 0; i < tryMove.IntersectSpecialLines.Length; i++)
+                    WorldStatic.World.ActivateSpecialLine(this, tryMove.IntersectSpecialLines[i], ActivationContext.UseLine, true);
             }
 
             return false;

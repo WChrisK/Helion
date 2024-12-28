@@ -125,7 +125,7 @@ public interface IWorld : IDisposable
     bool EntityUse(Entity entity);
     void OnTryEntityUseLine(Entity entity, Line line);
     bool CanActivate(Entity entity, Line line, ActivationContext context);
-    bool ActivateSpecialLine(Entity entity, Line line, ActivationContext context, bool fromFrom);
+    bool ActivateSpecialLine(Entity entity, Line line, ActivationContext context, bool fromFront);
     bool GetAutoAimEntity(Entity startEntity, in Vec3D start, double angle, double distance, out double pitch, out Entity? entity);
     Entity? FireProjectile(Entity shooter, double angle, double pitch, double autoAimDistance, bool autoAim, EntityDefinition projectileDef, out Entity? autoAimEntity,
         double addAngle = 0, double addPitch = 0, double zOffset = 0);

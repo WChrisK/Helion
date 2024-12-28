@@ -858,6 +858,7 @@ public sealed class Sector
     {
         if (changes.Texture.HasValue)
             world.SetPlaneTexture(GetSectorPlane(planeType), changes.Texture.Value);
+
         if (transferSpecial)
         {
             SectorDamageSpecial = changes.DamageSpecial?.Copy(this);
@@ -865,6 +866,15 @@ public sealed class Sector
                 SetSectorEffect(changes.SectorEffect.Value);
             if (changes.KillEffect.HasValue)
                 SetKillEffect(changes.KillEffect.Value);
+
+            var node = Entities.Head;
+            while (node != null)
+            {
+                var entity = node.Value;
+                if (entity.Sector == this)
+                    entity.SectorDamageSpecial = SectorDamageSpecial;
+                node = node.Next;
+            }
         }
     }
 }

@@ -199,7 +199,7 @@ public class FragFunction
 
                 float fuzzDistStep = ceil((fuzzDiv/(max(1, " + FuzzDist(options) + @" / 96))));
                 vec2 blockCoordinate = floor(coords / fuzzDistStep);
-                float fuzzAlpha = clamp(noise(blockCoordinate * fuzzFrac), 0.2, 0.65);
+                float fuzzAlpha = clamp(noise(blockCoordinate * fuzzFrac), 0.2, 0.8);
                 float offsetX = mix(-1, 1, float(fuzzAlpha > 0.3)) * int(fuzzDistStep * 4);
                 float offsetY = mix(1, -1, float(fuzzAlpha < 0.4)) * int(fuzzDistStep * 4);
                 float flipX = mix(1, -1, float(fuzzAlpha > 0.5));

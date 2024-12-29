@@ -80,6 +80,8 @@ public class ListedConfigSection : IOptionSection
         m_config.Render.LightMode.OptionDisabled = paletteMode;
 
         m_config.Mouse.ForwardBackwardSpeed.OptionDisabled = m_config.Mouse.Look.Value == true;
+
+        m_config.Hud.Scale.OptionDisabled = m_config.Hud.AutoScale.Value == true;
     }
 
     public void ResetSelection() => m_currentRowIndex = 0;

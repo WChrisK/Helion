@@ -174,7 +174,7 @@ public class ConfigHud: ConfigElement<ConfigHud>
     [OptionMenu(OptionSectionType.Hud, "Autoscale HUD", spacer: true)]
     public readonly ConfigValue<bool> AutoScale = new(true);
 
-    [ConfigInfo("Amount to scale the HUD.")]
+    [ConfigInfo("Amount to scale the HUD. Autoscale HUD must be disabled to change.")]
     [OptionMenu(OptionSectionType.Hud, "HUD Scale", sliderMin: 0, sliderMax: 5.0, sliderStep: 1)]
     public readonly ConfigValue<double> Scale = new(2.0, Greater(0.0));
 

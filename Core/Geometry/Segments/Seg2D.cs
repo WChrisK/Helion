@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Vectors;
+using Helion.Util;
 using Helion.Util.Extensions;
 
 namespace Helion.Geometry.Segments
@@ -377,7 +378,8 @@ namespace Helion.Geometry.Segments
                 return End;
             return FromTime(t);
         }
-        public bool Intersects(double boxMinX, double boxMinY, double boxMaxX, double boxMaxY)
+
+        public readonly bool Intersects(double boxMinX, double boxMinY, double boxMaxX, double boxMaxY)
         {
             if (Box.Min.X >= boxMaxX || Box.Max.X <= boxMinX || Box.Min.Y >= boxMaxY || Box.Max.Y <= boxMinY)
                 return false;
@@ -390,37 +392,30 @@ namespace Helion.Geometry.Segments
             Vec2D delta = Delta;
             if ((startX < endX) ^ (startY < endY))
             {
-                return ((delta.X * (boxMinY - startY)) - (delta.Y * (boxMinX - startX))) < 0 !=
-                    ((delta.X * (boxMaxY - startY)) - (delta.Y * (boxMaxX - startX))) < 0;
+                var left = (delta.X * (boxMinY - startY)) - (delta.Y * (boxMinX - startX));
+                var right = (delta.X * (boxMaxY - startY)) - (delta.Y * (boxMaxX - startX));
+
+                if (Math.Abs(left) < Constants.Epsilon)
+                    left = 0;
+                if (Math.Abs(right) < Constants.Epsilon)
+                    right = 0;
+
+                return left < 0 != right < 0;
             }
             else
             {
-                return ((delta.X * (boxMaxY - startY)) - (delta.Y * (boxMinX - startX))) < 0 !=
-                    ((delta.X * (boxMinY - startY)) - (delta.Y * (boxMaxX - startX))) < 0;
+                var left = (delta.X * (boxMaxY - startY)) - (delta.Y * (boxMinX - startX));
+                var right = (delta.X * (boxMinY - startY)) - (delta.Y * (boxMaxX - startX));
+
+                if (Math.Abs(left) < Constants.Epsilon)
+                    left = 0;
+                if (Math.Abs(right) < Constants.Epsilon)
+                    right = 0;
+
+                return left < 0 != right < 0;
             }
         }
-        public bool Intersects(in Box2D box)
-        {
-            if (Box.Min.X >= box.Max.X || Box.Max.X <= box.Min.X || Box.Min.Y >= box.Max.Y || Box.Max.Y <= box.Min.Y)
-                return false;
 
-            double startX = Start.X;
-            double startY = Start.Y;
-            double endX = End.X;
-            double endY = End.Y;
-
-            Vec2D delta = Delta;
-            if ((startX < endX) ^ (startY < endY))
-            {
-                return ((delta.X * (box.Min.Y - startY)) - (delta.Y * (box.Min.X - startX))) < 0 !=
-                    ((delta.X * (box.Max.Y - startY)) - (delta.Y * (box.Max.X - startX))) < 0;
-            }
-            else
-            {
-                return ((delta.X * (box.Max.Y - startY)) - (delta.Y * (box.Min.X - startX))) < 0 !=
-                    ((delta.X * (box.Min.Y - startY)) - (delta.Y * (box.Max.X - startX))) < 0;
-            }
-        }
         public bool Intersects(BoundingBox2D box)
         {
             if (!box.Overlaps(Box))

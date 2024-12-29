@@ -1006,7 +1006,7 @@ public sealed class PhysicsManager
 
                             m_checkedBlockLines[line->LineId] = checkCounter;
 
-                            if (line->Segment.Intersects(box))
+                            if (line->Segment.Intersects(box.Min.X, box.Min.Y, box.Max.X, box.Max.Y))
                             {
                                 // Doomism: Ignore for moving sectors if blocked by flags only.
                                 if (Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, line->Segment, line->OneSided, line->Flags, WorldStatic.Mbf21))

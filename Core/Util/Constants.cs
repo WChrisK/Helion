@@ -279,6 +279,7 @@ public static class Constants
         public const string Commands = "commands";
     }
 
+    public const double Epsilon = 0.00001;
     public const double EntityShootDistance = 2048.0;
     public const double EntityMeleeDistance = 64.0;
     public const double DefaultSpreadAngle = 5.625 * Math.PI / 180.0;

@@ -47,3 +47,4 @@
   - Fix one-sided walls and flats with null texture rendering (fixes 0x0.wad)
   - Fix ranodomization for new map starts starting with the same value
   - Fix two-sided boom generic door specials not being trigger by monsters when blocked (fixes Going Down Turbo MAP10)
+  - Fix flood rendering where flood sides would have gaps

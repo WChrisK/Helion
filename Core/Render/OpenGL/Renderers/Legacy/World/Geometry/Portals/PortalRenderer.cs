@@ -12,7 +12,7 @@ using System.Diagnostics;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Portals.FloodFill;
 using Helion.Util;
 using Helion.World.Geometry.Lines;
-using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
+using Helion.Resources;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Portals;
 
@@ -26,7 +26,6 @@ public enum FloodSet
 
 public class PortalRenderer : IDisposable
 {
-    enum PushDir { Back, Forward }
     const int FakeWallHeight = Constants.MaxTextureHeight;
 
     private FloodFillRenderer m_floodFillRenderer;
@@ -35,7 +34,6 @@ public class PortalRenderer : IDisposable
     private readonly ArchiveCollection m_archiveCollection;
     private readonly SectorPlane m_fakeFloor = new(SectorPlaneFace.Floor, 0, 0, 0);
     private readonly SectorPlane m_fakeCeiling = new(SectorPlaneFace.Floor, 0, 0, 0);
-    private readonly double m_pushSegAmount;
     private TransferHeightView m_transferHeightView;
     private bool m_disposed;
 
@@ -46,8 +44,6 @@ public class PortalRenderer : IDisposable
         m_floodFillStatic = new(glTextureManager, FloodFillRenderMode.Static);
         m_floodFillDynamic = new(glTextureManager, FloodFillRenderMode.Dynamic);
         m_floodFillRenderer = m_floodFillStatic;
-        // ReversedZ allows for a much smaller push amount
-        m_pushSegAmount = ShaderVars.ReversedZ ? 0.005 : 0.05;
         m_transferHeightView = TransferHeightView.Middle;
     }
 
@@ -102,7 +98,7 @@ public class PortalRenderer : IDisposable
         var saveEnd = line.Segment.End;
         WallVertices wall = default;
 
-        PushSeg(line, facingSide, PushDir.Forward, m_pushSegAmount);
+        GeometryRenderer.PushSeg(line, facingSide, PushDir.Forward);
 
         if (face == SectorPlaneFace.Floor)
         {
@@ -152,9 +148,6 @@ public class PortalRenderer : IDisposable
         var saveStart = line.Segment.Start;
         var saveEnd = line.Segment.End;
 
-        // The middle texture renders over any potential flood textures. Push the flood texture slightly behind the line.
-        PushSeg(facingSide.Line, facingSide, PushDir.Back, m_pushSegAmount);
-
         if (sideTexture == SideTexture.Upper)
         {
             SectorPlane top = facingSector.Ceiling;
@@ -199,8 +192,15 @@ public class PortalRenderer : IDisposable
             Debug.Assert(sideTexture == SideTexture.Lower, $"Expected lower floor, got {sideTexture} instead");
             SectorPlane top = otherSector.Floor;
             SectorPlane bottom = facingSector.Floor;
-            WorldTriangulator.HandleTwoSidedLower(facingSide, top, bottom, Vec2F.Zero, isFront, ref wall);
             double floodMinZ = top.Z;
+
+            // This lower would clip into the upper texture. Pick the upper as the priority and stop at the ceiling.
+            // TODO there is a case here where it should HOM.
+            if (top.Z > otherSector.Ceiling.Z)
+                top = otherSector.Ceiling;
+            
+            WorldTriangulator.HandleTwoSidedLower(facingSide, top, bottom, Vec2F.Zero, isFront, ref wall);            
+
             if (!IsSky(floodSector.Floor))
             {
                 result |= FloodSet.Normal;
@@ -247,9 +247,9 @@ public class PortalRenderer : IDisposable
         if (dir == PushDir.Forward)
             angle += MathHelper.Pi;
 
-        var unit = Vec2D.UnitCircle(angle + MathHelper.HalfPi) * amount;
-        line.Segment.Start += unit;
-        line.Segment.End += unit;
+        var pushUnit = Vec2D.UnitCircle(angle + MathHelper.HalfPi) * amount;
+        line.Segment.Start += pushUnit;
+        line.Segment.End += pushUnit;
     }
 
     private bool IgnoreAltFloodFill(Side facingSide, Side otherSide, SectorPlaneFace face)

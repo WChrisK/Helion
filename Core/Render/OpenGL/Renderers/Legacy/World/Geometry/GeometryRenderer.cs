@@ -8,6 +8,7 @@ using Helion.Render.Common.Shared.World;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Data;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Portals;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Static;
+using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Sky;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Sky.Sphere;
 using Helion.Render.OpenGL.Shader;
@@ -30,6 +31,8 @@ using Helion.World.Static;
 using static Helion.World.Geometry.Sectors.Sector;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World.Geometry;
+
+public enum PushDir { Back, Forward }
 
 public class GeometryRenderer : IDisposable
 {
@@ -105,6 +108,19 @@ public class GeometryRenderer : IDisposable
     ~GeometryRenderer()
     {
         ReleaseUnmanagedResources();
+    }
+
+    public static void PushSeg(Line line, Side facingSide, PushDir dir)
+    {
+        // Push it out to prevent potential z-fighting. Default pushes out from the sector.
+        var angle = facingSide == line.Front ? line.Segment.Start.Angle(line.Segment.End) : line.Segment.End.Angle(line.Segment.Start);
+        if (dir == PushDir.Forward)
+            angle += MathHelper.Pi;
+
+        // ReversedZ allows for a much smaller push amount
+        var pushUnit = Vec2D.UnitCircle(angle + MathHelper.HalfPi) * (ShaderVars.ReversedZ ? 0.005 : 0.05);
+        line.Segment.Start += pushUnit;
+        line.Segment.End += pushUnit;
     }
 
     public void UpdateTo(IWorld world)
@@ -1080,10 +1096,16 @@ public class GeometryRenderer : IDisposable
         DynamicVertex[]? data = m_vertexLookup[facingSide.Id];
         var geometryType = alpha < 1 ? GeometryType.AlphaWall : GeometryType.TwoSidedMiddleWall;
 
-        RenderWorldData renderData = m_worldDataManager.GetRenderData(texture, m_program, geometryType);
+        var renderData = m_worldDataManager.GetRenderData(texture, m_program, geometryType);
 
         if (facingSide.OffsetChanged || m_sectorChangedLine || data == null)
         {
+            // Push forward to cover flood fill side and prevent z-fighting (ex Doom2 MAP25 bloodfall)
+            var segSave = facingSide.Line.Segment;
+            // Don't push with flood plane. This is different from flood fill side and are already pushed.
+            if (!facingSector.Flood)
+                PushSeg(facingSide.Line, facingSide, PushDir.Forward);
+
             var opening = GetMidTexOpening(TextureManager, facingSide, facingSector, otherSector, false);
             var prevOpening = GetMidTexOpening(TextureManager, facingSide, facingSector, otherSector, true);
             double offset = GetTransferHeightHackOffset(facingSide, otherSide, opening.BottomZ, opening.TopZ, previous: false);
@@ -1105,6 +1127,7 @@ public class GeometryRenderer : IDisposable
                 SetWallVertices(data, wall, GetLightLevelAdd(facingSide), lightIndex, colorMapIndex, alpha, addAlpha: 0);
 
             m_vertexLookup[facingSide.Id] = data;
+            facingSide.Line.Segment = segSave;
         }
 
         // See RenderOneSided() for an ASCII image of why we do this.

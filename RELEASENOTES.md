@@ -48,3 +48,4 @@
   - Fix ranodomization for new map starts starting with the same value
   - Fix two-sided boom generic door specials not being trigger by monsters when blocked (fixes Going Down Turbo MAP10)
   - Fix flood rendering where flood sides would have gaps
+  - Fix box segment intersection to check for epsilon. Fixes Going Down Turbo MAP12 red key not falling.

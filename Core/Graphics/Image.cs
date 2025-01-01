@@ -31,7 +31,7 @@ public class Image
     public ImageType UploadType;
     public readonly Vec2I Offset;
     public readonly ResourceNamespace Namespace;
-    public readonly uint[] m_pixels; // Stored as argb with a = high byte, b = low byte
+    public uint[] m_pixels; // Stored as argb with a = high byte, b = low byte
     public readonly byte[] m_indices;
     public readonly int UpscaleFactor;
 
@@ -56,7 +56,7 @@ public class Image
 
     public Image(uint[] pixels, Dimension dimension, ImageType imageType, Vec2I offset, ResourceNamespace ns, ushort[]? indices = null, int upscaleFactor = 1)
     {
-        Precondition(pixels.Length == dimension.Area, "Image size mismatch");
+        Precondition(pixels.Length >= dimension.Area, "Image size mismatch");
 
         UpscaleFactor = upscaleFactor;
         Dimension = dimension;
@@ -78,6 +78,13 @@ public class Image
 
         UploadType = ImageType;
         m_indices ??= [];
+    }
+
+    public void SetPixels(uint[] pixels, Dimension dimension)
+    {
+        Precondition(pixels.Length >= dimension.Area, "Image size mismatch");
+        Dimension = dimension;
+        m_pixels = pixels;
     }
 
     public void DisableIndexedUpload()
@@ -333,21 +340,6 @@ public class Image
             if (ImageType == ImageType.PaletteWithArgb)
                 m_indices[offset] = index;
             m_pixels[offset] = color.Uint;
-        }
-    }
-
-    public void FlipY()
-    {
-        var row = new uint[Dimension.Width];
-        var rowSize = Dimension.Width;
-        for (int y = 0; y < Dimension.Height / 2; y++)
-        {
-            var topRowIndex = y * rowSize;
-            var bottomRowIndex = (Dimension.Height - y - 1) * rowSize;
-
-            Array.Copy(m_pixels, topRowIndex, row, 0, rowSize);
-            Array.Copy(m_pixels, bottomRowIndex, m_pixels, topRowIndex, rowSize);
-            Array.Copy(row, 0, m_pixels, bottomRowIndex, rowSize);
         }
     }
 

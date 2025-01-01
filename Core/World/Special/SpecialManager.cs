@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Helion.Geometry.Vectors;
 using Helion.Maps.Specials;
 using Helion.Maps.Specials.Compatibility;
@@ -19,8 +20,43 @@ using Helion.World.Special.SectorMovement;
 using Helion.World.Special.Specials;
 using Helion.World.Special.Switches;
 using Helion.World.Stats;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Helion.World.Special;
+
+public class SpecialModelData
+{
+    public readonly List<ISpecialModel> Specials = [];
+    public readonly List<SectorMoveSpecialModel> MoveSpecials = [];
+    public readonly List<ScrollSpecialModel> ScrollSpecials = [];
+    public readonly List<LightChangeSpecialModel> LightChangeSpecials = [];
+    public readonly List<LightFireFlickerDoomModel> LightFireFlickerDoomSpecials = [];
+    public readonly List<LightFlickerDoomSpecialModel> LightFlickerDoomSpecials = [];
+    public readonly List<LightPulsateSpecialModel> LightPulsateSpecials = [];
+    public readonly List<LightStrobeSpecialModel> LightStrobeSpecials = [];
+    public readonly List<PushSpecialModel> PushSpecials = [];
+    public readonly List<StairSpecialModel> StairSpecials = [];
+    public readonly List<ElevatorSpecialModel> ElevatorSpecials = [];
+    public readonly List<SwitchChangeSpecialModel> SwitchSpecials = [];
+    public readonly List<SectorDamageSpecialModel> SectorDamageSpecials = [];
+
+    public void Clear()
+    {
+        Specials.Clear();
+        MoveSpecials.Clear();
+        ScrollSpecials.Clear();
+        LightChangeSpecials.Clear();
+        LightFireFlickerDoomSpecials.Clear();
+        LightFlickerDoomSpecials.Clear();
+        LightPulsateSpecials.Clear();
+        LightStrobeSpecials.Clear();
+        PushSpecials.Clear();
+        StairSpecials.Clear();
+        ElevatorSpecials.Clear();
+        SwitchSpecials.Clear();
+        SectorDamageSpecials.Clear();
+    }
+}
 
 public sealed class SpecialManager : ITickable, IDisposable
 { 
@@ -110,17 +146,88 @@ public sealed class SpecialManager : ITickable, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public List<ISpecialModel> GetSpecialModels()
+    public void GetSpecialModels(SpecialModelData data)
     {
-        List<ISpecialModel> specials = new(256);
-        foreach (var special in m_specials)
+        for (var node = m_specials.First; node != null; node = node.Next)
         {
-            ISpecialModel? specialModel = special.ToSpecialModel();
-            if (specialModel != null)
-                specials.Add(specialModel);
+            var special = node.Value;
+            if (special is ScrollSpecial scroll)
+                data.ScrollSpecials.Add(scroll.ToSpecialModel());
+            else if (special is LightChangeSpecial lightChange)
+                data.LightChangeSpecials.Add(lightChange.ToSpecialModel());
+            else if (special is LightFireFlickerDoom fireFlickerDoom)
+                data.LightFireFlickerDoomSpecials.Add(fireFlickerDoom.ToSpecialModel());
+            else if (special is LightFlickerDoomSpecial lightFlickerDoom)
+                data.LightFlickerDoomSpecials.Add(lightFlickerDoom.ToSpecialModel());
+            else if (special is LightPulsateSpecial pulsate)
+                data.LightPulsateSpecials.Add(pulsate.ToSpecialModel());
+            else if (special is LightStrobeSpecial strobe)
+                data.LightStrobeSpecials.Add(strobe.ToSpecialModel());
+            else if (special is PushSpecial push)
+                data.PushSpecials.Add(push.ToSpecialModel());
+            else if (special is StairSpecial stair)
+                data.StairSpecials.Add(stair.ToStairSpecialModel());
+            else if (special is ElevatorSpecial elevator)
+                data.ElevatorSpecials.Add(elevator.ToSpecialModel());
+            else if (special is SwitchChangeSpecial switchChange)
+                data.SwitchSpecials.Add(switchChange.ToSpecialModel());
+            else if (special is SectorMoveSpecial move)
+                data.MoveSpecials.Add(move.ToSpecialModel());
+            else
+                SpecialModelNotImplemented(special);
         }
+    }
 
-        return specials;
+    [Conditional("DEBUG")]
+    private static void SpecialModelNotImplemented(ISpecial special)
+    {
+        throw new Exception($"{special} doesn't implement model generation.");
+    }
+
+    public void AddSpecialModels(WorldModel worldModel)
+    {
+        for (int i = 0; i < worldModel.MoveSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.MoveSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.ScrollSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.ScrollSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.LightChangeSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.LightChangeSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.LightFireFlickerDoomSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.LightFireFlickerDoomSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.LightFlickerDoomSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.LightFlickerDoomSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.LightPulsateSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.LightPulsateSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.LightStrobeSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.LightStrobeSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.PushSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.PushSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.StairSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.StairSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.ElevatorSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.ElevatorSpecials[i].ToWorldSpecial(m_world));
+
+        for (int i = 0; i < worldModel.SwitchSpecials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.SwitchSpecials[i].ToWorldSpecial(m_world));
+
+        // Kept for legacy purposes. Old versions used generic list.
+        for (int i = 0; i < worldModel.Specials.Count; i++)
+            AddSpecialNodeNotNull(worldModel.Specials[i].ToWorldSpecial(m_world));
+    }
+
+    private void AddSpecialNodeNotNull(ISpecial? special)
+    {
+        if (special != null)
+            AddSpecialNode(special);
     }
 
     public void ResetInterpolation()
@@ -363,16 +470,6 @@ public sealed class SpecialManager : ITickable, IDisposable
         }
 
         return true;
-    }
-
-    public void AddSpecialModels(IList<ISpecialModel> specialModels)
-    {
-        for (int i = 0; i < specialModels.Count; i++)
-        {
-            ISpecial? special = specialModels[i].ToWorldSpecial(m_world);
-            if (special != null)
-                AddSpecialNode(special);
-        }
     }
 
     public SectorMoveSpecial CreateLiftSpecial(Sector sector, double speed, int delay, SectorDest dest = SectorDest.LowestAdjacentFloor, int lip = 0,

@@ -179,6 +179,7 @@ public class GameLayerManager : IGameLayerManager
             case MenuLayer layer:
                 Remove(MenuLayer);
                 MenuLayer = layer;
+                GCUtil.SetDefaultLatencyMode();
                 break;
             case ReadThisLayer layer:
                 Remove(ReadThisLayer);
@@ -303,6 +304,9 @@ public class GameLayerManager : IGameLayerManager
     {
         if (layer == null)
             return;
+
+        if (layer is MenuLayer && WorldLayer != null)
+            GCUtil.SetGameplayLatencyMode();
 
         if (layer is IAnimationLayer animationLayer)
         {
@@ -700,7 +704,7 @@ public class GameLayerManager : IGameLayerManager
         }
         else
         {
-            world.DisplayMessage(world.Player, null, $"Failed to save {saveEvent.FileName}");
+            world.DisplayMessage(world.Player, null, $"Failed to save {saveEvent.FileName} {saveEvent.ErrorMessage}");
             if (saveEvent.Exception != null)
                 throw saveEvent.Exception;
         }

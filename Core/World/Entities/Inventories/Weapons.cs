@@ -14,8 +14,6 @@ namespace Helion.World.Entities.Inventories;
 /// </summary>
 public sealed class Weapons
 {
-    private const int MinSlot = 1;
-    private const int MaxSlot = 7;
     private static readonly WeaponSlot DefaultSlot = new(-1, -1);
     private readonly Dictionary<int, WeaponSlot> m_weaponSlotLookup = [];
     private readonly List<string> m_weaponNames = [];
@@ -62,13 +60,7 @@ public sealed class Weapons
 
     public IList<string> GetWeaponDefinitionNames() => m_weaponNames;
 
-    public List<string> GetOwnedWeaponNames()
-    {
-        List<string> weapons = [];
-        foreach (var weapon in m_ownedWeapons)
-            weapons.Add(weapon.Definition.Name);
-        return weapons;
-    }
+    public List<Weapon> GetOwnedWeapons() => m_ownedWeapons;
 
     public WeaponSlot GetNextSlot(Player player) => CycleSlot(player, player.WeaponSlot, player.WeaponSubSlot, true, false);
     public WeaponSlot GetPreviousSlot(Player player) => CycleSlot(player, player.WeaponSlot, player.WeaponSubSlot, false, false);

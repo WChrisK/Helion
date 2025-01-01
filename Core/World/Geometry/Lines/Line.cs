@@ -113,7 +113,7 @@ public sealed class Line
         return lineModel;
     }
 
-    public void ApplyLineModel(IWorld world, LineModel lineModel)
+    public void ApplyLineModel(IWorld world, in LineModel lineModel)
     {
         DataChanges = (LineDataTypes)lineModel.DataChanges;
         if ((DataChanges & LineDataTypes.Activated) != 0 && lineModel.Activated.HasValue)
@@ -121,10 +121,10 @@ public sealed class Line
 
         if ((DataChanges & LineDataTypes.Texture) != 0)
         {
-            if (lineModel.Front != null && lineModel.Front.DataChanges > 0)
-                ApplySideModel(world, Front, lineModel.Front);
-            if (Back != null && lineModel.Back != null && lineModel.Back.DataChanges > 0)
-                ApplySideModel(world, Back, lineModel.Back);
+            if (lineModel.Front != null && lineModel.Front.Value.DataChanges > 0)
+                ApplySideModel(world, Front, lineModel.Front.Value);
+            if (Back != null && lineModel.Back != null && lineModel.Back.Value.DataChanges > 0)
+                ApplySideModel(world, Back, lineModel.Back.Value);
         }
 
         if ((DataChanges & LineDataTypes.Args) != 0 && lineModel.Args.HasValue)

@@ -72,6 +72,8 @@ public partial class Renderer : IDisposable
     private IWorld? m_world;
     private GLBufferTextureStorage? m_colorMapBuffer;
     private Rectangle m_viewport = new(0, 0, 800, 600);
+    private uint[] m_frameBufferPixelData = [];
+    private Image? m_frameBufferImage;
     private bool m_disposed;
 
     public Dimension RenderDimension => UseVirtualResolution ? m_config.Window.Virtual.Dimension : Window.Dimension;
@@ -98,7 +100,7 @@ public partial class Renderer : IDisposable
         m_mainFramebuffer = GenerateMainFramebuffer();
         m_virtualFramebuffer = GenerateVirtualFramebuffer();
         // Temporary frame buffer for smaller save game screenshots. Significantly than pulling the full sized pixel buffer and downsizing using image sharp.
-        m_screenshotFramebuffer = new("Screenshot", (320, 240), 1);
+        m_screenshotFramebuffer = new("Screenshot", (Constants.ScreenshotSaveWidth, Constants.ScreenshotSaveHeight), 1);
 
         PrintGLInfo();
         SetGLStates();
@@ -502,28 +504,51 @@ public partial class Renderer : IDisposable
         return GenerateFrameBufferImage(m_screenshotFramebuffer);
     }
 
+    private readonly Image m_framebufferImage = new([], (0, 0), ImageType.Rgba, (0, 0), Resources.ResourceNamespace.Global);
+    private uint[] m_imageRowFlip = [];
+
     private Image GenerateFrameBufferImage(GLFramebuffer framebuffer)
     {
         var (w, h, rgba) = GetFramebufferDataRaw(framebuffer);
-        var image = new Image(rgba, (w, h), ImageType.Rgba, (0, 0), Resources.ResourceNamespace.Global);
-        image.FlipY();
-        return image;
+        if (w > m_imageRowFlip.Length)
+            m_imageRowFlip = new uint[Math.Max(w, m_mainFramebuffer.Dimension.Width)];
+
+        // OpenGL returns the Y pixel rows flipped
+        var rowSize = w;
+        for (int y = 0; y < h / 2; y++)
+        {
+            var topRowIndex = y * rowSize;
+            var bottomRowIndex = (h - y - 1) * rowSize;
+
+            Array.Copy(rgba, topRowIndex, m_imageRowFlip, 0, rowSize);
+            Array.Copy(rgba, bottomRowIndex, rgba, topRowIndex, rowSize);
+            Array.Copy(m_imageRowFlip, 0, rgba, bottomRowIndex, rowSize);
+        }
+
+        m_framebufferImage.SetPixels(rgba, (w, h));
+        return m_framebufferImage;
     }
 
     private unsafe (int width, int height, uint[] rgba) GetFramebufferDataRaw(GLFramebuffer framebuffer)
     {
         GL.Finish();
         (int w, int h) = framebuffer.Dimension;
-        var rgba = new uint[w * h];
+        if (m_frameBufferPixelData.Length < w * h)
+        {
+            // Keep array for framebuffer pixel data. Used for savegame and main buffer screenshots. Take the maximum to not realloc later.
+            var allocWidth = Math.Max(w, m_mainFramebuffer.Dimension.Width);
+            var allocHeight = Math.Max(h, m_mainFramebuffer.Dimension.Height);
+            m_frameBufferPixelData = new uint[allocWidth * allocHeight];
+        }
 
         framebuffer.BindRead();
-        fixed (uint* rgbPtr = rgba)
+        fixed (uint* rgbPtr = m_frameBufferPixelData)
         {
             IntPtr ptr = new(rgbPtr);
             GL.ReadPixels(0, 0, w, h, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
         }
 
-        return (w, h, rgba);
+        return (w, h, m_frameBufferPixelData);
     }
 
     private static void HandleClearCommand(ClearRenderCommand clearRenderCommand)

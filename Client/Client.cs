@@ -42,7 +42,7 @@ namespace Helion.Client;
 public partial class Client : IDisposable, IInputManagement
 {
     private record class OnLoadMapComplete(Action<object?> OnComplete, object? CompleteParam);
-    private record class LoadMapResult(WorldLayer? WorldLayer, WorldModel? WorldModel, LevelChangeEvent? EventContext, IList<Player> Players, IRandom Random);
+    private record class LoadMapResult(WorldLayer? WorldLayer, WorldModel? WorldModel, LevelChangeEvent? EventContext, IList<Player> Players, IRandom Random, Exception? Exception = null);
     private record class QueueLoadMapParams(MapInfoDef MapInfoDef, WorldModel? WorldModel, IWorld? PreviousWorld, LevelChangeEvent? EventContext, bool Transition);
 
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
@@ -278,6 +278,8 @@ public partial class Client : IDisposable, IInputManagement
         if (m_queueMapLoad == null)
             return;
 
+        GCUtil.SetDefaultLatencyMode();
+
         var load = m_queueMapLoad;
         m_queueMapLoad = null;
         m_layerManager.LockInput = true;
@@ -355,6 +357,9 @@ public partial class Client : IDisposable, IInputManagement
 
         m_onLoadMapComplete?.OnComplete(m_onLoadMapComplete.CompleteParam);
         m_onLoadMapComplete = null;
+
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false);
+        GCUtil.SetGameplayLatencyMode();
     }
 
     private async Task WriteAutoSave(LoadMapResult result)
@@ -381,6 +386,8 @@ public partial class Client : IDisposable, IInputManagement
     private void SetMapLoadFailure()
     {
         Log.Error("Failed to load map");
+        if (m_loadMapResult?.Exception != null)
+            Log.Error(m_loadMapResult.Exception);
         m_layerManager.ClearAllExcept();
         ShowConsole();
         m_layerManager.LockInput = false;
@@ -418,8 +425,7 @@ public partial class Client : IDisposable, IInputManagement
 
         PackageDemo();
 
-        if (m_demoPlayer != null)
-            m_demoPlayer.Dispose();
+        m_demoPlayer?.Dispose();
 
         m_window.SetGrabCursor(false);
         m_window.WindowState = WindowState.Minimized;

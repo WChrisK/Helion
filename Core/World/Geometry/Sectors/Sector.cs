@@ -350,7 +350,7 @@ public sealed class Sector
         return sectorModel;
     }
 
-    public void ApplySectorModel(IWorld world, SectorModel sectorModel, WorldModelPopulateResult result)
+    public void ApplySectorModel(IWorld world, in SectorModel sectorModel, WorldModelPopulateResult result)
     {
         var textureManager = world.ArchiveCollection.TextureManager;
         IList<Sector> sectors = world.Sectors;

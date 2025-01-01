@@ -21,6 +21,7 @@ public static class ModelVerification
             if (log == null)
                 return false;
 
+            log.Info($"Save file has {filesModel.Files.Count} but {fileArchives.Count} files are loaded.");
             LogExtraLoadedArchives(filesModel, log, fileArchives);
             LogMissingFiles(filesModel, log, fileArchives);
             return false;

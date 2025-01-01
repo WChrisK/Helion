@@ -180,7 +180,7 @@ public partial class Client
             Map = mapName,
             CommandIndex = recorder.CommandIndex,
             RandomIndex = randomIndex,
-            PlayerModel = player?.ToPlayerModel()
+            PlayerModel = player?.ToPlayerModel(new PlayerModel())
         });
     }
 

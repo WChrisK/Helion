@@ -1,8 +1,8 @@
 ﻿using Helion.Geometry;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using System.Buffers;
 using System.IO;
 
 namespace Helion.Graphics;
@@ -20,7 +20,7 @@ public static class ImageExtensions
         try
         {
             var pixels = image.Pixels;
-            byte[] data = new byte[pixels.Length * 4]; // rgba -> [r, g, b]
+            var data = ArrayPool<byte>.Shared.Rent(pixels.Length * 4); // rgba -> [r, g, b]
 
             if (image.ImageType == ImageType.Rgba)
             {
@@ -59,6 +59,8 @@ public static class ImageExtensions
 
                 pixelImage.Mutate(x => x.Resize(resizeOptions));
             }
+
+            ArrayPool<byte>.Shared.Return(data);
 
             pixelImage.SaveAsPng(stream, null);
             return true;

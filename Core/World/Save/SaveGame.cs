@@ -101,7 +101,7 @@ public class SaveGame
             Date = DateTime.Now,
             WorldFile = WorldDataFile,
             ImageFile = image == null ? "" : ImageFile,
-            Files = world.GetGameFilesModel()
+            Files = worldModel.Files,
         };
 
         string saveTempFile = TempFileManager.GetFile();
@@ -109,35 +109,38 @@ public class SaveGame
         try
         {
             File.Delete(saveTempFile);
-            using ZipArchive zipArchive = ZipFile.Open(saveTempFile, ZipArchiveMode.Create);
-            ZipArchiveEntry entry = zipArchive.CreateEntry(SaveDataFile);
-            using (Stream stream = entry.Open())
-                stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(saveGameModel, typeof(SaveGameModel), SaveGameModelSerializationContext.Default)));
-
-            entry = zipArchive.CreateEntry(WorldDataFile);
-            using (Stream stream = entry.Open())
-                stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(worldModel, typeof(WorldModel), WorldModelSerializationContext.Default)));
-
-            if (image != null)
+            using (ZipArchive zipArchive = ZipFile.Open(saveTempFile, ZipArchiveMode.Create))
             {
-                var imageBytes = screenshotGenerator.GeneratePngImage(image);
-                entry = zipArchive.CreateEntry(ImageFile);
-                using var stream = entry.Open();
-                stream.Write(imageBytes);
+                ZipArchiveEntry entry = zipArchive.CreateEntry(SaveDataFile);
+                using (Stream stream = entry.Open())
+                    stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(saveGameModel, typeof(SaveGameModel), SaveGameModelSerializationContext.Default)));
+
+                entry = zipArchive.CreateEntry(WorldDataFile);
+                using (Stream stream = entry.Open())
+                    stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(worldModel, typeof(WorldModel), WorldModelSerializationContext.Default)));
+
+                if (image != null)
+                {      
+                    entry = zipArchive.CreateEntry(ImageFile);
+                    using var stream = entry.Open();
+                    screenshotGenerator.GeneratePngImage(image, stream);
+                }
             }
+
+            SaveGame saveGame = new(saveDir, filename, saveGameModel);
+
+            if (File.Exists(saveGame.FilePath))
+                File.Delete(saveGame.FilePath);
+
+            File.Copy(saveTempFile, saveGame.FilePath);
+
+            return new SaveGameEvent(saveGame, worldModel, filename, true);
         }
         catch (Exception ex)
         {
             return new SaveGameEvent(new SaveGame(saveDir, filename, saveGameModel), worldModel, filename, false, ex);
         }
 
-        SaveGame saveGame = new(saveDir, filename, saveGameModel);
 
-        if (File.Exists(saveGame.FilePath))
-            File.Delete(saveGame.FilePath);
-
-        File.Copy(saveTempFile, saveGame.FilePath);
-
-        return new SaveGameEvent(saveGame, worldModel, filename, true);
     }
 }

@@ -86,7 +86,7 @@ public class SectorMoveSpecial : ISectorSpecial
         Sector.SetActiveMoveSpecial(MoveData.SectorMoveType, this);
     }
 
-    public void Set(IWorld world, Sector sector, SectorMoveSpecialModel model)
+    public void Set(IWorld world, Sector sector, in SectorMoveSpecialModel model)
     {
         Sector = sector;
         m_world = world;
@@ -153,9 +153,9 @@ public class SectorMoveSpecial : ISectorSpecial
         StartClipped = Sector.Ceiling.Z < Sector.Floor.Z;
     }
 
-    public virtual ISpecialModel ToSpecialModel()
+    public SectorMoveSpecialModel ToSpecialModel()
     {
-        return new SectorMoveSpecialModel()
+        return new()
         {
             SectorId = Sector.Id,
             MoveType = (int)MoveData.SectorMoveType,
@@ -195,7 +195,7 @@ public class SectorMoveSpecial : ISectorSpecial
         if (model == null)
             return null;
 
-        return new CrushData(model);
+        return new CrushData(model.Value);
     }
 
     private CrushDataModel? CreateCrushDataModel()

@@ -44,9 +44,9 @@ public class PushSpecial : ISpecial
         m_pushEntityAction = new(PushEntity);
     }
 
-    public ISpecialModel ToSpecialModel()
+    public PushSpecialModel ToSpecialModel()
     {
-        return new PushSpecialModel()
+        return new()
         {
             Type = (int)m_type,
             SectorId = m_sector.Id,

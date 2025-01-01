@@ -273,43 +273,45 @@ public class Player : Entity
         Info.Gender = WorldStatic.World.Config.Player.Gender;
     }
 
-    public PlayerModel ToPlayerModel()
+    public PlayerModel ToPlayerModel(PlayerModel playerModel)
     {
-        PlayerModel playerModel = new PlayerModel()
-        {
-            Number = PlayerNumber,
-            PitchRadians = PitchRadians,
-            DamageCount = DamageCount,
-            BonusCount = BonusCount,
-            ExtraLight = ExtraLight,
-            IsJumping = m_isJumping,
-            JumpTics = m_jumpTics,
-            DeathTics = m_deathTics,
-            ViewHeight = ViewHeight,
-            ViewZ = ViewZ,
-            DeltaViewHeight = DeltaViewHeight,
-            Bob = m_viewBob,
-            WeaponBobX = WeaponBobOffset.X,
-            WeaponBobY = WeaponBobOffset.Y,
-            Killer = m_killer.Entity?.Id,
-            Attacker = Attacker.Entity?.Id,
-            KillCount = KillCount,
-            ItemCount = ItemCount,
-            SecretsFound = SecretsFound,
-            Weapon = Weapon?.Definition.Name,
-            PendingWeapon = PendingWeapon?.Definition.Name,
-            AnimationWeapon = AnimationWeapon?.Definition.Name,
-            WeaponOffsetX = WeaponOffset.X,
-            WeaponOffsetY = WeaponOffset.Y,
-            WeaponSlot = WeaponSlot,
-            WeaponSubSlot = WeaponSubSlot,
-            Inventory = Inventory.ToInventoryModel(),
-            AnimationWeaponFrame = AnimationWeapon?.FrameState.ToFrameStateModel(),
-            WeaponFlashFrame = AnimationWeapon?.FlashState.ToFrameStateModel(),
-            Cheats = Cheats.GetActiveCheats().Cast<int>().ToList(),
-            AttackDown = AttackDown,
-            Refire = Refire
-        };
+        playerModel.Number = PlayerNumber;
+        playerModel.PitchRadians = PitchRadians;
+        playerModel.DamageCount = DamageCount;
+        playerModel.BonusCount = BonusCount;
+        playerModel.ExtraLight = ExtraLight;
+        playerModel.IsJumping = m_isJumping;
+        playerModel.JumpTics = m_jumpTics;
+        playerModel.DeathTics = m_deathTics;
+        playerModel.ViewHeight = ViewHeight;
+        playerModel.ViewZ = ViewZ;
+        playerModel.DeltaViewHeight = DeltaViewHeight;
+        playerModel.Bob = m_viewBob;
+        playerModel.WeaponBobX = WeaponBobOffset.X;
+        playerModel.WeaponBobY = WeaponBobOffset.Y;
+        playerModel.Killer = m_killer.Entity?.Id;
+        playerModel.Attacker = Attacker.Entity?.Id;
+        playerModel.KillCount = KillCount;
+        playerModel.ItemCount = ItemCount;
+        playerModel.SecretsFound = SecretsFound;
+        playerModel.Weapon = Weapon?.Definition.Name;
+        playerModel.PendingWeapon = PendingWeapon?.Definition.Name;
+        playerModel.AnimationWeapon = AnimationWeapon?.Definition.Name;
+        playerModel.WeaponOffsetX = WeaponOffset.X;
+        playerModel.WeaponOffsetY = WeaponOffset.Y;
+        playerModel.WeaponSlot = WeaponSlot;
+        playerModel.WeaponSubSlot = WeaponSubSlot;
+        playerModel.AnimationWeaponFrame = AnimationWeapon?.FrameState.ToFrameStateModel();
+        playerModel.WeaponFlashFrame = AnimationWeapon?.FlashState.ToFrameStateModel();
+        playerModel.AttackDown = AttackDown;
+        playerModel.Refire = Refire;
+
+        Inventory.ToInventoryModel(playerModel.Inventory);
+
+        playerModel.Cheats.Clear();
+        var cheats = Cheats.GetActiveCheats();
+        for (int i = 0; i < cheats.Count; i++)
+            playerModel.Cheats.Add((int)cheats[i]);
 
         ToEntityModel(playerModel);
         return playerModel;

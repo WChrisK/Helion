@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Helion.Graphics;
 using Helion.Models;
 using Helion.Resources.Archives.Collection;
 using Helion.Util;
@@ -12,27 +13,51 @@ using NLog;
 
 namespace Helion.World.Save;
 
-public readonly struct SaveGameEvent(SaveGame saveGame, WorldModel worldModel, string filename, bool success, Exception? ex = null)
+public readonly struct SaveGameEvent(SaveGame saveGame, WorldModel worldModel, string filename, bool success, Exception? ex = null, string errorMessage = "")
 {
     public readonly SaveGame SaveGame = saveGame;
     public readonly WorldModel WorldModel = worldModel;
     public readonly string FileName = filename;
     public readonly bool Success = success;
     public readonly Exception? Exception = ex;
+    public readonly string ErrorMessage = errorMessage;
 }
 
-public class SaveGameManager(IConfig config, ArchiveCollection archiveCollection, string? saveDirCommandLineArg)
+public class SaveGameManager
 {
+    struct WriteSaveGameArgs(IWorld world, WorldModel worldModel, string title, string saveDir, string fileName, IScreenshotGenerator screenshotGenerator, Image? image)
+    {
+        public IWorld World = world;
+        public WorldModel WorldModel = worldModel;
+        public string Title = title;
+        public string SaveDir = saveDir;
+        public string FileName = fileName;
+        public IScreenshotGenerator ScreenshotGenerator = screenshotGenerator;
+        public Image? Image = image;
+    }
+
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-    private readonly IConfig m_config = config;
-    private readonly ArchiveCollection m_archiveCollection = archiveCollection;
-    private readonly string? m_saveDirCommandLineArg = saveDirCommandLineArg;
+    private static readonly SaveGameEvent ActiveSaveError = new(null!, null!, "file", false, null, "(Save in progress)");
+    private readonly IConfig m_config;
+    private readonly ArchiveCollection m_archiveCollection;
+    private readonly string? m_saveDirCommandLineArg;
     private readonly List<SaveGame> m_currentSaves = [];
     private readonly List<SaveGame> m_matchingSaves = [];
     private readonly Comparison<SaveGame> m_saveDateComparison = new(CompareSaveDates);
+    private readonly Func<SaveGameEvent> m_saveFunc;
     private bool m_currentSavesLoaded;
+    private bool m_saving;
+    private WriteSaveGameArgs m_saveArgs;
 
     public event EventHandler<SaveGameEvent>? GameSaved;
+
+    public SaveGameManager(IConfig config, ArchiveCollection archiveCollection, string? saveDirCommandLineArg)
+    {
+        m_config = config;
+        m_archiveCollection = archiveCollection;
+        m_saveDirCommandLineArg = saveDirCommandLineArg;
+        m_saveFunc = new Func<SaveGameEvent>(WriteSaveGameForTask);
+    }
 
     private string GetSaveDir()
     {
@@ -85,22 +110,36 @@ public class SaveGameManager(IConfig config, ArchiveCollection archiveCollection
 
     public async Task<SaveGameEvent> WriteSaveGameAsync(IWorld world, string title, IScreenshotGenerator screenshotGenerator, SaveGame? existingSave, SaveGameType type = SaveGameType.Default)
     {
+        // Unlikely to happen but check if actively saving. Only one can be processed at a time.
+        if (m_saving)
+            return ActiveSaveError;
+
+        m_saving = true;
         existingSave = GetExistingSave(existingSave, type);
         var filename = existingSave?.FileName ?? GetNewSaveName(type);
         var worldModel = world.ToWorldModel();
         var image = screenshotGenerator.GetImage();
-        var saveEvent = await Task.Run(() => SaveGame.WriteSaveGame(world, worldModel, title, GetSaveDir(), filename, screenshotGenerator, image));
+        m_saveArgs = new(world, worldModel, title, GetSaveDir(), filename, screenshotGenerator, image);
+        var saveEvent = await Task.Run(m_saveFunc);
 
         AddOrUpdateSaveGame(saveEvent.SaveGame);
         GameSaved?.Invoke(this, saveEvent);
+        m_saving = false;
         return saveEvent;
     }
+
+    private SaveGameEvent WriteSaveGameForTask() =>
+        SaveGame.WriteSaveGame(m_saveArgs.World, m_saveArgs.WorldModel, m_saveArgs.Title, m_saveArgs.SaveDir, m_saveArgs.FileName, m_saveArgs.ScreenshotGenerator, m_saveArgs.Image);
 
     public SaveGameEvent WriteNewSaveGame(IWorld world, string title, IScreenshotGenerator screenshotGenerator, SaveGameType type = SaveGameType.Default) =>
         WriteSaveGame(world, title, screenshotGenerator, null, type);
 
     public SaveGameEvent WriteSaveGame(IWorld world, string title, IScreenshotGenerator screenshotGenerator, SaveGame? existingSave, SaveGameType type = SaveGameType.Default)
     {
+        if (m_saving)
+            return ActiveSaveError;
+
+        m_saving = true;
         existingSave = GetExistingSave(existingSave, type);
         var filename = existingSave?.FileName ?? GetNewSaveName(type);
         var worldModel = world.ToWorldModel();
@@ -109,6 +148,7 @@ public class SaveGameManager(IConfig config, ArchiveCollection archiveCollection
 
         AddOrUpdateSaveGame(saveEvent.SaveGame);
         GameSaved?.Invoke(this, saveEvent);
+        m_saving = false;
         return saveEvent;
     }
 

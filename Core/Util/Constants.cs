@@ -321,4 +321,7 @@ public static class Constants
     public static readonly int MaxSoundChannels = Enum.GetValues<SoundChannel>().Length;
 
     public const int DefaultMaxDistance = 6000;
+
+    public const int ScreenshotSaveWidth = 320;
+    public const int ScreenshotSaveHeight = 240;
 }

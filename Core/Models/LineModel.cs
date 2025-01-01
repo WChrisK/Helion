@@ -2,7 +2,7 @@ using Helion.Maps.Specials;
 
 namespace Helion.Models;
 
-public class LineModel
+public struct LineModel
 {
     public int Id { get; set; }
     public int DataChanges { get; set; }

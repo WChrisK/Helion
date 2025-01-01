@@ -746,50 +746,57 @@ public partial class Client
     {
         IList<Player> players = Array.Empty<Player>();
         IRandom random = GetLoadMapRandom(mapInfoDef, worldModel, previousWorld);
-        var result = new LoadMapResult(null, worldModel, eventContext, players, random);
 
-        if (previousWorld != null)
-            players = previousWorld.EntityManager.Players;
-
-        m_lastWorldModel = worldModel;
-        IMap? map = m_archiveCollection.FindMap(mapInfoDef.MapName);
-        if (map == null)
+        try
         {
-            LogError($"Cannot load map '{mapInfoDef.MapName}', it cannot be found or is corrupt");
-            return result;
-        }
+            var result = new LoadMapResult(null, worldModel, eventContext, players, random);
+            if (previousWorld != null)
+                players = previousWorld.EntityManager.Players;
 
-        if (!m_zdbsp.RunZdbsp(map, map.Name, mapInfoDef, out map))
+            m_lastWorldModel = worldModel;
+            IMap? map = m_archiveCollection.FindMap(mapInfoDef.MapName);
+            if (map == null)
+            {
+                LogError($"Cannot load map '{mapInfoDef.MapName}', it cannot be found or is corrupt");
+                return result;
+            }
+
+            if (!m_zdbsp.RunZdbsp(map, map.Name, mapInfoDef, out map))
+            {
+                Log.Error("Failed to run zdbsp.");
+                return result;
+            }
+
+            m_config.ApplyQueuedChanges(ConfigSetFlags.OnNewWorld);
+            SkillDef? skillDef = GetSkillDefinition(worldModel);
+            if (skillDef == null)
+            {
+                LogError($"Could not find skill definition for {m_config.Game.Skill}");
+                return result;
+            }
+
+            m_window.InputManager.Clear();
+            m_tickCommands.Clear();
+
+            if (map == null)
+            {
+                LogError($"Cannot load map '{mapInfoDef.MapName}', it cannot be found or is corrupt");
+                return result;
+            }
+
+            // Don't show the spinner here. The final steps requires OpenGL calls that are required to be executed on the main thread for now so the spinner can't update.
+            if (m_layerManager.LoadingLayer != null)
+                m_layerManager.LoadingLayer.ShowSpinner = false;
+
+            var worldLayer = WorldLayer.Create(m_layerManager, m_globalData, m_config, m_console,
+                m_audioSystem, m_archiveCollection, m_fpsTracker, m_profiler, mapInfoDef, skillDef, map,
+                players.FirstOrDefault(), worldModel, random);
+            return new(worldLayer, worldModel, eventContext, players, random);
+        }
+        catch (Exception ex)
         {
-            Log.Error("Failed to run zdbsp.");
-            return result;
+            return new LoadMapResult(null, worldModel, eventContext, players, random, ex);
         }
-
-        m_config.ApplyQueuedChanges(ConfigSetFlags.OnNewWorld);
-        SkillDef? skillDef = GetSkillDefinition(worldModel);
-        if (skillDef == null)
-        {
-            LogError($"Could not find skill definition for {m_config.Game.Skill}");
-            return result;
-        }
-
-        m_window.InputManager.Clear();
-        m_tickCommands.Clear();
-
-        if (map == null)
-        {
-            LogError($"Cannot load map '{mapInfoDef.MapName}', it cannot be found or is corrupt");
-            return result;
-        }
-
-        // Don't show the spinner here. The final steps requires OpenGL calls that are required to be executed on the main thread for now so the spinner can't update.
-        if (m_layerManager.LoadingLayer != null)
-            m_layerManager.LoadingLayer.ShowSpinner = false;
-
-        var worldLayer = WorldLayer.Create(m_layerManager, m_globalData, m_config, m_console,
-            m_audioSystem, m_archiveCollection, m_fpsTracker, m_profiler, mapInfoDef, skillDef, map,
-            players.FirstOrDefault(), worldModel, random);
-        return new(worldLayer, worldModel, eventContext, players, random);
     }
 
     private void FinalizeWorldLayerLoad(LoadMapResult result)

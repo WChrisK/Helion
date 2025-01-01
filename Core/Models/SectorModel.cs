@@ -2,7 +2,7 @@ using Helion.Maps.Specials;
 
 namespace Helion.Models;
 
-public class SectorModel
+public struct SectorModel
 {
     public int Id;
     public int SoundValidationCount;

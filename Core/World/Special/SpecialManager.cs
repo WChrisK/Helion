@@ -20,7 +20,6 @@ using Helion.World.Special.SectorMovement;
 using Helion.World.Special.Specials;
 using Helion.World.Special.Switches;
 using Helion.World.Stats;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Helion.World.Special;
 

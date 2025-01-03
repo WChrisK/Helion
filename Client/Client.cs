@@ -42,7 +42,7 @@ namespace Helion.Client;
 public partial class Client : IDisposable, IInputManagement
 {
     private record class OnLoadMapComplete(Action<object?> OnComplete, object? CompleteParam);
-    private record class LoadMapResult(WorldLayer? WorldLayer, WorldModel? WorldModel, LevelChangeEvent? EventContext, IList<Player> Players, IRandom Random, Exception? Exception = null);
+    private record class LoadMapResult(WorldLayer? WorldLayer, WorldModel? WorldModel, LevelChangeEvent? EventContext, IList<Player> Players, IRandom Random, int StartRandomIndex, Exception? Exception = null);
     private record class QueueLoadMapParams(MapInfoDef MapInfoDef, WorldModel? WorldModel, IWorld? PreviousWorld, LevelChangeEvent? EventContext, bool Transition);
 
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();

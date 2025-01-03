@@ -36,7 +36,6 @@ public partial class Client
         if (!TryCreateDemoRecorder(fileName, out m_demoRecorder))
             return;
 
-        AddDemoMap(m_demoRecorder, worldLayer.CurrentMap.MapName, 0, null);
         m_demoRecorder.Start();
         worldLayer.StartRecording(m_demoRecorder);
         worldLayer.World.CheatManager.CheatActivationChanged += CheatManager_CheatActivationChanged;
@@ -180,7 +179,7 @@ public partial class Client
             Map = mapName,
             CommandIndex = recorder.CommandIndex,
             RandomIndex = randomIndex,
-            PlayerModel = player?.ToPlayerModel(new PlayerModel())
+            PlayerModel = player?.ToPlayerModel(PlayerModel.Create())
         });
     }
 

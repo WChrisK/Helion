@@ -746,10 +746,11 @@ public partial class Client
     {
         IList<Player> players = Array.Empty<Player>();
         IRandom random = GetLoadMapRandom(mapInfoDef, worldModel, previousWorld);
+        var startRandomIndex = random.RandomIndex;
 
         try
         {
-            var result = new LoadMapResult(null, worldModel, eventContext, players, random);
+            var result = new LoadMapResult(null, worldModel, eventContext, players, random, startRandomIndex);
             if (previousWorld != null)
                 players = previousWorld.EntityManager.Players;
 
@@ -791,11 +792,11 @@ public partial class Client
             var worldLayer = WorldLayer.Create(m_layerManager, m_globalData, m_config, m_console,
                 m_audioSystem, m_archiveCollection, m_fpsTracker, m_profiler, mapInfoDef, skillDef, map,
                 players.FirstOrDefault(), worldModel, random);
-            return new(worldLayer, worldModel, eventContext, players, random);
+            return new(worldLayer, worldModel, eventContext, players, random, startRandomIndex);
         }
         catch (Exception ex)
         {
-            return new LoadMapResult(null, worldModel, eventContext, players, random, ex);
+            return new LoadMapResult(null, worldModel, eventContext, players, random, startRandomIndex, ex);
         }
     }
 
@@ -820,13 +821,12 @@ public partial class Client
 
         if (m_demoRecorder != null)
         {
-            int randomIndex = result.Random.RandomIndex;
             var worldPlayer = worldLayer.World.Player;
             // Cheat events reset the player, do not serialize the player
             if (result.EventContext != null && result.EventContext.ChangeType == LevelChangeType.SpecificLevel)
                 worldPlayer = null;
 
-            AddDemoMap(m_demoRecorder, worldLayer.CurrentMap.MapName, randomIndex, worldPlayer);
+            AddDemoMap(m_demoRecorder, worldLayer.CurrentMap.MapName, result.StartRandomIndex, worldPlayer);
             worldLayer.StartRecording(m_demoRecorder);
         }
     }

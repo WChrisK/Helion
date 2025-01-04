@@ -3,6 +3,7 @@ using Helion.Resources.Definitions.MapInfo;
 using Helion.Util.Configs.Impl;
 using Helion.Util.Configs.Options;
 using Helion.Util.Configs.Values;
+using Helion.Util.RandomGenerators;
 using static Helion.Util.Configs.Values.ConfigFilters;
 
 namespace Helion.Util.Configs.Components;
@@ -96,6 +97,9 @@ public class ConfigGame: ConfigElement<ConfigGame>
     [OptionMenu(OptionSectionType.General, "Fast Monsters")]
     public readonly ConfigValue<bool> FastMonsters = new(false);
 
+    [ConfigInfo("Random number generator method.", save: false, demo: true, serialize: true, mapRestartRequired: true)]
+    [OptionMenu(OptionSectionType.General, "RNG Method", spacer: true)]
+    public readonly ConfigValue<RngMethod> Rng = new(RngMethod.Boom);
 
     // Non-menu items
     [ConfigInfo("Write stats to levelstat.txt.", save: false)]

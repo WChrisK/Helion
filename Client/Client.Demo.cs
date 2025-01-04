@@ -4,10 +4,12 @@ using Helion.Models;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Util;
 using Helion.Util.Configs.Components;
+using Helion.Util.RandomGenerators;
 using Helion.World.Cheats;
 using Helion.World.Entities.Players;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -144,6 +146,12 @@ public partial class Client
                 continue;
 
             m_userConfigValues.Add(new ConfigValueModel(component.Path, component.Value.ObjectValue));
+        }
+
+        if (m_demoModel.Version == DemoVersion.Alpha)
+        {
+            m_config.Game.Rng.Set(RngMethod.VanillaDoom);
+            m_userConfigValues.Add(new ConfigValueModel("game.rng", m_config.Game.Rng.Value));
         }
 
         m_config.ApplyConfiguration(m_demoModel.ConfigValues, writeToConfig: false);

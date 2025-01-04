@@ -710,17 +710,36 @@ public partial class Client
 
     private IRandom GetLoadMapRandom(MapInfoDef mapInfoDef, WorldModel? worldModel, IWorld? previousWorld)
     {
-        if (previousWorld != null)
+        if (!m_invalidateRng && previousWorld != null)
             return previousWorld.Random;
 
         if (worldModel != null)
-            return new DoomRandom(worldModel.RandomIndex);
+            return CreateRandom(worldModel.RandomIndex);
 
         var demoMap = GetDemoMap(mapInfoDef.MapName);
         if (m_demoPlayer != null && demoMap != null)
-            return new DoomRandom(demoMap.RandomIndex);
+            return CreateRandom(demoMap.RandomIndex);
 
-        return new DoomRandom(Random.Shared.Next(byte.MaxValue));
+        return CreateRandom(null);
+    }
+
+    private IRandom CreateRandom(int? randomIndex = null)
+    {
+        var method = m_config.Game.Rng.Value;
+        if (randomIndex == null)
+        {
+            return method switch
+            {
+                RngMethod.VanillaDoom => new DoomRandom(Random.Shared.Next(byte.MaxValue)),
+                _ => new BoomRandom(),
+            };
+        }
+
+        return method switch
+        {
+            RngMethod.VanillaDoom => new DoomRandom(randomIndex.Value),
+            _ => new BoomRandom((uint)randomIndex.Value),
+        };
     }
 
     private void QueueLoadMap(MapInfoDef mapInfoDef, WorldModel? worldModel, IWorld? previousWorld, Action<object?> onComplete, object? completeParam, LevelChangeEvent? eventContext = null, bool transition = true)
@@ -900,11 +919,11 @@ public partial class Client
                     break;
 
                 case LevelChangeType.Reset:
-                    QueueLoadMap(world.MapInfo, null, null, e);
+                    QueueLoadMap(world.MapInfo, null, world, e);
                     break;
 
                 case LevelChangeType.ResetOrLoadLast:
-                    QueueLoadMap(world.MapInfo, m_lastWorldModel, null, e);
+                    QueueLoadMap(world.MapInfo, m_lastWorldModel, world, e);
                     break;
             }
         }

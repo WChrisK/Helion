@@ -13,12 +13,13 @@
   - Add option to disable crosshair shrinking on target
   - Add use command to allow for separate bindings for shotgun/super shotgun [bind x "use shotgun"] [bind y "use supershotgun"]
   - Add custom weapon groups similar to the ones found in Woof!, with the added bonus of being assignable to any button.
-  - Added order independent transparency to fix issues with multiple transparent sprites causing transparent textures not to render
+  - Add order independent transparency to fix issues with multiple transparent sprites causing transparent textures not to render
   - Support texture filtering with sprites
   - Refraction effect for spectres
   - Added nearest to bilinear and nearest to trilinear texture filter options
   - Updated save game management to read save files on startup to fix load time of the load/save menu when there are a large number of save files to read
   - Improved quick save performance to reduce large stutters when saving
+  - Add Boom RNG method with option to toggle between Boom and Vanilla Doom RNG
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch

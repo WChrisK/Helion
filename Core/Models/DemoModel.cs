@@ -7,6 +7,7 @@ namespace Helion.Models;
 public enum DemoVersion
 {
     Alpha = 1,
+    v0960 = 2,
 }
 
 public class DemoMap

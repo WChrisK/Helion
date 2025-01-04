@@ -66,6 +66,7 @@ public partial class Client : IDisposable, IInputManagement
     private bool m_takeScreenshot;
     private bool m_loadComplete;
     private bool m_filesLoaded;
+    private bool m_invalidateRng;
     private OnLoadMapComplete? m_onLoadMapComplete;
     private LoadMapResult? m_loadMapResult;
     private QueueLoadMapParams? m_queueMapLoad;
@@ -88,6 +89,8 @@ public partial class Client : IDisposable, IInputManagement
         m_archiveCollection = archiveCollection;
         m_saveGameManager = new SaveGameManager(config, m_archiveCollection, commandLineArgs.SaveDir);
         m_soundManager = new SoundManager(audioSystem, archiveCollection);
+
+        m_config.Game.Rng.OnChanged += Rng_OnChanged;
 
         if (commandLineArgs.GlVersion.HasValue)
         {
@@ -119,6 +122,8 @@ public partial class Client : IDisposable, IInputManagement
         UpdateVolume();
         m_ticker.Start();
     }
+
+    private void Rng_OnChanged(object? sender, RngMethod e) =>  m_invalidateRng = true;
 
     private static void SetOpenGLVersion(IConfig config)
     {

@@ -191,6 +191,8 @@ public struct FrameState
             {
                 m_entity.PlayerObj.WeaponOffset.X = Frame.DehackedMisc1;
                 m_entity.PlayerObj.WeaponOffset.Y = Frame.DehackedMisc2;
+                m_entity.PlayerObj.PrevWeaponOffset.X = Frame.DehackedMisc1;
+                m_entity.PlayerObj.PrevWeaponOffset.Y = Frame.DehackedMisc2;
             }
 
             if ((m_options & FrameStateOptions.DestroyOnStop) != 0 && Frame.IsNullFrame)

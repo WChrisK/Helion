@@ -1844,7 +1844,7 @@ public static class EntityActionFunctions
         var player = entity.PlayerObj;
         player.Weapon.ReadyState = true;
         player.WeaponOffset.Y = Constants.WeaponTop;
-        player.WeaponOffset.X = 0;
+        player.WeaponOffset.X = 1;
 
         if (entity.PlayerObj.PendingWeapon != null || player.IsDead)
         {

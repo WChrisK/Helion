@@ -1476,14 +1476,14 @@ public class Player : Entity
 
     private void SetWeaponTop()
     {
-        WeaponOffset.X = PrevWeaponOffset.X = 0;
+        WeaponOffset.X = PrevWeaponOffset.X = 1;
         WeaponOffset.Y = PrevWeaponOffset.Y = Constants.WeaponTop;
         WeaponBobOffset = PrevWeaponBobOffset = Vec2D.Zero;
     }
 
     private void SetWeaponBottom()
     {
-        WeaponOffset.X = PrevWeaponOffset.X = 0;
+        WeaponOffset.X = PrevWeaponOffset.X = 1;
         WeaponOffset.Y = PrevWeaponOffset.Y = Constants.WeaponBottom;
         WeaponBobOffset = PrevWeaponBobOffset = Vec2D.Zero;
     }

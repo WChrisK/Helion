@@ -49,7 +49,7 @@ public partial class Client
 
             if (m_iwad == null)
             {
-                IwadSelectionLayer selectionlayer = new(m_archiveCollection, m_config, m_installedIwads);
+                IwadSelectionLayer selectionlayer = new(m_config, m_installedIwads);
                 selectionlayer.OnIwadSelected += IwadSelection_OnIwadSelected;
                 m_layerManager.Add(selectionlayer);
                 m_layerManager.Remove(m_layerManager.LoadingLayer);
@@ -104,9 +104,11 @@ public partial class Client
         m_installedIwads.AddRange(iwadLocator.Locate());
     }
 
-    private async void IwadSelection_OnIwadSelected(object? sender, string iwad)
+    private async void IwadSelection_OnIwadSelected(object? sender, IwadSelection selection)
     {
-        m_iwad = iwad;
+        m_iwad = selection.IWad;
+        if (!string.IsNullOrEmpty(selection.PWad))
+            m_pwads.Add(selection.PWad);
         m_layerManager.Remove(m_layerManager.IwadSelectionLayer);
         await Initialize();
     }

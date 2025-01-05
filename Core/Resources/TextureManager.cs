@@ -91,6 +91,8 @@ public partial class TextureManager : ITickable
     {
         foreach (var skyFire in m_skyFireTextures)
             skyFire.RenderUpdate = true;
+
+        MapSkyFlat(m_archiveCollection.GameInfo.SkyFlatName, m_skyIndex);
     }
 
     private void MapSpriteIndexToEntries(List<Entry> spriteEntries, List<string> spriteNames)
@@ -626,7 +628,7 @@ public partial class TextureManager : ITickable
             if (flat.Path.Name.Equals(skyFlatName, StringComparison.OrdinalIgnoreCase))
                 m_skyIndex = index;
 
-            MapSkyFlat(flat, index);
+            MapSkyFlat(flat.Path.Name, index);
             index++;
         }
     }

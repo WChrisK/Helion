@@ -142,12 +142,12 @@ public partial class Client
 
     private void ArchiveCollection_ArchiveRead(object? sender, Archive archive)
     {
-        Log.Info($"Reading {archive.OriginalFilePath}");
+        Log.Info($"Reading {archive.FullPath}");
     }
 
     private void ArchiveCollection_ArchiveLoaded(object? sender, Archive archive)
     {
-        Log.Info($"Loaded {archive.OriginalFilePath}");
+        Log.Info($"Loaded {archive.FullPath}");
     }
 
     private bool CheckLoadMap()

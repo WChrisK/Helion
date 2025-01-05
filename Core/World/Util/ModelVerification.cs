@@ -39,7 +39,7 @@ public static class ModelVerification
         {
             if (filesModel.Files.Any(x => archive.MD5.Equals(x.MD5)))
                 continue;
-            log.Error($"Loaded '{Path.GetFileName(archive.OriginalFilePath)}' that is not part of this save.");
+            log.Error($"Loaded '{Path.GetFileName(archive.FullPath)}' that is not part of this save.");
         }
     }
 

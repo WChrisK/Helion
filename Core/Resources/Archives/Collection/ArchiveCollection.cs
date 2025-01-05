@@ -221,7 +221,7 @@ public class ArchiveCollection : IResources, IPathResolver
         if (!m_lastLoadedMapIsTemp || m_lastLoadedMap == null)
             return;
 
-        TempFileManager.DeleteFile(m_lastLoadedMap.Archive.OriginalFilePath);
+        TempFileManager.DeleteFile(m_lastLoadedMap.Archive.FullPath);
         m_lastLoadedMap.Archive.Dispose();
         m_lastLoadedMap = null;
         m_lastLoadedMapIsTemp = false;
@@ -280,7 +280,7 @@ public class ArchiveCollection : IResources, IPathResolver
     public Archive? GetArchiveByFileName(string fileName)
     {
         foreach (var archive in m_archives)
-            if (Path.GetFileName(archive.OriginalFilePath).EqualsIgnoreCase(fileName))
+            if (Path.GetFileName(archive.FullPath).EqualsIgnoreCase(fileName))
                 return archive;
         return null;
     }
@@ -469,7 +469,7 @@ public class ArchiveCollection : IResources, IPathResolver
         {
             foreach (var archive in archives)
             {
-                if (IsEntryInFolder(entry, Path.GetFileName(archive.OriginalFilePath)))
+                if (IsEntryInFolder(entry, Path.GetFileName(archive.FullPath)))
                     return true;
             }
 
@@ -542,7 +542,6 @@ public class ArchiveCollection : IResources, IPathResolver
             return null;
         }
 
-        archive.OriginalFilePath = Path.GetFullPath(filePath);
         if (shouldCalculateMd5)
         {
             string? md5 = Files.CalculateMD5(archive.Path.FullPath);
@@ -582,7 +581,7 @@ public class ArchiveCollection : IResources, IPathResolver
     {
         if (iwadArchive != null)
         {
-            iwadArchive.IWadInfo = IWadInfo.GetIWadInfo(iwadArchive.OriginalFilePath);
+            iwadArchive.IWadInfo = IWadInfo.GetIWadInfo(iwadArchive.FullPath);
             info = iwadArchive.IWadInfo;
             return true;
         }

@@ -65,7 +65,7 @@ public abstract class Archive : IDisposable
     public IWadInfo IWadInfo { get; set; } = IWadInfo.DefaultIWadInfo;
     public Archive? ExtractedFrom { get; set; }
 
-    public string OriginalFilePath { get; set; } = string.Empty;
+    public string FullPath => Path.FullPath;
 
     public Palette? TranslationPalette { get; set; }
 
@@ -83,7 +83,7 @@ public abstract class Archive : IDisposable
     {
         return new FileModel()
         {
-            FileName = System.IO.Path.GetFileName(OriginalFilePath),
+            FileName = System.IO.Path.GetFileName(FullPath),
             MD5 = MD5
         };
     }

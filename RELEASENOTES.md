@@ -55,3 +55,4 @@
   - Fix door compatibility to always allow clipping through floor regardless of vanilla movement physics setting (fixes Going Down Turbo MAP23 Invulnerability not spawning)
   - Fix No Rest for the Living to be loaded as a PWAD with Doom 2 IWAD from the IWAD selections screen
   - Fix weapon offset interpolation to reset when modifying offsets through dehacked (fixes Doom Zero pistol and shotgun jittering)
+  - Set SLIDE and INFLOAT flags correctly for MBF21 flag functions

@@ -33,7 +33,6 @@ public partial class Entity
 
     private MoveDir m_direction = MoveDir.None;
 
-    public bool BlockFloating;
     public double MonsterMovementSpeed;
 
     public void SetEnemyDirection(MoveDir direction) =>
@@ -359,13 +358,13 @@ public partial class Entity
 
         if (!tryMove.Success && floatFlag && tryMove.CanFloat)
         {
-            BlockFloating = true;
+            Flags.InFloat = true;
             Position.Z += Position.Z < tryMove.HighestFloorZ ? FloatSpeed : -FloatSpeed;
             return true;
         }
         else
         {
-            BlockFloating = false;
+            Flags.InFloat = false;
         }
 
         if (tryMove.Success && !floatFlag && isMoving)
@@ -404,7 +403,7 @@ public partial class Entity
 
     public double GetEnemyFloatMove()
     {
-        if (IsPlayer || IsDead || Target.Entity == null || !Flags.Float || Flags.Skullfly || BlockFloating || OnGround)
+        if (IsPlayer || IsDead || Target.Entity == null || !Flags.Float || Flags.Skullfly || Flags.InFloat || OnGround)
             return 0.0;
 
         double distance = Position.ApproximateDistance2D(Target.Entity.Position);

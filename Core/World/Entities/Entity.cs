@@ -1,7 +1,6 @@
 using Helion.Audio;
 using Helion.Geometry.Vectors;
 using Helion.Models;
-using Helion.Render.OpenGL.Renderers.Legacy.World;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Resources.Definitions.SoundInfo;
 using Helion.Util;
@@ -218,7 +217,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Respawn = entityModel.Respawn;
 
         m_direction = (MoveDir)entityModel.MoveDir;
-        BlockFloating = entityModel.BlockFloat;
+        Flags.InFloat = entityModel.BlockFloat;
         MoveCount = entityModel.MoveCount;
         FrozenTics = entityModel.FrozenTics;
 
@@ -263,7 +262,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         entityModel.Respawn = Respawn;
         entityModel.Sector = Sector.Id;
         entityModel.MoveDir = (int)m_direction;
-        entityModel.BlockFloat = BlockFloating;
+        entityModel.BlockFloat = Flags.InFloat;
         entityModel.ArmorDefinition = ArmorDefinition?.Name;
         entityModel.Frame = FrameState.ToFrameStateModel();
         entityModel.Flags = Flags.ToEntityFlagsModel();

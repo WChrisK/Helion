@@ -73,7 +73,6 @@ public partial class Renderer : IDisposable
     private GLBufferTextureStorage? m_colorMapBuffer;
     private Rectangle m_viewport = new(0, 0, 800, 600);
     private uint[] m_frameBufferPixelData = [];
-    private Image? m_frameBufferImage;
     private bool m_disposed;
 
     public Dimension RenderDimension => UseVirtualResolution ? m_config.Window.Virtual.Dimension : Window.Dimension;

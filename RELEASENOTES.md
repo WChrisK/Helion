@@ -57,3 +57,4 @@
   - Fix weapon offset interpolation to reset when modifying offsets through dehacked (fixes Doom Zero pistol and shotgun jittering)
   - Set SLIDE and INFLOAT flags correctly for MBF21 flag functions
   - Fix path reporting of loaded files that were not added with a full path
+  - Fix not being able to search current working directory when launching Helion outside of it's executing directory

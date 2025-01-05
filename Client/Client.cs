@@ -493,15 +493,16 @@ public partial class Client : IDisposable, IInputManagement
 
     public static void Main(string[] args)
     {
+        var workingDirectory = Directory.GetCurrentDirectory();
         SetToExecutingDirectory();
         CommandLineArgs commandLineArgs = CommandLineArgs.Parse(args);
         HelionLoggers.Initialize(commandLineArgs);
         LogAnyCommandLineErrors(commandLineArgs);
 
 #if DEBUG
-        Run(commandLineArgs);
+        Run(commandLineArgs, workingDirectory);
 #else
-        RunRelease(commandLineArgs);
+        RunRelease(commandLineArgs, workingDirectory);
 #endif
 
         ForceFinalizersIfDebugMode();
@@ -521,11 +522,11 @@ public partial class Client : IDisposable, IInputManagement
         Directory.SetCurrentDirectory(dir);
     }
 
-    private static void RunRelease(CommandLineArgs commandLineArgs)
+    private static void RunRelease(CommandLineArgs commandLineArgs, string workingDirectory)
     {
         try
         {
-            Run(commandLineArgs);
+            Run(commandLineArgs, workingDirectory);
         }
         catch (Exception e)
         {
@@ -568,14 +569,14 @@ public partial class Client : IDisposable, IInputManagement
         }
     }
 
-    private static void Run(CommandLineArgs commandLineArgs)
+    private static void Run(CommandLineArgs commandLineArgs, string workingDirectory)
     {
         var configPath = string.IsNullOrWhiteSpace(commandLineArgs.ConfigFileName) ? FileConfig.GetDefaultConfigPath() : commandLineArgs.ConfigFileName.Trim();
         FileConfig config = ReadConfigFileOrTerminate(configPath);
 
         try
         {
-            ArchiveCollection archiveCollection = new(new FilesystemArchiveLocator(config), config, ArchiveCollection.StaticDataCache);
+            ArchiveCollection archiveCollection = new(new FilesystemArchiveLocator(config, GetSearchPaths(workingDirectory)), config, ArchiveCollection.StaticDataCache);
             using HelionConsole console = new(archiveCollection.DataCache, config, commandLineArgs);
             LogClientInfo();
             using IMusicPlayer musicPlayer = commandLineArgs.NoMusic ?
@@ -597,6 +598,13 @@ public partial class Client : IDisposable, IInputManagement
 
             TempFileManager.DeleteAllFiles();
         }
+    }
+
+    private static IList<string> GetSearchPaths(string workingDirectory)
+    {
+        if (workingDirectory == Directory.GetCurrentDirectory())
+            return [];
+        return [workingDirectory];
     }
 
     private void SaveGameManager_GameSaved(object? sender, SaveGameEvent e)

@@ -28,7 +28,7 @@ public class FilesystemArchiveLocator : IArchiveLocator
     /// we assume priority is meant to be given to the beginning of what is
     /// provided.
     /// </remarks>
-    private readonly List<string> m_paths = new List<string> { "" };
+    private readonly List<string> m_paths = [""];
     private readonly IndexGenerator m_indexGenerator = new();
 
     /// <summary>
@@ -44,15 +44,18 @@ public class FilesystemArchiveLocator : IArchiveLocator
     /// and any additional directories that are in the config or commonly used envvars.
     /// </summary>
     /// <param name="config">The config to get the additional directories
+    /// <param name="paths">Additional paths to add outside of the user configuration
     /// from.</param>
-    public FilesystemArchiveLocator(IConfig config)
+    public FilesystemArchiveLocator(IConfig config, IList<string> paths)
     {
-        List<string> paths = [
+        List<string> allPaths = [
+            .. paths,
             .. config.Files.Directories.Value,
             .. WadPaths.GetFromSteamAndLinuxDirs(),
             .. WadPaths.GetFromEnvVars()
         ];
-        m_paths.AddRange(paths.Where(p => !p.Empty()).Select(EnsureEndsWithDirectorySeparator).Distinct());
+
+        m_paths.AddRange(allPaths.Where(p => !p.Empty()).Select(EnsureEndsWithDirectorySeparator).Distinct());
     }
 
     public Archive? Locate(string uri)
@@ -123,11 +126,11 @@ public class FilesystemArchiveLocator : IArchiveLocator
     {
         using BinaryReader reader = GetBinaryReader(path);
         const int iwadValue = 1145132873;
-        const int pwadVallue = 1145132880;
+        const int pwadValue = 1145132880;
         if (reader.BaseStream.Length < 4)
             return false;
         uint headerValue = reader.ReadUInt32();
-        return headerValue == iwadValue || headerValue == pwadVallue;
+        return headerValue == iwadValue || headerValue == pwadValue;
     }
 
     private static bool IsPk3(string path)

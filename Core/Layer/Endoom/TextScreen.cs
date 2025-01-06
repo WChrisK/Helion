@@ -123,22 +123,7 @@
                     }
                 });
 
-                byte[] argbData = new byte[bitmap.Height * bitmap.Width * 4];
-                int offset = 0;
-                for (int y = 0; y < bitmap.Height; y++)
-                {
-                    Span<Argb32> pixelRow = bitmap.DangerousGetPixelRowMemory(y).Span;
-                    foreach (ref Argb32 pixel in pixelRow)
-                    {
-                        argbData[offset] = pixel.A;
-                        argbData[offset + 1] = pixel.R;
-                        argbData[offset + 2] = pixel.G;
-                        argbData[offset + 3] = pixel.B;
-                        offset += 4;
-                    }
-                }
-
-                return Graphics.Image.FromArgbBytes((bitmap.Width, bitmap.Height), argbData)!;
+                return Graphics.Image.FromImageSharp(bitmap)!;
             }
         }
     }

@@ -69,11 +69,7 @@ public static class TrueTypeFont
                             ctx.DrawText(richTextOptions, charString, Color.White.ToImageSharp);
                         });
 
-                        charImages[c] = Image.FromArgbBytes(
-                            (charImage.Width, charImage.Height),
-                            ExtractBytesFromRgbaImage(charImage),
-                            Vec2I.Zero,
-                            ResourceNamespace.Fonts)!;
+                        charImages[c] = Image.FromImageSharp(charImage, ns: ResourceNamespace.Fonts)!;
                     }
                 }
 
@@ -92,30 +88,6 @@ public static class TrueTypeFont
     {
         var chars = Enumerable.Range(StartCharacter, CharCount).Select(char.ConvertFromUtf32);
         return string.Join("", chars);
-    }
-
-    private static byte[] ExtractBytesFromRgbaImage(Image<Rgba32> rgbaImage)
-    {
-        byte[] bytes = new byte[rgbaImage.Width * rgbaImage.Height * 4];
-        int bytesOffset = 0;
-
-        for (int y = 0; y < rgbaImage.Height; y++)
-        {
-            Span<Rgba32> pixelRow = rgbaImage.DangerousGetPixelRowMemory(y).Span;
-            for (int x = 0; x < rgbaImage.Width; x++)
-            {
-                Rgba32 rgba = pixelRow[x];
-
-                bytes[bytesOffset] = rgba.A;
-                bytes[bytesOffset + 1] = rgba.R;
-                bytes[bytesOffset + 2] = rgba.G;
-                bytes[bytesOffset + 3] = rgba.B;
-
-                bytesOffset += 4;
-            }
-        }
-
-        return bytes;
     }
 
     private static (Dictionary<char, Glyph>, Image) ComposeFontGlyphs(Dictionary<char, Image> charImages)

@@ -173,23 +173,7 @@ public class ArchiveImageRetriever : IImageRetriever
             {
                 using MemoryStream inputStream = new MemoryStream(data);
                 using Image<Rgba32> img = SixLabors.ImageSharp.Image.Load<Rgba32>(inputStream);
-
-                byte[] argbData = new byte[img.Height * img.Width * 4];
-                int offset = 0;
-                for (int y = 0; y < img.Height; y++)
-                {
-                    Span<Rgba32> pixelRow = img.DangerousGetPixelRowMemory(y).Span;
-                    foreach (ref Rgba32 pixel in pixelRow)
-                    {
-                        argbData[offset] = pixel.A;
-                        argbData[offset + 1] = pixel.R;
-                        argbData[offset + 2] = pixel.G;
-                        argbData[offset + 3] = pixel.B;                        
-                        offset += 4;
-                    }
-                }
-
-                image = Image.FromArgbBytes((img.Width, img.Height), argbData, (0, 0), entry.Namespace);
+                image = Image.FromImageSharp(img, (0, 0), entry.Namespace);
             }
             catch
             {

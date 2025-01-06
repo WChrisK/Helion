@@ -2,7 +2,9 @@ using Helion.Geometry;
 using Helion.Geometry.Vectors;
 using Helion.Graphics.Palettes;
 using Helion.Resources;
+using Helion.Resources.Archives.Entries;
 using Helion.Util.Extensions;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using static Helion.Util.Assertion.Assert;
 
@@ -105,6 +107,30 @@ public class Image
             return null;
 
         return new(indices, dimension, ImageType.Palette, offset, ns);
+    }
+
+    public static Image? FromImageSharp<TPixel>(SixLabors.ImageSharp.Image<TPixel> data, Vec2I imageOffset = default, ResourceNamespace ns = ResourceNamespace.Global)
+        where TPixel : unmanaged, IPixel<TPixel>
+    {
+        byte[] argbData = new byte[data.Height * data.Width * 4];
+        int offset = 0;
+        Rgba32 tempPixel = new();
+        for (int y = 0; y < data.Height; y++)
+        {
+            Span<TPixel> pixelRow = SixLabors.ImageSharp.Advanced.AdvancedImageExtensions.DangerousGetPixelRowMemory(data, y).Span;
+            foreach (ref TPixel pixel in pixelRow)
+            {
+                pixel.ToRgba32(ref tempPixel);
+
+                argbData[offset] = tempPixel.A;
+                argbData[offset + 1] = tempPixel.R;
+                argbData[offset + 2] = tempPixel.G;
+                argbData[offset + 3] = tempPixel.B;
+                offset += 4;
+            }
+        }
+
+        return FromArgbBytes((data.Width, data.Height), argbData, imageOffset, ns);
     }
 
     public static Image? FromArgbBytes(Dimension dimension, byte[] argbData, Vec2I offset = default, ResourceNamespace ns = ResourceNamespace.Global)

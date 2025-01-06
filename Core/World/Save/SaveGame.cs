@@ -91,7 +91,7 @@ public class SaveGame
         }
     }
 
-    public static SaveGameEvent WriteSaveGame(IWorld world, WorldModel worldModel, 
+    public static SaveGameEvent WriteSaveGame(IWorld world, WorldModel worldModel,
         string title, string saveDir, string filename, IScreenshotGenerator screenshotGenerator, Image? image)
     {
         SaveGameModel saveGameModel = new()
@@ -102,6 +102,15 @@ public class SaveGame
             WorldFile = WorldDataFile,
             ImageFile = image == null ? "" : ImageFile,
             Files = worldModel.Files,
+
+            SaveGameStats = new SaveGameStats()
+            {
+                KillCount = worldModel.KillCount,
+                TotalMonsters = worldModel.TotalMonsters,
+                SecretCount = worldModel.SecretCount,
+                TotalSecrets = worldModel.TotalSecrets,
+                LevelTime = worldModel.LevelTime,
+            }
         };
 
         string saveTempFile = TempFileManager.GetFile();

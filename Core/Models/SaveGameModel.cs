@@ -11,4 +11,6 @@ public class SaveGameModel
     public DateTime Date { get; set; }
     public string WorldFile { get; set; } = string.Empty;
     public string ImageFile { get; set; } = string.Empty;
+
+    public SaveGameStats? SaveGameStats = null;
 }

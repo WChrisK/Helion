@@ -3,6 +3,7 @@ using Helion.Models;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Util;
 using Helion.Util.SerializationContexts;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -59,6 +60,34 @@ public class SaveGame
         {
             // Corrupt zip or bad serialize
         }
+    }
+
+    public Image? GetSaveGameImage()
+    {
+        try
+        {
+            using ZipArchive zipArchive = ZipFile.Open(FilePath, ZipArchiveMode.Read);
+            ZipArchiveEntry? imageFileEntry = zipArchive.Entries.FirstOrDefault(x => x.Name.Equals(ImageFile));
+
+            if (imageFileEntry == null)
+            {
+                return null;
+            }
+
+            using (Stream dataStream = imageFileEntry.Open())
+            {
+                using (SixLabors.ImageSharp.Image<Rgba32> pngImage = SixLabors.ImageSharp.Image.Load<Rgba32>(dataStream))
+                {
+                    return Image.FromImageSharp(pngImage);
+                }
+            }
+        }
+        catch
+        {
+            // Bad ZIP file?
+        }
+
+        return null;
     }
 
     private static SaveGameType GetFileType(string fileName)
@@ -129,7 +158,7 @@ public class SaveGame
                     stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(worldModel, typeof(WorldModel), WorldModelSerializationContext.Default)));
 
                 if (image != null)
-                {      
+                {
                     entry = zipArchive.CreateEntry(ImageFile);
                     using var stream = entry.Open();
                     screenshotGenerator.GeneratePngImage(image, stream);

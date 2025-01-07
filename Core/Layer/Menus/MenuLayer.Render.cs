@@ -8,6 +8,7 @@ using Helion.Menus.Impl;
 using Helion.Render.Common;
 using Helion.Render.Common.Enums;
 using Helion.Render.Common.Renderers;
+using Helion.Render.Common.Textures;
 using Helion.Util;
 using System;
 using static Helion.Render.Common.RenderDimensions;
@@ -21,6 +22,7 @@ public partial class MenuLayer
     private const int SelectedOffsetY = 5;
 
     private IMenuComponent? m_previousSelectedComponent;
+    private IRenderableTextureHandle? m_saveGameTexture;
     private SaveGameSummary? m_saveGameSummary;
 
     private bool ShouldDrawActive => (m_stopwatch.ElapsedMilliseconds % ActiveMillis) <= ActiveMillis / 2;
@@ -200,10 +202,11 @@ public partial class MenuLayer
         {
             if (!wasPreviouslySelected)
             {
-                m_saveGameSummary?.Dispose();
                 m_saveGameSummary = saveRowComponent.SaveGame == null
                     ? null
-                    : new SaveGameSummary(saveRowComponent.SaveGame, hud);
+                    : new SaveGameSummary(saveRowComponent.SaveGame);
+
+                m_saveGameTexture = m_saveGameSummary?.UpdateSaveGameTexture(hud);
             }
         }
     }

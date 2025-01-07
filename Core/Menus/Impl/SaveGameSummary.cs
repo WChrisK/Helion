@@ -7,20 +7,21 @@
     using Helion.World.Save;
     using System;
 
-    public class SaveGameSummary : IDisposable
+    public class SaveGameSummary
     {
+        private const string TEXTURENAME = "SAVEGAMETHUMBNAIL";
+
         public readonly IRenderableTextureHandle? SaveGameImage;
         public readonly string MapName;
         public readonly DateTime? Date;
         public readonly string[] Stats;
-        private readonly Action? m_saveGameTextureRemove;
-        private bool disposedValue;
+        private Image? m_saveGameImage;
 
-        public SaveGameSummary(SaveGame saveGame, IHudRenderContext hud)
+        public SaveGameSummary(SaveGame saveGame)
         {
             MapName = saveGame.Model?.MapName ?? string.Empty;
             Date = saveGame.Model?.Date;
-            Image? tempImage = saveGame.GetSaveGameImage();
+            m_saveGameImage = saveGame.GetSaveGameImage();
 
             Stats = saveGame.Model?.SaveGameStats == null
                 ? Array.Empty<string>()
@@ -29,30 +30,16 @@
                     $"Secrets: {saveGame.Model.SaveGameStats.SecretCount} / {saveGame.Model.SaveGameStats.TotalSecrets}",
                     $"Elapsed: {TimeSpan.FromSeconds(saveGame.Model.SaveGameStats.LevelTime / 35)}"
                 ];
-
-            if (tempImage != null)
-            {
-                SaveGameImage = hud.CreateImage(tempImage, saveGame.FileName, Resources.ResourceNamespace.Textures, out m_saveGameTextureRemove);
-            }
         }
 
-        protected virtual void Dispose(bool disposing)
+        public IRenderableTextureHandle? UpdateSaveGameTexture(IHudRenderContext hud)
         {
-            if (!disposedValue)
+            if (m_saveGameImage != null)
             {
-                if (disposing)
-                {
-                    m_saveGameTextureRemove?.Invoke();
-                }
-
-                disposedValue = true;
+                return hud.CreateOrReplaceImage(m_saveGameImage, TEXTURENAME, Resources.ResourceNamespace.Textures, false);
             }
-        }
 
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            return null;
         }
     }
 }

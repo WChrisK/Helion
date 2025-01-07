@@ -11,9 +11,9 @@ public static class HudExtensions
 {
     private readonly record struct HudImage(IHudRenderContext Hud, string Image, IRenderableTextureHandle Handle, Align Window, Align Anchor, float Alpha = 1f);
 
-    public static IRenderableTextureHandle CreateImage(this IHudRenderContext hud, Image image, string imageName, ResourceNamespace resourceNamespace, out Action removeAction, bool repeatY = true)
+    public static IRenderableTextureHandle CreateOrReplaceImage(this IHudRenderContext hud, Image image, string imageName, ResourceNamespace resourceNamespace, bool repeatY = true)
     {
-        return hud.Textures.CreateAndTrackTexture(imageName, resourceNamespace, image, out removeAction, repeatY: repeatY);
+        return hud.Textures.CreateOrReplaceTexture(imageName, resourceNamespace, image, repeatY: repeatY);
     }
 
     public static bool RenderFullscreenImage(this IHudRenderContext hud, string image,

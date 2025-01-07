@@ -9,18 +9,18 @@
 
     public class SaveGameSummary
     {
-        private const string TEXTURENAME = "SAVEGAMETHUMBNAIL";
+        public const string TEXTURENAME = "SAVEGAMETHUMBNAIL";
 
         public readonly IRenderableTextureHandle? SaveGameImage;
         public readonly string MapName;
-        public readonly DateTime? Date;
+        public readonly string Date;
         public readonly string[] Stats;
         private Image? m_saveGameImage;
 
         public SaveGameSummary(SaveGame saveGame)
         {
             MapName = saveGame.Model?.MapName ?? string.Empty;
-            Date = saveGame.Model?.Date;
+            Date = $"{saveGame.Model?.Date}";
             m_saveGameImage = saveGame.GetSaveGameImage();
 
             Stats = saveGame.Model?.SaveGameStats == null

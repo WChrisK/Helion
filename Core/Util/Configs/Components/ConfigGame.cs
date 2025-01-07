@@ -73,7 +73,7 @@ public class ConfigGame : ConfigElement<ConfigGame>
     public readonly ConfigValue<int> QuickSaveSeconds = new(0, GreaterOrEqual(0));
 
     [ConfigInfo("Display screenshot and extended information in Save/Load menu.")]
-    [OptionMenu(OptionSectionType.General, "Display Extended Info")]
+    [OptionMenu(OptionSectionType.General, "Display Savegame Details")]
     public readonly ConfigValue<bool> ExtendedSaveGameInfo = new(true);
 
     // Cheats

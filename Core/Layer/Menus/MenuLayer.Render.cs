@@ -39,6 +39,10 @@ public partial class MenuLayer
         if (!m_menus.TryPeek(out Menu? menu))
             return;
 
+        bool shouldRenderSaveGameDetails =
+            (menu as SaveMenu)?.IsSaveMenu == false
+            && m_config.Game.ExtendedSaveGameInfo;
+
         int offsetY = menu.TopPixelPadding;
         for (int i = 0; i < menu.Components.Count; i++)
         {
@@ -61,7 +65,7 @@ public partial class MenuLayer
                     DrawText(hud, largeTextComponent, ref offsetY);
                     break;
                 case MenuSaveRowComponent saveRowComponent:
-                    DrawSaveRow(hud, saveRowComponent, isSelected, wasSelected, ref offsetY);
+                    DrawSaveRow(hud, saveRowComponent, isSelected, wasSelected, ref offsetY, shouldRenderSaveGameDetails);
                     break;
                 default:
                     throw new Exception($"Unexpected menu component type for drawing: {component.GetType().FullName}");
@@ -73,9 +77,9 @@ public partial class MenuLayer
             }
         }
 
-        if (m_saveGameSummary != null)
+        if (menu.CurrentComponent is MenuSaveRowComponent && m_saveGameSummary != null)
         {
-            RenderSaveGameSummary(hud);
+            RenderSaveGameDetails(hud);
         }
     }
 
@@ -135,7 +139,7 @@ public partial class MenuLayer
     }
 
     private void DrawSaveRow(IHudRenderContext hud, MenuSaveRowComponent saveRowComponent, bool isSelected,
-        bool wasPreviouslySelected, ref int offsetY)
+        bool wasPreviouslySelected, ref int offsetY, bool detailsEnabled)
     {
         const int LeftOffset = 32;
         const int DesiredRowVerticalPadding = 4;
@@ -162,9 +166,9 @@ public partial class MenuLayer
         hud.Image(LeftBarName, (offsetX, offsetY));
         offsetX += leftDim.Width;
 
-        const int MenuRowWidth = 248;
+        int menuRowWidth = detailsEnabled ? 180 : 248;
 
-        int blocks = (int)Math.Ceiling((MenuRowWidth - leftDim.Width - rightDim.Width) / (double)midDim.Width) + 1;
+        int blocks = (int)Math.Ceiling((menuRowWidth - leftDim.Width - rightDim.Width) / (double)midDim.Width) + 1;
         for (int i = 0; i < blocks; i++)
         {
             hud.Image(MiddleBarName, (offsetX, offsetY));
@@ -198,7 +202,7 @@ public partial class MenuLayer
         int rowVerticalPadding = Math.Max(0, (14 + DesiredRowVerticalPadding) - rowTotalHeight);
         offsetY += rowTotalHeight + rowVerticalPadding;
 
-        if (isSelected && m_config.Game.ExtendedSaveGameInfo)
+        if (isSelected && detailsEnabled)
         {
             if (!wasPreviouslySelected)
             {
@@ -211,8 +215,42 @@ public partial class MenuLayer
         }
     }
 
-    private void RenderSaveGameSummary(IHudRenderContext hud)
+    private void RenderSaveGameDetails(IHudRenderContext hud)
     {
-        // TO-DO:  Render summary box with thumbnail, saved game details, etc.
+        if (m_saveGameSummary == null)
+        {
+            return;
+        }
+
+        const int TextSize = 4;
+        const string Font = Constants.Fonts.Small;
+        const int BoxWidth = 80;
+        const int ThumbnailHeight = 60;
+        const int BoxHeight = ThumbnailHeight + 6 * 4;
+
+        Vec2I boxUpperLeft = (230, 31);
+        Vec2I boxLowerRight = boxUpperLeft + (BoxWidth, BoxHeight);
+
+        hud.FillBox((boxUpperLeft, boxLowerRight), Color.DarkGray);
+
+        if (m_saveGameTexture != null)
+        {
+            hud.Image(SaveGameSummary.TEXTURENAME, new HudBox(boxUpperLeft, boxUpperLeft + (BoxWidth, ThumbnailHeight)));
+        }
+
+        Vec2I offset = boxUpperLeft + (0, 60);
+
+        hud.Text(m_saveGameSummary.MapName, Font, TextSize, offset, out Dimension area, maxWidth: BoxWidth);
+        offset += (0, area.Height);
+
+        hud.Text(m_saveGameSummary.Date, Font, TextSize, offset, out area);
+        offset += (0, area.Height);
+        offset += (0, area.Height);
+
+        foreach (string str in m_saveGameSummary?.Stats ?? Array.Empty<string>())
+        {
+            hud.Text(str, Constants.Fonts.Small, 4, offset, out area);
+            offset += (0, area.Height);
+        }
     }
 }

@@ -8,7 +8,7 @@ using static Helion.Util.Configs.Values.ConfigFilters;
 
 namespace Helion.Util.Configs.Components;
 
-public class ConfigGame: ConfigElement<ConfigGame>
+public class ConfigGame : ConfigElement<ConfigGame>
 {
     // Controls/input
 
@@ -71,6 +71,10 @@ public class ConfigGame: ConfigElement<ConfigGame>
     [ConfigInfo("Automatically create a quicksave every x seconds. 0 = never.")]
     [OptionMenu(OptionSectionType.General, "Quicksave Seconds")]
     public readonly ConfigValue<int> QuickSaveSeconds = new(0, GreaterOrEqual(0));
+
+    [ConfigInfo("Display screenshot and extended information in Save/Load menu.")]
+    [OptionMenu(OptionSectionType.General, "Display Extended Info")]
+    public readonly ConfigValue<bool> ExtendedSaveGameInfo = new(true);
 
     // Cheats
 

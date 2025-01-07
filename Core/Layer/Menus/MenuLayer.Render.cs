@@ -1,14 +1,15 @@
-using System;
 using Helion.Geometry;
 using Helion.Geometry.Vectors;
 using Helion.Graphics;
 using Helion.Menus;
 using Helion.Menus.Base;
 using Helion.Menus.Base.Text;
+using Helion.Menus.Impl;
 using Helion.Render.Common;
 using Helion.Render.Common.Enums;
 using Helion.Render.Common.Renderers;
 using Helion.Util;
+using System;
 using static Helion.Render.Common.RenderDimensions;
 
 namespace Helion.Layer.Menus;
@@ -18,6 +19,9 @@ public partial class MenuLayer
     private const int ActiveMillis = 500;
     private const int SelectedOffsetX = -32;
     private const int SelectedOffsetY = 5;
+
+    private IMenuComponent? m_previousSelectedComponent;
+    private SaveGameSummary? m_saveGameSummary;
 
     private bool ShouldDrawActive => (m_stopwatch.ElapsedMilliseconds % ActiveMillis) <= ActiveMillis / 2;
 
@@ -38,6 +42,7 @@ public partial class MenuLayer
         {
             IMenuComponent component = menu.Components[i];
             bool isSelected = ReferenceEquals(menu.CurrentComponent, component);
+            bool wasSelected = ReferenceEquals(menu.CurrentComponent, m_previousSelectedComponent);
 
             switch (component)
             {
@@ -54,11 +59,21 @@ public partial class MenuLayer
                     DrawText(hud, largeTextComponent, ref offsetY);
                     break;
                 case MenuSaveRowComponent saveRowComponent:
-                    DrawSaveRow(hud, saveRowComponent, isSelected, ref offsetY);
+                    DrawSaveRow(hud, saveRowComponent, isSelected, wasSelected, ref offsetY);
                     break;
                 default:
                     throw new Exception($"Unexpected menu component type for drawing: {component.GetType().FullName}");
             }
+
+            if (isSelected)
+            {
+                m_previousSelectedComponent = menu.CurrentComponent;
+            }
+        }
+
+        if (m_saveGameSummary != null)
+        {
+            RenderSaveGameSummary(hud);
         }
     }
 
@@ -118,7 +133,7 @@ public partial class MenuLayer
     }
 
     private void DrawSaveRow(IHudRenderContext hud, MenuSaveRowComponent saveRowComponent, bool isSelected,
-        ref int offsetY)
+        bool wasPreviouslySelected, ref int offsetY)
     {
         const int LeftOffset = 32;
         const int DesiredRowVerticalPadding = 4;
@@ -180,5 +195,21 @@ public partial class MenuLayer
         int rowTotalHeight = Math.Max(rowBgHeight, textArea.Height);
         int rowVerticalPadding = Math.Max(0, (14 + DesiredRowVerticalPadding) - rowTotalHeight);
         offsetY += rowTotalHeight + rowVerticalPadding;
+
+        if (isSelected && m_config.Game.ExtendedSaveGameInfo)
+        {
+            if (!wasPreviouslySelected)
+            {
+                m_saveGameSummary?.Dispose();
+                m_saveGameSummary = saveRowComponent.SaveGame == null
+                    ? null
+                    : new SaveGameSummary(saveRowComponent.SaveGame, hud);
+            }
+        }
+    }
+
+    private void RenderSaveGameSummary(IHudRenderContext hud)
+    {
+        // TO-DO:  Render summary box with thumbnail, saved game details, etc.
     }
 }

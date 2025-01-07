@@ -345,8 +345,6 @@ public partial class Client : IDisposable, IInputManagement
         // Note: StaticDataApplier happens through this start and needs to happen before UpdateToNewWorld
         worldLayer.World.Start(m_loadMapResult.WorldModel);
 
-        _ = WriteAutoSave(m_loadMapResult);
-
         m_window.Renderer.UpdateToNewWorld(worldLayer.World);
         m_layerManager.LockInput = false;
 
@@ -355,6 +353,9 @@ public partial class Client : IDisposable, IInputManagement
         // Flag the WorldLayer that it is safe to render now that everything has been loaded
         worldLayer.ShouldRender = true;
         m_layerManager.Remove(m_layerManager.LoadingLayer);
+
+        Render();
+        _ = WriteAutoSave(m_loadMapResult);
 
         m_loadMapResult = null;
         PlayTransition();

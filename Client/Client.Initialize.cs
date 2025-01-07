@@ -12,6 +12,7 @@ using Helion.Resources.Definitions.MapInfo;
 using Helion.Resources.IWad;
 using Helion.Util;
 using Helion.Util.CommandLine;
+using Helion.Util.Configs.Components;
 using Helion.Util.Consoles;
 using Helion.World.Util;
 
@@ -234,6 +235,13 @@ public partial class Client
             compat.Stairs.Set(true, writeToConfig: false);
         if (options.OptionEnabled(OptionsConstants.Comp.Vile, compLevelDef.CompLevel))
             compat.VileGhosts.Set(true, writeToConfig: false);
+
+        var id24skies = m_archiveCollection.Definitions.Id24SkyDefinition.Data.Skies;
+        if (id24skies != null && id24skies.Count > 0 && m_config.Render.SkyMode != SkyRenderMode.Vanilla)
+        {
+            m_config.Render.SkyMode.Set(SkyRenderMode.Vanilla, writeToConfig: false);
+            Log.Info("SKYDEFS: Sky render mode set to vanilla");
+        }
     }
 
     private MapInfoDef? GetDefaultMap()

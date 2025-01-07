@@ -43,7 +43,8 @@ namespace Helion.Util.Configs
             { typeof(BlitFilter), Enum.GetValues<BlitFilter>() },
             { typeof(GyroTurnAxis), Enum.GetValues<GyroTurnAxis>() },
             { typeof(ConfigWeaponSlots), Enum.GetValues<ConfigWeaponSlots>() },
-            { typeof(RngMethod), Enum.GetValues<RngMethod>() }
+            { typeof(RngMethod), Enum.GetValues<RngMethod>() },
+            { typeof(SkyRenderMode), Enum.GetValues<SkyRenderMode>() },
         };
 
         public static Dictionary<Type, Dictionary<Enum, string>> KnownEnumLabels { get; } = new Dictionary<Type, Dictionary<Enum, string>>()
@@ -66,7 +67,8 @@ namespace Helion.Util.Configs
             { typeof(BlitFilter), GetDescriptions<BlitFilter>() },
             { typeof(GyroTurnAxis), GetDescriptions<GyroTurnAxis>() },
             { typeof(ConfigWeaponSlots), GetDescriptions<ConfigWeaponSlots>()},
-            { typeof(RngMethod), GetDescriptions<RngMethod>()}
+            { typeof(RngMethod), GetDescriptions<RngMethod>()},
+            { typeof(SkyRenderMode), GetDescriptions<SkyRenderMode>()}
         };
 
         private static Dictionary<Enum, string> GetDescriptions<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T>() where T : struct, Enum

@@ -110,29 +110,27 @@ public class ArchiveCollection : IResources, IPathResolver
     {
         if (unitTest)
         {
-            TextureManager = new TextureManager(this, m_config.Render.CacheSprites, unitTest);
-            SetTextureManagerSky(mapInfo);
+            TextureManager = new TextureManager(this, m_config.Render.CacheSprites, GetSkyTexture(mapInfo), unitTest);
             return;
         }
 
         if (m_initTextureManager)
         {
-            SetTextureManagerSky(mapInfo);
+            TextureManager.SetSkyTexture(GetSkyTexture(mapInfo));
             TextureManager.MapInit();
             return;
         }
 
-        TextureManager = new TextureManager(this, m_config.Render.CacheSprites, unitTest);
-        SetTextureManagerSky(mapInfo);
+        TextureManager = new TextureManager(this, m_config.Render.CacheSprites, GetSkyTexture(mapInfo), unitTest);
         m_initTextureManager = true;
     }
 
-    private void SetTextureManagerSky(MapInfoDef mapInfo)
+    private static string GetSkyTexture(MapInfoDef mapInfo)
     {
         if (mapInfo.Sky1.Name != null && mapInfo.Sky1.Name.Length > 0)
-            TextureManager.SetSkyTexture(mapInfo.Sky1.Name ?? Constants.DefaultSkyTextureName);
-        else
-            TextureManager.SetSkyTexture(Constants.DefaultSkyTextureName);
+            return mapInfo.Sky1.Name ?? Constants.DefaultSkyTextureName;
+
+        return Constants.DefaultSkyTextureName;
     }
 
     public Entry? FindEntry(string name, ResourceNamespace? priorityNamespace = null)

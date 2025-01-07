@@ -1,19 +1,19 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Helion.Geometry.Vectors;
 using Helion.Graphics;
-using Helion.Graphics.Palettes;
 using Helion.Render.OpenGL.Texture;
 using Helion.Render.OpenGL.Texture.Legacy;
 using Helion.Resources;
 using Helion.Resources.Archives.Collection;
+using Helion.Resources.Definitions;
+using Helion.Util.Configs.Components;
 using Helion.Util.Container;
 using OpenTK.Graphics.OpenGL;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World.Sky.Sphere;
 
-public record struct SkyTexture(GLLegacyTexture GlTexture, int AnimatedTextureIndex, float ScaleU, Vec4F TopColor, Vec4F BottomColor, int TopColorIndex, int BottomColorIndex);
+public record struct SkyTexture(GLLegacyTexture GlTexture, int AnimatedTextureIndex, Vec4F TopColor, Vec4F BottomColor, int TopColorIndex, int BottomColorIndex);
 
 // The sky texture looks like this (p = padding):
 //
@@ -61,6 +61,7 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
         }
 
         skyTransform = SkyTransform.Default;
+        skyTransform.Sky.Offset = default;
         // Check if we have generated this sky texture yet. The translation can change if skies are animated.
         int animationIndex = m_archiveCollection.TextureManager.GetTranslationIndex(m_textureHandleIndex);
         if (m_archiveCollection.TextureManager.TryGetSkyTransform(animationIndex, out var findTransform))
@@ -91,7 +92,7 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
         if (findSkyTexture != null)
             CheckSkyFireUpdate(findSkyTexture.Value.GlTexture, textureIndex);
 
-        return findSkyTexture ?? new SkyTexture(m_textureManager.NullTexture, 0, 1, Vec4F.Zero, Vec4F.Zero, 0, 0);
+        return findSkyTexture ?? new SkyTexture(m_textureManager.NullTexture, 0, Vec4F.Zero, Vec4F.Zero, 0, 0);
     }
 
     private void CheckSkyFireUpdate(GLLegacyTexture skyTexture, int textureIndex)
@@ -122,39 +123,69 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
         GC.SuppressFinalize(this);
     }
 
-    private static float CalculateScale(int imageWidth)
+    public static Vec2F CalcOffset(in SkyTexture skyTexture, SkyTransformTexture transform, SkyRenderMode mode, SkyOptions options = SkyOptions.None)
     {
-        // If the texture is huge, we'll just assume the user wants a one-
-        // to-one scaling. See the bottom return comment on why this is
-        // negative.
-        if (imageWidth >= 1024)
-            return 1.0f;
+        var offset = transform.Offset + transform.CurrentScroll;
+        offset.X += 256;
 
-        // We want to fit either 4 '256 width textures' onto the sphere
-        // or 1 '1024 width texture' onto the same area. While we're at
-        // it, we can just make it so that the texture scales around to
-        // it's nearest power of two.
-        //
-        // To do so, first find out X when we have width = 2^X. We need
-        // to force this to be a whole number so we round. This is likely
-        // not correct due to how a value at 0.5 won't do what we think,
-        // but we'll deal with this later if the need ever arises.
-        double roundedExponent = Math.Round(Math.Log(imageWidth, 2));
+        if (mode == SkyRenderMode.Vanilla)
+        {
+            // Set offset to draw from bottom up (only for skytransfer specials or id24 skies with midtexel property)
+            if (options.HasFlag(SkyOptions.SkyTransfer) || transform.MidTexel.HasValue)
+                offset.Y += skyTexture.GlTexture.Height - 128;
 
-        // We want to fit it onto a sky that is 1024 in width. We can now
-        // do `1024 / width` where width is a power of two. We can find out
-        // the scaling factor with the following rearrangement:
-        //      f = 1024 / width
-        //        = 2^10 / 2^x       [because x is a whole number now]
-        //        = 2^(10 - x)
+            // Calculate the offset so that the midtexel is in the center of the sphere projection
+            if (transform.MidTexel.HasValue)
+                offset.Y += 24 - (skyTexture.GlTexture.Height - transform.MidTexel.Value);
+        }
+
+        if (transform.Scale.Y != 1)
+            offset.Y += (128 * transform.Scale.Y - 128) * 0.5f;
+
+        // Offset needs to be in texture coordinates
+        offset.X /= skyTexture.GlTexture.Width;
+        offset.Y /= skyTexture.GlTexture.Height;
+        return offset;
+    }
+
+    public static Vec2F CalcFireOffset(in SkyTexture skyTexture, SkyTransformTexture transform)
+    {
+        // This can't be right. The kex port has some weird offset stuff going on with fire textures specifically.
+        var offset = transform.Offset + transform.CurrentScroll;
+        offset.X += 256;
+
+        var textureHeight = 200f;
+        offset.Y += textureHeight - 128;
+
+        if (transform.MidTexel.HasValue)
+        {
+            var midOffset = skyTexture.GlTexture.Height * transform.MidTexel.Value / textureHeight;
+            offset.Y += 32 + midOffset;
+        }
+
+        // Offset needs to be in texture coordinates
+        offset.X /= skyTexture.GlTexture.Width;
+        offset.Y /= skyTexture.GlTexture.Height;
+        return offset;
+    }
+
+    public static Vec2F CalcScale(in SkyTexture skyTexture, SkyTransformTexture skyTransform)
+    {
+        double roundedExponent = Math.Round(Math.Log(skyTexture.GlTexture.Dimension.Width, 2));
         float scalingFactor = (float)Math.Pow(2, 10 - roundedExponent);
+        float u = 1 / scalingFactor;
+        float v = (skyTexture.GlTexture.Dimension.Height / 128f) * 0.25f;
+        return (u, v) * skyTransform.Scale;
+    }
 
-        // We make the scale negative so that the U coordinate is reversed.
-        // The sphere is made in a counter-clockwise direction but drawing
-        // the texture in other ports appears visually to be clockwise. By
-        // setting the U scaling to be negative, the shader will reverse
-        // the direction of the texturing (which is what we want).
-        return 1 / scalingFactor;
+    public static float CalcSkyHeight(float textureHeight, SkyRenderMode mode)
+    {
+        const float StaticSize = 0.25f;
+        if (mode == SkyRenderMode.Vanilla)
+            return StaticSize;
+
+        float pad = 128 / textureHeight * StaticSize;
+        return (1 - (pad * 2)) / 2;
     }
 
     private static Color CalculateAverageRowColor(int startY, int exclusiveEndY, Image skyImage)
@@ -210,11 +241,10 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
             return false;
         }
 
-        float scaleU = CalculateScale(skyImage.Dimension.Width);
         GetAverageColors(skyImage, out var topColor, out var bottomColor);
         var colormap = m_archiveCollection.Colormap;
         var glTexture = CreateTexture(skyImage, $"[SKY][{textureIndex}] {m_archiveCollection.TextureManager.SkyTextureName}");
-        texture = new(glTexture, textureIndex, scaleU, topColor, bottomColor, 
+        texture = new(glTexture, textureIndex, topColor, bottomColor, 
             colormap.GetNearestColorIndex(FromRgba(topColor)), colormap.GetNearestColorIndex(FromRgba(bottomColor)));
         return true;
     }

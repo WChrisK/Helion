@@ -8,6 +8,7 @@ using Helion.Maps.Specials.Vanilla;
 using Helion.Maps.Specials.ZDoom;
 using Helion.Models;
 using Helion.Resources;
+using Helion.Resources.Definitions;
 using Helion.Util;
 using Helion.Util.Container;
 using Helion.Util.RandomGenerators;
@@ -917,7 +918,11 @@ public sealed class SpecialManager : ITickable, IDisposable
         if (line.Args.Arg1 == (int)ZDoomStaticInit.Sky)
         {
             foreach (Sector sector in m_world.FindBySectorTag(line.Args.Arg0))
-                sector.SetSkyTexture(line.Front.Upper.TextureHandle, line.Args.Arg2 != 0, m_world.Gametick);
+            {
+                var options = line.Args.Arg2 != 0 ? SkyOptions.Flip : SkyOptions.None;
+                options |= SkyOptions.SkyTransfer;
+                sector.SetSkyTexture(line.Front.Upper.TextureHandle, options, line.Front.Offset, m_world.Gametick);
+            }
         }
     }
 

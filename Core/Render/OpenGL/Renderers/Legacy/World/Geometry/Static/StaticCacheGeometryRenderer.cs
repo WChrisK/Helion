@@ -427,7 +427,7 @@ public class StaticCacheGeometryRenderer : IDisposable
         else if (side != null && wallLocation == WallLocation.Lower)
             skyTextureHandle = sector.FloorSkyTextureHandle;
 
-        if (!m_skyRenderer.GetOrCreateSky(skyTextureHandle, sector.FlipSkyTexture, out var sky))
+        if (!m_skyRenderer.GetOrCreateSky(skyTextureHandle, sector.SkyOptions, sector.SkyOffset, out var sky))
             return;
 
         if (plane != null && !planeUpdated)

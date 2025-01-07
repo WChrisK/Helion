@@ -832,7 +832,8 @@ public class GeometryRenderer : IDisposable
                 m_skyWallVertexLowerLookup[facingSide.Id] = data;
             }
 
-            m_skyRenderer.Add(data, data.Length, otherSide.Sector.FloorSkyTextureHandle, otherSide.Sector.FlipSkyTexture);
+            var sector = otherSide.Sector;
+            m_skyRenderer.Add(data, data.Length, sector.FloorSkyTextureHandle, sector.SkyOptions, sector.SkyOffset);
             vertices = null;
             skyVertices = data;
         }
@@ -939,7 +940,8 @@ public class GeometryRenderer : IDisposable
                 m_skyWallVertexUpperLookup[facingSide.Id] = data;
             }
 
-            m_skyRenderer.Add(data, data.Length, plane.Sector.CeilingSkyTextureHandle, plane.Sector.FlipSkyTexture);
+            var sector = plane.Sector;
+            m_skyRenderer.Add(data, data.Length, sector.CeilingSkyTextureHandle, sector.SkyOptions, sector.SkyOffset);
             vertices = null;
             skyVertices = data;
         }
@@ -1052,7 +1054,8 @@ public class GeometryRenderer : IDisposable
         }
 
         SetSkyWallVertices(m_skyWallVertices, wall);
-        m_skyRenderer.Add(m_skyWallVertices, m_skyWallVertices.Length, facingSide.Sector.CeilingSkyTextureHandle, facingSide.Sector.FlipSkyTexture);
+        var sector = facingSide.Sector;
+        m_skyRenderer.Add(m_skyWallVertices, m_skyWallVertices.Length, sector.CeilingSkyTextureHandle, sector.SkyOptions, sector.SkyOffset);
         skyVertices = m_skyWallVertices;
     }
 
@@ -1293,8 +1296,8 @@ public class GeometryRenderer : IDisposable
 
             vertices = null;
             skyVertices = lookupData;
-            var skyHandle = floor ? subsectors[0].Sector.FloorSkyTextureHandle : subsectors[0].Sector.CeilingSkyTextureHandle;
-            m_skyRenderer.Add(lookupData, lookupData.Length, skyHandle, subsectors[0].Sector.FlipSkyTexture);
+            var skyHandle = floor ? sector.FloorSkyTextureHandle : sector.CeilingSkyTextureHandle;
+            m_skyRenderer.Add(lookupData, lookupData.Length, skyHandle, sector.SkyOptions, sector.SkyOffset);
         }
         else
         {

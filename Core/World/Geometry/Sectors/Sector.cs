@@ -18,6 +18,7 @@ using Helion.Geometry.Boxes;
 using Helion.World.Geometry.Islands;
 using static Helion.World.Entities.EntityManager;
 using Helion.Graphics.Palettes;
+using Helion.Resources.Definitions;
 
 namespace Helion.World.Geometry.Sectors;
 
@@ -50,7 +51,8 @@ public sealed class Sector
     public int DamageAmount;
     public int? FloorSkyTextureHandle;
     public int? CeilingSkyTextureHandle;
-    public bool FlipSkyTexture = true;
+    public SkyOptions SkyOptions = SkyOptions.Flip;
+    public Vec2I SkyOffset;
     public bool IsFloorStatic => Floor.Dynamic == SectorDynamic.None;
     public bool IsCeilingStatic => Ceiling.Dynamic == SectorDynamic.None;
     public bool AreFlatsStatic => IsFloorStatic && IsCeilingStatic;
@@ -280,11 +282,12 @@ public sealed class Sector
             DataChanges |= SectorDataTypes.CeilingTexture;
     }
 
-    public void SetSkyTexture(int texture, bool flipped, int gametick)
+    public void SetSkyTexture(int texture, SkyOptions options, Vec2I offset, int gametick)
     {
         FloorSkyTextureHandle = texture;
         CeilingSkyTextureHandle = texture;
-        FlipSkyTexture = flipped;
+        SkyOptions = options;
+        SkyOffset = offset;
         DataChanges |= SectorDataTypes.SkyTexture;
         ChangeGametick = gametick;
     }

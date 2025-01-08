@@ -1,4 +1,5 @@
 using Helion.Geometry;
+using Helion.Geometry.Boxes;
 using Helion.Geometry.Vectors;
 using Helion.Graphics;
 using Helion.Menus;
@@ -10,6 +11,7 @@ using Helion.Render.Common.Enums;
 using Helion.Render.Common.Renderers;
 using Helion.Render.Common.Textures;
 using Helion.Util;
+using NAudio.Wave.SampleProviders;
 using System;
 using static Helion.Render.Common.RenderDimensions;
 
@@ -40,7 +42,7 @@ public partial class MenuLayer
             return;
 
         bool shouldRenderSaveGameDetails =
-            (menu as SaveMenu)?.IsSaveMenu == false
+            menu is SaveMenu { IsSaveMenu: false }
             && m_config.Game.ExtendedSaveGameInfo;
 
         int offsetY = menu.TopPixelPadding;
@@ -226,19 +228,26 @@ public partial class MenuLayer
         const string Font = Constants.Fonts.Small;
         const int BoxWidth = 80;
         const int ThumbnailHeight = 60;
-        const int BoxHeight = ThumbnailHeight + 6 * 4;
+        const int BoxHeight = ThumbnailHeight + 6 * 4 + 3;
 
-        Vec2I boxUpperLeft = (230, 31);
+        Vec2I boxUpperLeftBorder = (229, 31);
+        Vec2I boxLowerRightBorder = boxUpperLeftBorder + (BoxWidth + 2, BoxHeight + 2);
+
+        Vec2I boxUpperLeft = (230, 32);
         Vec2I boxLowerRight = boxUpperLeft + (BoxWidth, BoxHeight);
 
-        hud.FillBox((boxUpperLeft, boxLowerRight), Color.DarkGray);
+        hud.PushAlpha(0.65f);
+        DrawBorderBox(hud, new HudBox(boxUpperLeftBorder, boxLowerRightBorder), Color.DarkGray, 1);
+        hud.FillBox((boxUpperLeft, boxLowerRight), Color.Black);
+        hud.PopAlpha();
 
         if (m_saveGameTexture != null)
         {
-            hud.Image(SaveGameSummary.TEXTURENAME, new HudBox(boxUpperLeft, boxUpperLeft + (BoxWidth, ThumbnailHeight)));
+            var imageBox = new HudBox(boxUpperLeft, boxUpperLeft + (BoxWidth, ThumbnailHeight));
+            hud.Image(SaveGameSummary.TEXTURENAME, imageBox);
         }
 
-        Vec2I offset = boxUpperLeft + (0, 60);
+        Vec2I offset = boxUpperLeft + (2, ThumbnailHeight + 2);
 
         hud.Text(m_saveGameSummary.MapName, Font, TextSize, offset, out Dimension area, maxWidth: BoxWidth);
         offset += (0, area.Height);
@@ -252,5 +261,17 @@ public partial class MenuLayer
             hud.Text(str, Constants.Fonts.Small, 4, offset, out area);
             offset += (0, area.Height);
         }
+    }
+
+    private void DrawBorderBox(IHudRenderContext hud, HudBox box, Color color, int size)
+    {
+        HudBox topLine = new((box.TopLeft.X + size, box.TopLeft.Y), (box.TopRight.X - size, box.TopRight.Y + size));
+        HudBox bottomLine = new((box.BottomLeft.X + size, box.BottomLeft.Y - size), (box.BottomRight.X - size, box.BottomRight.Y));
+        HudBox leftLine = new(box.TopLeft, (box.BottomLeft.X + size, box.BottomLeft.Y));
+        HudBox rightLine = new((box.TopRight.X - size, box.TopRight.Y), box.BottomRight);
+        hud.FillBox(topLine, color);
+        hud.FillBox(bottomLine, color);
+        hud.FillBox(leftLine, color);
+        hud.FillBox(rightLine, color);
     }
 }

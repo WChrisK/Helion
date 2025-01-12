@@ -56,11 +56,9 @@ public class SkySphereRenderer : IDisposable
         GL.ActiveTexture(TextureUnit.Texture0);
 
         var skyTexture = m_texture.GetSkyTexture(out var skyTransform);
-        if (m_mode == SkyRenderMode.Vanilla)
-        {
-            skyTransform.Sky.Offset.X += offset.X;
-            skyTransform.Sky.Offset.Y += offset.Y;
-        }
+        skyTransform.Sky.Offset.X += offset.X;
+        skyTransform.Sky.Offset.Y += offset.Y;
+
 
         if (skyTransform.Sky.Type == SkyTransformType.Fire)
         {
@@ -194,7 +192,7 @@ public class SkySphereRenderer : IDisposable
 
         var texture = skyTexture.GlTexture;
         var scaleUV = SkySphereTexture.CalcScale(skyTexture, skyTransform);
-        var offset = SkySphereTexture.CalcOffset(skyTexture, skyTransform, m_mode, options);
+        var offset = SkySphereTexture.CalcOffset(skyTexture, skyTransform, m_mode, scaleUV, options);
         var skyHeight = SkySphereTexture.CalcSkyHeight(texture.Dimension.Height, m_mode);
 
         m_skyProgram.BoundTexture(TextureUnit.Texture0);
@@ -233,7 +231,7 @@ public class SkySphereRenderer : IDisposable
             invulnerability = renderInfo.ViewerEntity.PlayerObj.DrawInvulnerableColorMap();
 
         var scaleUV = SkySphereTexture.CalcScale(foregroundTexture, foregroundTransform);
-        var offset = SkySphereTexture.CalcOffset(foregroundTexture, foregroundTransform, m_mode);
+        var offset = SkySphereTexture.CalcOffset(foregroundTexture, foregroundTransform, m_mode, scaleUV);
         var textureHeight = SkySphereTexture.CalcSkyHeight(foregroundTexture.GlTexture.Dimension.Height, m_mode);
 
         m_foregroundProgram.BoundTexture(TextureUnit.Texture0);

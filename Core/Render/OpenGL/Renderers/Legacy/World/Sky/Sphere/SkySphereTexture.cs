@@ -34,6 +34,10 @@ public record struct SkyTexture(GLLegacyTexture GlTexture, int AnimatedTextureIn
 //
 public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextureManager textureManager, int textureHandle) : IDisposable
 {
+    private const float StaticSkySize = 0.25f;
+    private const float StandardWidth = 256;
+    private const float StandardHeight = 128;
+    private const float StandardAspectRatio = StandardWidth / StandardHeight;
     private const int PixelRowsToEvaluate = 24;
     private readonly ArchiveCollection m_archiveCollection = archiveCollection;
     private readonly LegacyGLTextureManager m_textureManager = textureManager;
@@ -123,24 +127,30 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
         GC.SuppressFinalize(this);
     }
 
-    public static Vec2F CalcOffset(in SkyTexture skyTexture, SkyTransformTexture transform, SkyRenderMode mode, SkyOptions options = SkyOptions.None)
+    public static Vec2F CalcOffset(in SkyTexture skyTexture, SkyTransformTexture transform, SkyRenderMode mode, Vec2F scaleUV, SkyOptions options = SkyOptions.None)
     {
         var offset = transform.Offset + transform.CurrentScroll;
-        offset.X += 256;
 
         if (mode == SkyRenderMode.Vanilla)
         {
+            offset.X += StandardWidth;
             // Set offset to draw from bottom up (only for skytransfer specials or id24 skies with midtexel property)
             if (options.HasFlag(SkyOptions.SkyTransfer) || transform.MidTexel.HasValue)
-                offset.Y += skyTexture.GlTexture.Height - 128;
+                offset.Y += skyTexture.GlTexture.Height - StandardHeight;
 
             // Calculate the offset so that the midtexel is in the center of the sphere projection
             if (transform.MidTexel.HasValue)
                 offset.Y += 24 - (skyTexture.GlTexture.Height - transform.MidTexel.Value);
         }
+        else
+        {
+            var adjustY = skyTexture.GlTexture.Height - StandardHeight;
+            offset.Y += adjustY / 2;
+            offset.X += GetTextureAdjustmentX(skyTexture.GlTexture.Width, skyTexture.GlTexture.Height);
+        }
 
         if (transform.Scale.Y != 1)
-            offset.Y += (128 * transform.Scale.Y - 128) * 0.5f;
+            offset.Y += (StandardHeight * transform.Scale.Y - StandardHeight) * StandardAspectRatio;
 
         // Offset needs to be in texture coordinates
         offset.X /= skyTexture.GlTexture.Width;
@@ -148,18 +158,27 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
         return offset;
     }
 
+    private static float GetTextureAdjustmentX(int textureWidth, int textureHeight)
+    {
+        // Adjust texture position in the sphere with dynamic as it moves with the height because of the aspect ratio change.
+        float aspectRatio = (float)textureWidth / textureHeight;
+        float offsetX = StandardWidth - (StandardHeight * aspectRatio);
+        if (aspectRatio >= 2)
+            offsetX /= (aspectRatio / StandardAspectRatio);
+        return -offsetX;
+    }
+
     public static Vec2F CalcFireOffset(in SkyTexture skyTexture, SkyTransformTexture transform)
     {
         // This can't be right. The kex port has some weird offset stuff going on with fire textures specifically.
         var offset = transform.Offset + transform.CurrentScroll;
-        offset.X += 256;
 
-        var textureHeight = 200f;
-        offset.Y += textureHeight - 128;
+        const float fireTextureHeight = 200f;
+        offset.Y += fireTextureHeight - StandardHeight;
 
         if (transform.MidTexel.HasValue)
         {
-            var midOffset = skyTexture.GlTexture.Height * transform.MidTexel.Value / textureHeight;
+            var midOffset = skyTexture.GlTexture.Height * transform.MidTexel.Value / fireTextureHeight;
             offset.Y += 32 + midOffset;
         }
 
@@ -174,17 +193,16 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
         double roundedExponent = Math.Round(Math.Log(skyTexture.GlTexture.Dimension.Width, 2));
         float scalingFactor = (float)Math.Pow(2, 10 - roundedExponent);
         float u = 1 / scalingFactor;
-        float v = (skyTexture.GlTexture.Dimension.Height / 128f) * 0.25f;
+        float v = (skyTexture.GlTexture.Dimension.Height / StandardHeight) * StaticSkySize;
         return (u, v) * skyTransform.Scale;
     }
 
     public static float CalcSkyHeight(float textureHeight, SkyRenderMode mode)
     {
-        const float StaticSize = 0.25f;
         if (mode == SkyRenderMode.Vanilla)
-            return StaticSize;
+            return StaticSkySize;
 
-        float pad = 128 / textureHeight * StaticSize;
+        float pad = StandardHeight / textureHeight * StaticSkySize;
         return (1 - (pad * 2)) / 2;
     }
 

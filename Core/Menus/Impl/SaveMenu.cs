@@ -40,7 +40,7 @@ public class SaveMenu : Menu
     private readonly List<SaveGame> m_saveGames;
     private readonly IScreenshotGenerator m_screenshotGenerator;
     private int m_currentPage = 1;
-    private readonly bool m_isSave;
+    public readonly bool IsSaveMenu; // is this the "save" or "load" menu?
     private readonly bool m_canSave;
 
     private bool m_hasRowLock;
@@ -58,7 +58,7 @@ public class SaveMenu : Menu
         m_parent = parent;
         m_saveGameManager = saveManager;
         m_canSave = hasWorld;
-        m_isSave = isSave;
+        IsSaveMenu = isSave;
         m_screenshotGenerator = screenshotGenerator;
 
         m_saveGames = saveManager.GetSaveGames();
@@ -68,7 +68,7 @@ public class SaveMenu : Menu
     private int GetPageCount()
     {
         // add a single row to the first page when saving
-        int rowCount = m_isSave
+        int rowCount = IsSaveMenu
             ? m_saveGames.Count + 1
             : m_saveGames.Count;
         return (int)Math.Ceiling(rowCount * 1d / RowsPerPage);
@@ -76,7 +76,7 @@ public class SaveMenu : Menu
 
     private IEnumerable<SaveGame> GetCurrentPageSaveGames()
     {
-        if (m_isSave)
+        if (IsSaveMenu)
         {
             // add a single row to the first page when saving
             return m_saveGames
@@ -107,7 +107,7 @@ public class SaveMenu : Menu
     /// </summary>
     private void UpdateMenuComponents(bool setTop = false, bool setBottom = false)
     {
-        var newComponents = (m_isSave)
+        var newComponents = (IsSaveMenu)
             ? GenerateSaveMenuComponents()
             : GenerateLoadMenuComponents();
         Components = [.. newComponents];
@@ -130,7 +130,7 @@ public class SaveMenu : Menu
     {
         List<IMenuComponent> newComponents = [SaveHeader, BigPadding];
 
-        if (m_isSave && !m_canSave)
+        if (IsSaveMenu && !m_canSave)
         {
             string[] text = ArchiveCollection.Definitions.Language.GetMessages("$SAVEDEAD");
             for (int i = 0; i < text.Length; i++)
@@ -194,7 +194,7 @@ public class SaveMenu : Menu
     {
         base.HandleInput(input);
 
-        if (input.Manager.HasAnyKeyPressed() && m_isSave && !m_canSave)
+        if (input.Manager.HasAnyKeyPressed() && IsSaveMenu && !m_canSave)
         {
             m_parent.Close();
             return;
@@ -202,7 +202,7 @@ public class SaveMenu : Menu
 
         if (ComponentIndex.HasValue && Components[ComponentIndex.Value] is MenuSaveRowComponent savedGameRow)
         {
-            if (m_isSave)
+            if (IsSaveMenu)
             {
                 if (m_hasRowLock)
                 {

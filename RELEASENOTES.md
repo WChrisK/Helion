@@ -20,7 +20,8 @@
   - Updated save game management to read save files on startup to fix load time of the load/save menu when there are a large number of save files to read
   - Improved quick save performance to reduce large stutters when saving
   - Add Boom RNG method with option to toggle between Boom and Vanilla Doom RNG
-  - Sky render modes dynamic and vanilla. Dynamic is the original version and similar to GZDoom. Vanilla to better match vanilla sky drawing.
+  - Add save game thumbnails and summary details (kills, secrets, elapsed time) to Load menu
+  - Add sky render modes dynamic and vanilla. Dynamic is the original version and similar to GZDoom. Vanilla to better match vanilla sky drawing
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch
@@ -59,5 +60,5 @@
   - Set SLIDE and INFLOAT flags correctly for MBF21 flag functions
   - Fix path reporting of loaded files that were not added with a full path
   - Fix not being able to search current working directory when launching Helion outside of it's executing directory
-  - Fix various id24 skydef rendering for midtexel and scaling. Sky render mode automatically changed to vanilla when skydefs is encountered.
+  - Fix various id24 skydef rendering for midtexel and scaling. Sky render mode automatically changed to vanilla when skydefs is encountered
   - Fix transfer sky specials 171 and 172 to apply Y offset from line 

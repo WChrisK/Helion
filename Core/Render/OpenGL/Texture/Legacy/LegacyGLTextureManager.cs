@@ -124,7 +124,7 @@ public class LegacyGLTextureManager : GLTextureManager<GLLegacyTexture>
         texture.Flags = flags;
     }
 
-    public unsafe void ReUpload(GLLegacyTexture texture, Image image, uint[] imagePixels)
+    public unsafe override void ReUpload(GLLegacyTexture texture, Image image, uint[] imagePixels)
     {
         GL.BindTexture(texture.Target, texture.TextureId);
 

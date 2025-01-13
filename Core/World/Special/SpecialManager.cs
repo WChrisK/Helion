@@ -921,7 +921,7 @@ public sealed class SpecialManager : ITickable, IDisposable
             {
                 var options = line.Args.Arg2 != 0 ? SkyOptions.Flip : SkyOptions.None;
                 options |= SkyOptions.SkyTransfer;
-                sector.SetSkyTexture(line.Front.Upper.TextureHandle, options, line.Front.Offset, m_world.Gametick);
+                sector.SetSkyTexture(line.Front.Upper.TextureHandle, options, (0, line.Front.Offset.Y), m_world.Gametick);
             }
         }
     }

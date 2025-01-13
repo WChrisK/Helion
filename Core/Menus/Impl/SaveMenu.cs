@@ -2,6 +2,7 @@ using Helion.Audio.Sounds;
 using Helion.Layer.Menus;
 using Helion.Menus.Base;
 using Helion.Menus.Base.Text;
+using Helion.Render.Common.Enums;
 using Helion.Resources.Archives.Collection;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Util;
@@ -25,15 +26,13 @@ public class SaveMenu : Menu
 {
     public const string SaveMessage = "Game saved.";
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-    private const int RowsPerPage = 8;
-    private const string SaveHeaderImage = "M_SGTTL";
-    private const string LoadHeaderImage = "M_LGTTL";
+    private const int RowsPerPage = 15;
     private const string UnknownSavedGameName = "Unknown";
     private const string EmptySlotText = "Empty slot";
     private const string NoSavedGamesText = "There are no saved games.";
     private static readonly string[] DeleteConfirmationText = ["Are you sure you want to delete this save?", "Press Y to confirm."];
 
-    public bool IsTypingName { get; private set; }
+    public bool IsTypingName => m_hasRowLock;
 
     private readonly MenuLayer m_parent;
     private readonly SaveGameManager m_saveGameManager;
@@ -49,6 +48,10 @@ public class SaveMenu : Menu
     private readonly StringBuilder m_customNameBuilder = new();
     private readonly Stopwatch m_tickStopwatch = new();
 
+    private readonly MenuSmallTextComponent SaveHeader;
+    private readonly MenuPaddingComponent SmallPadding = new(4);
+    private readonly MenuSmallTextComponent NoSavedGamesComponent = new(NoSavedGamesText);
+
     private SaveGame? m_deleteSave;
 
     public SaveMenu(MenuLayer parent, IConfig config, HelionConsole console, SoundManager soundManager,
@@ -60,6 +63,7 @@ public class SaveMenu : Menu
         m_canSave = hasWorld;
         IsSaveMenu = isSave;
         m_screenshotGenerator = screenshotGenerator;
+        SaveHeader = new(isSave ? "SAVE GAME" : "LOAD GAME");
 
         m_saveGames = saveManager.GetSaveGames();
         UpdateMenuComponents(setTop: true);
@@ -91,16 +95,11 @@ public class SaveMenu : Menu
         }
     }
 
-    private readonly MenuImageComponent SaveHeader = new(SaveHeaderImage,  upscaleWithText: true);
-    private readonly MenuImageComponent LoadHeader = new(LoadHeaderImage, upscaleWithText: true);
-    private readonly MenuPaddingComponent BigPadding = new(8);
-    private readonly MenuPaddingComponent SmallPadding = new(4);
-    private readonly MenuSmallTextComponent NoSavedGamesComponent = new(NoSavedGamesText);
-
-    private List<IMenuComponent> GetPaginationFooter() => [
-        SmallPadding,
-        new MenuSmallTextComponent($"<- Page {m_currentPage}/{GetPageCount()} ->")
-    ];
+    private void AddPaginationFooter(List<IMenuComponent> components)
+    {
+        components.Add(SmallPadding);
+        components.Add(new MenuSmallTextComponent($"<- Page {m_currentPage}/{GetPageCount()} ->", align: Align.BottomMiddle));
+    }
 
     /// <summary>
     /// Updates the menu components on init or after a delete or page change.
@@ -128,7 +127,11 @@ public class SaveMenu : Menu
 
     private List<IMenuComponent> GenerateSaveMenuComponents()
     {
-        List<IMenuComponent> newComponents = [SaveHeader, BigPadding];
+        List<IMenuComponent> newComponents = new(32)
+        {
+            SaveHeader,
+            SmallPadding
+        };
 
         if (IsSaveMenu && !m_canSave)
         {
@@ -154,13 +157,13 @@ public class SaveMenu : Menu
                 string displayName = save.Model?.Text ?? UnknownSavedGameName;
                 string mapName = save.Model?.MapName ?? UnknownSavedGameName;
                 MenuSaveRowComponent saveRow = new(displayName, mapName, save.Type != SaveGameType.Default,
-                    null, CreateDeleteCommand(save));
+                    null, CreateDeleteCommand(save), save);
                 saveRow.Action = new Func<Menu?>(UpdateSaveGame(save, new(() => saveRow.Text)));
                 return saveRow;
             });
             newComponents.AddRange(saveRowComponents);
             if (GetPageCount() > 1)
-                newComponents.AddRange(GetPaginationFooter());
+                AddPaginationFooter(newComponents);
         }
 
         return newComponents;
@@ -168,7 +171,11 @@ public class SaveMenu : Menu
 
     private List<IMenuComponent> GenerateLoadMenuComponents()
     {
-        List<IMenuComponent> newComponents = [LoadHeader, BigPadding];
+        List<IMenuComponent> newComponents = new(32)
+        {
+            SaveHeader,
+            SmallPadding
+        };
 
         if (m_saveGames.Empty())
             newComponents.Add(NoSavedGamesComponent);
@@ -183,7 +190,7 @@ public class SaveMenu : Menu
             });
             newComponents.AddRange(saveRowComponents);
             if (GetPageCount() > 1)
-                newComponents.AddRange(GetPaginationFooter());
+                AddPaginationFooter(newComponents);
         }
 
         return newComponents;

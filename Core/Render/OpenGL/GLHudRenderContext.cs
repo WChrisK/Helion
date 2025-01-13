@@ -347,4 +347,16 @@ public class GLHudRenderContext : IHudRenderContext
     {
         m_commands.DrawHud();
     }
+
+    public void BorderBox(HudBox box, Color color, int size)
+    {
+        HudBox topLine = new((box.TopLeft.X + size, box.TopLeft.Y), (box.TopRight.X - size, box.TopRight.Y + size));
+        HudBox bottomLine = new((box.BottomLeft.X + size, box.BottomLeft.Y - size), (box.BottomRight.X - size, box.BottomRight.Y));
+        HudBox leftLine = new(box.TopLeft, (box.BottomLeft.X + size, box.BottomLeft.Y));
+        HudBox rightLine = new((box.TopRight.X - size, box.TopRight.Y), box.BottomRight);
+        FillBox(topLine, color);
+        FillBox(bottomLine, color);
+        FillBox(leftLine, color);
+        FillBox(rightLine, color);
+    }
 }

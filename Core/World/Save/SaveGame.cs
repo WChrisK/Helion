@@ -74,13 +74,9 @@ public class SaveGame
                 return null;
             }
 
-            using (Stream dataStream = imageFileEntry.Open())
-            {
-                using (SixLabors.ImageSharp.Image<Rgba32> pngImage = SixLabors.ImageSharp.Image.Load<Rgba32>(dataStream))
-                {
-                    return Image.FromImageSharp(pngImage);
-                }
-            }
+            using Stream dataStream = imageFileEntry.Open();
+            using SixLabors.ImageSharp.Image<Rgba32> pngImage = SixLabors.ImageSharp.Image.Load<Rgba32>(dataStream);
+            return Image.FromImageSharp(pngImage);
         }
         catch
         {

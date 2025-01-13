@@ -202,4 +202,6 @@ public interface IHudRenderContext : IDisposable
     /// Draws queued images, text, shapes to screen.
     /// </summary>
     void DrawHud();
+
+    void BorderBox(HudBox box, Color color, int size);
 }

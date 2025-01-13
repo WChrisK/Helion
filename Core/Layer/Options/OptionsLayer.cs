@@ -14,6 +14,7 @@ using Helion.Util.Configs.Extensions;
 using Helion.Util.Configs.Impl;
 using Helion.Util.Configs.Options;
 using Helion.Util.Configs.Values;
+using Helion.Util.Extensions;
 using Helion.Util.Timing;
 using Helion.Window;
 using Helion.Window.Input;
@@ -474,7 +475,7 @@ public class OptionsLayer : IGameLayer, IAnimationLayer
         // the dimensions we'll need for a footer, so we can reserve room when doing rendering and scroll offset
         // calculations.  It also returns the split text, since we need to figure that out anyway and are going to
         // need it later when we actually render the footer.
-        LineWrap.Calculate(inputText, font, fontSize, hud.Width, hud, lines, builder, out requiredHeight);
+        hud.LineWrap(inputText, font, fontSize, hud.Width, lines, builder, out requiredHeight);
 
         // Calculate how much room we need for the footer, with padding both above and below the text
         int padding = m_config.Window.GetMenuScaled(8);

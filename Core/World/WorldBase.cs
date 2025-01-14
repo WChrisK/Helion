@@ -60,6 +60,7 @@ using Helion.Maps.Specials.Vanilla;
 using Helion.Util.Loggers;
 using Helion.Graphics.Palettes;
 using Helion.Maps.Shared;
+using Helion.World.Geometry.Islands;
 
 namespace Helion.World;
 
@@ -2814,7 +2815,16 @@ public abstract partial class WorldBase : IWorld
             return;
 
         var island = WorldStatic.World.Geometry.IslandGeometry.Islands[playerSubsector.IslandId];
-        if (!island.IsMonsterCloset)
+        bool wasMonsterCloset = island.IsMonsterCloset;
+        bool wasVooDooCloset = island.IsVooDooCloset;
+
+        if (wasMonsterCloset || wasVooDooCloset)
+            ClearSectorIslandClosetStatus(island, wasMonsterCloset, wasVooDooCloset);
+
+        island.IsMonsterCloset = false;
+        island.IsVooDooCloset = false;
+
+        if (!wasMonsterCloset)
             return;
 
         // Whoops. Player teleported into a monster closet.       
@@ -2834,6 +2844,25 @@ public abstract partial class WorldBase : IWorld
                 continue;
 
             entity.ClearMonsterCloset();
+        }
+    }
+
+    private static void ClearSectorIslandClosetStatus(Island island, bool wasMonsterCloset, bool wasVooDooCloset)
+    {
+        for (int i = 0; i < WorldStatic.World.Geometry.IslandGeometry.SectorIslands.Length; i++)
+        {
+            var sectorIslands = WorldStatic.World.Geometry.IslandGeometry.SectorIslands[i];
+            for (int j = 0; j < sectorIslands.Count; j++)
+            {
+                var sectorIsland = sectorIslands[j];
+                if (sectorIsland.ParentIsland != island)
+                    continue;
+
+                if (wasVooDooCloset)
+                    sectorIsland.IsVooDooCloset = false;
+                if (wasMonsterCloset)
+                    sectorIsland.IsMonsterCloset = false;
+            }
         }
     }
 

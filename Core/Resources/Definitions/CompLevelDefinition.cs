@@ -16,6 +16,7 @@ public enum CompLevel
 public class CompLevelDefinition
 {
     public CompLevel CompLevel;
+    private bool m_setting;
 
     public CompLevelDefinition()
     {
@@ -33,6 +34,10 @@ public class CompLevelDefinition
     public void Apply(IConfig config, bool reset = false)
     {
         // Avoid possible recursion if invoked via event handler
+        if (m_setting)
+            return;
+
+        m_setting = true;
         if ((CompLevel)config.Compatibility.SessionCompatLevel.ObjectValue != CompLevel)
             config.Compatibility.SessionCompatLevel.Set(CompLevel, writeToConfig: false);
 
@@ -81,6 +86,7 @@ public class CompLevelDefinition
                 break;
         }
 
+        m_setting = false;
         HelionLog.Info($"Comp level set to {CompLevel}");
     }
 }

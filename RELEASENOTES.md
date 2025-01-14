@@ -64,3 +64,4 @@
   - Fix various id24 skydef rendering for midtexel and scaling. Sky render mode automatically changed to vanilla when skydefs is encountered
   - Fix transfer sky specials 171 and 172 to apply Y offset from line 
   - Fix map options not being set from default map (nojump nofreelook etc)
+  - Fix issue where moving sectors may not render when inside a misclassified voodoo doll closet

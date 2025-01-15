@@ -19,6 +19,7 @@ using Helion.World.Geometry.Islands;
 using static Helion.World.Entities.EntityManager;
 using Helion.Graphics.Palettes;
 using Helion.Resources.Definitions;
+using Vector2D = Helion.Models.Vector2D;
 
 namespace Helion.World.Geometry.Sectors;
 
@@ -345,6 +346,13 @@ public sealed class Sector
             }
             if ((DataChanges & SectorDataTypes.ColorMap) != 0)
                 sectorModel.ColorMap = Colormap?.Entry?.Path.Name;
+            if ((DataChanges & SectorDataTypes.Offset) != 0)
+            {
+                if (Floor.RenderOffsets.Offset.X != 0 || Floor.RenderOffsets.Offset.Y != 0)
+                    sectorModel.FloorOffset = new Vector2D(Floor.RenderOffsets.Offset);
+                if (Ceiling.RenderOffsets.Offset.X != 0 || Ceiling.RenderOffsets.Offset.Y != 0)
+                    sectorModel.CeilingOffset = new Vector2D(Ceiling.RenderOffsets.Offset);
+            }
 
             sectorModel.Secret = Secret;
             sectorModel.DamageAmount = DamageAmount;
@@ -436,6 +444,20 @@ public sealed class Sector
 
             if ((DataChanges & SectorDataTypes.ColorMap) != 0 && sectorModel.ColorMap != null && textureManager.TryGetColormap(sectorModel.ColorMap, out var sectorColorMap))
                 Colormap = sectorColorMap;
+
+            if ((DataChanges & SectorDataTypes.Offset) != 0)
+            {
+                if (sectorModel.FloorOffset.HasValue)
+                {
+                    Floor.RenderOffsets.Offset = new Vec2D(sectorModel.FloorOffset.Value.X, sectorModel.FloorOffset.Value.Y);
+                    Floor.RenderOffsets.LastOffset = Floor.RenderOffsets.Offset;
+                }
+                if (sectorModel.CeilingOffset.HasValue)
+                {
+                    Ceiling.RenderOffsets.Offset = new Vec2D(sectorModel.CeilingOffset.Value.X, sectorModel.CeilingOffset.Value.Y);
+                    Ceiling.RenderOffsets.LastOffset = Ceiling.RenderOffsets.Offset;
+                }
+            }
         }
 
         if (sectorModel.TransferFloorLight.HasValue && IsSectorIdValid(sectors, sectorModel.TransferFloorLight.Value))

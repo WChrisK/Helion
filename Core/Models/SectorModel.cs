@@ -1,3 +1,4 @@
+using Helion.Geometry.Vectors;
 using Helion.Maps.Specials;
 
 namespace Helion.Models;
@@ -37,4 +38,6 @@ public struct SectorModel
     public SectorEffect? SectorEffect;
     public double? FloorRotate;
     public double? CeilingRotate;
+    public Vector2D? FloorOffset;
+    public Vector2D? CeilingOffset;
 }

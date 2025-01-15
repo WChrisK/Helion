@@ -30,7 +30,6 @@ using Helion.Maps.Specials;
 using Helion.World.Impl.SinglePlayer;
 using Helion.World.Geometry;
 using Helion.Maps;
-using Helion.Resources.Archives.Entries;
 using Helion.Util.Container;
 using Helion.Maps.Shared;
 using Helion.World.Geometry.Subsectors;
@@ -43,6 +42,7 @@ public interface IWorld : IDisposable
 {
     event EventHandler<LevelChangeEvent>? LevelExit;
     event EventHandler? LevelExiting;
+    event EventHandler? WorldPaused;
     event EventHandler? WorldResumed;
     event EventHandler? ClearConsole;
     event EventHandler? OnResetInterpolation;

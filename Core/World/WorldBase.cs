@@ -85,6 +85,7 @@ public abstract partial class WorldBase : IWorld
 
     public event EventHandler<LevelChangeEvent>? LevelExit;
     public event EventHandler? LevelExiting;
+    public event EventHandler? WorldPaused;
     public event EventHandler? WorldResumed;
     public event EventHandler? ClearConsole;
     public event EventHandler? OnResetInterpolation;
@@ -981,6 +982,7 @@ public abstract partial class WorldBase : IWorld
         SoundManager.Pause();
 
         Paused = true;
+        WorldPaused?.Invoke(this, EventArgs.Empty);
     }
 
     public void ResetInterpolation()

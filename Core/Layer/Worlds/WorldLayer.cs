@@ -129,6 +129,12 @@ public partial class WorldLayer : IGameLayerParent
         m_largeHudFont = GetFontOrDefault(LargeHudFont);
 
         World.LevelExiting += World_LevelExiting;
+        World.WorldPaused += World_WorldPaused;
+    }
+
+    private void World_WorldPaused(object? sender, EventArgs e)
+    {
+        m_resetInterpolation = true;
     }
 
     private void World_LevelExiting(object? sender, EventArgs e)
@@ -337,6 +343,7 @@ public partial class WorldLayer : IGameLayerParent
             return;
 
         World.LevelExiting -= World_LevelExiting;
+        World.WorldPaused -= World_WorldPaused;
         World.Dispose();
 
         Intermission?.Dispose();

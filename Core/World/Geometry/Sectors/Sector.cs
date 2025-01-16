@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Helion.Geometry.Vectors;
 using Helion.Maps.Specials.ZDoom;
@@ -182,13 +181,7 @@ public sealed class Sector
         return false;
     }
 
-    public enum RenderChangeOptions
-    {
-        None,
-        TransferHeightsOverride
-    }
-
-    public bool CheckRenderingChanged(int gametick, RenderChangeOptions options = RenderChangeOptions.TransferHeightsOverride)
+    public bool CheckRenderingChanged(int gametick, bool checkTransferHeights = true)
     {
         if (Floor.LastRenderChangeGametick >= gametick - 1 || Floor.PrevZ != Floor.Z)
             return true;
@@ -196,8 +189,8 @@ public sealed class Sector
         if (Ceiling.LastRenderChangeGametick >= gametick - 1 || Ceiling.PrevZ != Ceiling.Z)
             return true;
 
-        if (TransferHeights != null && (options & RenderChangeOptions.TransferHeightsOverride) != 0)
-            return (TransferHeights.ControlSector.DataChanges & SectorDataTypes.FloorZ) != 0 || (TransferHeights.ControlSector.DataChanges & SectorDataTypes.CeilingZ) != 0;
+        if (checkTransferHeights && TransferHeights != null)
+            return TransferHeights.ControlSector.CheckRenderingChanged(gametick, false);
 
         return false;
     }

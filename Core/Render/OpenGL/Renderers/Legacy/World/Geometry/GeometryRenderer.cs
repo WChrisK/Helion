@@ -378,9 +378,9 @@ public class GeometryRenderer : IDisposable
         m_viewPosition = viewPosition;
         m_prevViewPosition = prevViewPosition;
         SetSectorRendering(sector);
-        RenderSectorSideWall(sector, line.Front, viewPosition.XY, true);
+        RenderSectorSideWall(sector, line.Front, true);
         if (line.Back != null)
-            RenderSectorSideWall(sector, line.Back, viewPosition.XY, false);
+            RenderSectorSideWall(sector, line.Back, false);
     }
 
     private void SetSectorRendering(Sector sector)
@@ -390,10 +390,12 @@ public class GeometryRenderer : IDisposable
 
         if (sector.TransferHeights != null)
         {
+            bool transferFloorChanged = sector.TransferHeights.ControlSector.Floor.CheckRenderingChanged();
+            bool transferCeilingChanged = sector.TransferHeights.ControlSector.Ceiling.CheckRenderingChanged();
             // Transfer heights can swap the rendering from floor to ceiling.
             // If either the floor or ceiling has changed recalculate both to ensure it's correct.
-            m_floorChanged = m_floorChanged || m_ceilingChanged;
-            m_ceilingChanged = m_floorChanged || m_ceilingChanged;
+            m_floorChanged = m_floorChanged || m_ceilingChanged || transferFloorChanged || transferCeilingChanged;
+            m_ceilingChanged = m_floorChanged || m_ceilingChanged || transferFloorChanged || transferCeilingChanged;
         }
     }
 
@@ -486,23 +488,23 @@ public class GeometryRenderer : IDisposable
             // Need to force render for alternative flood fill from the front side.
             if (onFront || onBothSides || line.Front.LowerFloodKeys.Key2 > 0 || line.Front.UpperFloodKeys.Key2 > 0)
             {
-                RenderSectorSideWall(sector, line.Front, pos2D, true);
+                RenderSectorSideWall(sector, line.Front, true);
             }
             else if (m_vanillaRender && line.Back != null)
             {
                 m_renderCoverOnly = true;
-                RenderSectorSideWall(sector, line.Front, pos2D, true);
+                RenderSectorSideWall(sector, line.Front, true);
                 m_renderCoverOnly = false;
             }
             // Need to force render for alternative flood fill from the back side.
             if (line.Back != null && (!onFront || onBothSides || line.Back.LowerFloodKeys.Key2 > 0 || line.Back.UpperFloodKeys.Key2 > 0))
             {
-                RenderSectorSideWall(sector, line.Back, pos2D, false);
+                RenderSectorSideWall(sector, line.Back, false);
             }
             else if (m_vanillaRender && line.Back != null)
             {
                 m_renderCoverOnly = true;
-                RenderSectorSideWall(sector, line.Back, pos2D, false);
+                RenderSectorSideWall(sector, line.Back, false);
                 m_renderCoverOnly = false;
             }
         }
@@ -513,36 +515,32 @@ public class GeometryRenderer : IDisposable
         if (m_renderMode == GeometryRenderMode.All)
             return;
 
-        const RenderChangeOptions Options = RenderChangeOptions.None;
         if (front.IsDynamic && m_drawnSides[front.Id] != WorldStatic.CheckCounter &&
-            (back.Sector.CheckRenderingChanged(m_world.Gametick, Options) ||
-            front.Sector.CheckRenderingChanged(m_world.Gametick, Options)))
+            (back.Sector.CheckRenderingChanged(m_world.Gametick) ||
+            front.Sector.CheckRenderingChanged(m_world.Gametick)))
             m_staticCacheGeometryRenderer.CheckForFloodFill(front, back,
                 front.Sector.GetRenderSector(m_transferHeightsView), back.Sector.GetRenderSector(m_transferHeightsView), isFront: true);
 
         if (back.IsDynamic && m_drawnSides[back.Id] != WorldStatic.CheckCounter &&
-            (front.Sector.CheckRenderingChanged(m_world.Gametick, Options) ||
-            back.Sector.CheckRenderingChanged(m_world.Gametick, Options)))
+            (front.Sector.CheckRenderingChanged(m_world.Gametick) ||
+            back.Sector.CheckRenderingChanged(m_world.Gametick)))
             m_staticCacheGeometryRenderer.CheckForFloodFill(back, front,
                 back.Sector.GetRenderSector(m_transferHeightsView), front.Sector.GetRenderSector(m_transferHeightsView), isFront: false);
     }
 
-    private void RenderSectorSideWall(Sector sector, Side side, Vec2D pos2D, bool onFrontSide)
+    private void RenderSectorSideWall(Sector sector, Side side, bool onFrontSide)
     {
         if (m_drawnSides[side.Id] == WorldStatic.CheckCounter)
             return;
 
         m_drawnSides[side.Id] = WorldStatic.CheckCounter;
         if (m_config.Render.TextureTransparency && side.Line.Alpha < 1)
-        {
             RenderAlphaSide(side, onFrontSide);
-            return;
-        }
 
         bool transferHeights = false;
         // Transfer heights has to be drawn by the transfer heights sector
         if (side.Sector.TransferHeights != null &&
-            (sector.TransferHeights == null || !ReferenceEquals(sector.TransferHeights.ControlSector, side.Sector.TransferHeights.ControlSector)))
+            (sector.TransferHeights == null || sector.TransferHeights.ControlSector != side.Sector.TransferHeights.ControlSector))
         {
             SetSectorRendering(side.Sector);
             transferHeights = true;

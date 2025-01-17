@@ -2,8 +2,6 @@ using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Vectors;
 using Helion.Graphics;
-using Helion.Layer.Options;
-using Helion.Layer.Options.Sections;
 using Helion.Menus;
 using Helion.Menus.Base;
 using Helion.Menus.Base.Text;
@@ -82,6 +80,7 @@ public partial class MenuLayer
                         offsetY++;
                         firstRow = false;
                     }
+                    hud.PushOffset(GetSaveMenuOffset(hud));
                     DrawSaveRow(hud, (SaveMenu)menu, saveRowComponent, isSelected, wasSelected, ref offsetY, detailsEnabled);
                     break;
                 default:
@@ -163,7 +162,7 @@ public partial class MenuLayer
         bool wasPreviouslySelected, ref int offsetY, bool detailsEnabled)
     {
         const string FontName = Constants.Fonts.Small;
-        int fontSize = hud.GetFontMaxHeight(FontName);
+        int fontSize = hud.GetFontMaxHeight(FontName) - 2;
         int menuRowWidth = GetSaveRowWidth(detailsEnabled);
 
         var textDimension = hud.MeasureText("_", FontName, fontSize);
@@ -184,7 +183,7 @@ public partial class MenuLayer
         }
         
         var rowHeight = textHeight + 3;
-        hud.PushOffset((17, 0));
+        hud.AddOffset((17, 0));
 
         if (isSelected)
         {
@@ -203,7 +202,10 @@ public partial class MenuLayer
                 ? null
                 : new SaveGameSummary(saveRowComponent.SaveGame);
 
+            var saveFilter = m_config.Render.Filter.Texture.Value;
+            m_config.Render.Filter.Texture.Set(FilterType.Bilinear, false);
             m_saveGameTexture = m_saveGameSummary?.UpdateSaveGameTexture(hud);
+            m_config.Render.Filter.Texture.Set(saveFilter, false);
         }
 
         hud.PopOffset();
@@ -213,6 +215,7 @@ public partial class MenuLayer
     {
         int height = 167;
         hud.PushOffset((16, 20));
+        hud.AddOffset(GetSaveMenuOffset(hud));
         int saveRowWidth = GetSaveRowWidth(detailsEnabled);
         var box = new HudBox((0, 0), (saveRowWidth - 6, height));
         hud.PushAlpha(0.65f);
@@ -223,26 +226,40 @@ public partial class MenuLayer
         hud.PopOffset();
     }
 
+    private static bool SaveMenuWide(IHudRenderContext hud) =>
+        hud.WindowDimension.Width > 320 && hud.WindowDimension.AspectRatio > 1.45f;
+
+    private static Vec2I GetSaveMenuOffset(IHudRenderContext hud)
+    {
+        if (SaveMenuWide(hud))
+            return (-28, 0);
+        return Vec2I.Zero;
+    }
+
     private void RenderSaveGameDetails(IHudRenderContext hud)
     {
         if (m_saveGameSummary == null)
             return;
 
-        const int TextSize = 4;
         const string Font = Constants.Fonts.Small;
-        const int BoxWidth = 80;
-        const int ThumbnailHeight = 60;
-        int BoxHeight = ThumbnailHeight + 5 * TextSize + 3;
+        const float ImageAspect = 4 / 3f;
 
-        hud.LineWrap(m_saveGameSummary.MapName, Font, TextSize, BoxWidth - 4, m_mapNameLines, m_mapNameStringBuilder, 
+        bool wideScreen = SaveMenuWide(hud);
+        int textSize = wideScreen ? 6 : 4;
+        int boxWidth = wideScreen ? 128 : 80;
+        int thumbnailHeight = (int)(boxWidth / ImageAspect * 0.8f);
+        int boxHeight = thumbnailHeight + 5 * textSize + 3;
+
+        var centerOffset = GetSaveMenuOffset(hud);
+        hud.LineWrap(m_saveGameSummary.MapName, Font, textSize, boxWidth - 4, m_mapNameLines, m_mapNameStringBuilder, 
             out var requiredHeight);
-        BoxHeight += requiredHeight;
+        boxHeight += requiredHeight;
 
-        Vec2I boxUpperLeftBorder = (229, 20);
-        Vec2I boxLowerRightBorder = boxUpperLeftBorder + (BoxWidth + 2, BoxHeight + 2);
+        Vec2I boxUpperLeftBorder = (229, 20) + centerOffset;
+        Vec2I boxLowerRightBorder = boxUpperLeftBorder + (boxWidth + 2, boxHeight + 2);
 
-        Vec2I boxUpperLeft = (230, 21);
-        Vec2I boxLowerRight = boxUpperLeft + (BoxWidth, BoxHeight);
+        Vec2I boxUpperLeft = (230, 21) + centerOffset;
+        Vec2I boxLowerRight = boxUpperLeft + (boxWidth, boxHeight);
 
         hud.PushAlpha(0.65f);
         hud.BorderBox(new HudBox(boxUpperLeftBorder, boxLowerRightBorder), Color.DarkGray, 1);
@@ -252,31 +269,31 @@ public partial class MenuLayer
         if (m_saveGameTexture == null)
         {
             hud.PushOffset(boxUpperLeft);
-            var size = hud.MeasureText("No Image", Font, TextSize);
-            hud.Text("No Image", Font, TextSize, (BoxWidth / 2 - size.Width / 2, ThumbnailHeight / 2 - size.Height / 2), textAlign: TextAlign.Center);
+            var size = hud.MeasureText("No Image", Font, textSize);
+            hud.Text("No Image", Font, textSize, (boxWidth / 2 - size.Width / 2, thumbnailHeight / 2 - size.Height / 2), textAlign: TextAlign.Center);
             hud.PopOffset();
         }
         else
         {
-            var imageBox = new HudBox(boxUpperLeft, boxUpperLeft + (BoxWidth, ThumbnailHeight));
+            var imageBox = new HudBox(boxUpperLeft, boxUpperLeft + (boxWidth, thumbnailHeight));
             hud.Image(SaveGameSummary.TEXTURENAME, imageBox);
         }
 
-        Vec2I offset = boxUpperLeft + (2, ThumbnailHeight + 2);
+        Vec2I offset = boxUpperLeft + (2, thumbnailHeight + 2);
 
-        for (int i = 0; i< m_mapNameLines.Count; i++)
+        for (int i = 0; i < m_mapNameLines.Count; i++)
         {
-            hud.Text(m_mapNameLines[i], Font, TextSize, offset, out var drawArea);
+            hud.Text(m_mapNameLines[i], Font, textSize, offset, out var drawArea);
             offset += (0, drawArea.Height);
         }
 
-        hud.Text(m_saveGameSummary.Date, Font, TextSize, offset, out var area);
+        hud.Text(m_saveGameSummary.Date, Font, textSize, offset, out var area);
         offset += (0, area.Height);
         offset += (0, area.Height);
 
         foreach (string str in m_saveGameSummary?.Stats ?? [])
         {
-            hud.Text(str, Constants.Fonts.Small, 4, offset, out area);
+            hud.Text(str, Constants.Fonts.Small, textSize, offset, out area);
             offset += (0, area.Height);
         }
     }

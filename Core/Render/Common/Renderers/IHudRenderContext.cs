@@ -21,6 +21,8 @@ public interface IHudRenderContext : IDisposable
     /// </summary>
     Dimension Dimension { get; }
 
+    Dimension WindowDimension { get; }
+
     /// <summary>
     /// The texture manager that this context uses.
     /// </summary>

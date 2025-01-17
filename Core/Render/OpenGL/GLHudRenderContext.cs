@@ -37,6 +37,8 @@ public class GLHudRenderContext : IHudRenderContext
         }
     }
 
+    public Dimension WindowDimension => m_context?.Dimension ?? (800, 600);
+
     public GLHudRenderContext(ArchiveCollection archiveCollection, RenderCommands commands,
         IRendererTextureManager textureManager)
     {

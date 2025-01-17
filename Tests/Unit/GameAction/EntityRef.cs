@@ -40,7 +40,7 @@ namespace Helion.Tests.Unit.GameAction
             }
 
             foreach (var entity in entities1)
-                entity.Target.Entity.Should().Be(lostSoul1);
+                entity.Target.Get().Should().Be(lostSoul1);
 
             for (int i = 0; i < 10; i++)
             {
@@ -50,25 +50,25 @@ namespace Helion.Tests.Unit.GameAction
             }
 
             foreach (var entity in entities2)
-                entity.Target.Entity.Should().Be(lostSoul2);
+                entity.Target.Get().Should().Be(lostSoul2);
 
             lostSoul1.Kill(null);
             GameActions.TickWorld(world, 200);
 
             foreach (var entity in entities1)
-                entity.Target.Entity.Should().BeNull();
+                entity.Target.Get().Should().BeNull();
 
             foreach (var entity in entities2)
             {
-                entity.Target.Entity.Should().NotBeNull();
-                entity.Target.Entity!.Should().Be(lostSoul2);
+                entity.Target.Get().Should().NotBeNull();
+                entity.Target.Get()!.Should().Be(lostSoul2);
             }
 
             lostSoul2.Kill(null);
             GameActions.TickWorld(world, 200);
 
             foreach (var entity in entities2)
-                entity.Target.Entity.Should().BeNull();
+                entity.Target.Get().Should().BeNull();
         }
 
         [Fact(DisplayName = "Test dispose tracer")]
@@ -86,13 +86,13 @@ namespace Helion.Tests.Unit.GameAction
             }
 
             foreach (var entity in entities)
-                entity.Tracer.Entity.Should().Be(lostSoul1);
+                entity.Tracer.Get().Should().Be(lostSoul1);
 
             lostSoul1.Kill(null);
             GameActions.TickWorld(world, 200);
 
             foreach (var entity in entities)
-                entity.Tracer.Entity.Should().BeNull();
+                entity.Tracer.Get().Should().BeNull();
         }
 
         [Fact(DisplayName = "Test dispose target and tracer")]
@@ -114,8 +114,8 @@ namespace Helion.Tests.Unit.GameAction
 
             foreach (var entity in entities1)
             {
-                entity.Target.Entity!.Should().Be(lostSoul1);
-                entity.Tracer.Entity!.Should().Be(lostSoul2);
+                entity.Target.Get()!.Should().Be(lostSoul1);
+                entity.Tracer.Get()!.Should().Be(lostSoul2);
             }
 
             for (int i = 0; i < 10; i++)
@@ -128,8 +128,8 @@ namespace Helion.Tests.Unit.GameAction
 
             foreach (var entity in entities2)
             {
-                entity.Target.Entity!.Should().Be(lostSoul2);
-                entity.Tracer.Entity!.Should().Be(lostSoul1);
+                entity.Target.Get()!.Should().Be(lostSoul2);
+                entity.Tracer.Get()!.Should().Be(lostSoul1);
             }
 
             lostSoul1.Kill(null);
@@ -137,16 +137,16 @@ namespace Helion.Tests.Unit.GameAction
 
             foreach (var entity in entities1)
             {
-                entity.Target.Entity.Should().BeNull();
-                entity.Tracer.Entity.Should().NotBeNull();
-                entity.Tracer.Entity!.Should().Be(lostSoul2);
+                entity.Target.Get().Should().BeNull();
+                entity.Tracer.Get().Should().NotBeNull();
+                entity.Tracer.Get()!.Should().Be(lostSoul2);
             }
 
             foreach (var entity in entities2)
             {
-                entity.Target.Entity.Should().NotBeNull();
-                entity.Target.Entity!.Should().Be(lostSoul2);
-                entity.Tracer.Entity.Should().BeNull();
+                entity.Target.Get().Should().NotBeNull();
+                entity.Target.Get()!.Should().Be(lostSoul2);
+                entity.Tracer.Get().Should().BeNull();
             }
 
             lostSoul2.Kill(null);
@@ -154,8 +154,8 @@ namespace Helion.Tests.Unit.GameAction
 
             foreach (var entity in entities2)
             {
-                entity.Target.Entity.Should().BeNull();
-                entity.Tracer.Entity.Should().BeNull();
+                entity.Target.Get().Should().BeNull();
+                entity.Tracer.Get().Should().BeNull();
             }
 
             foreach (var entity in entities1.Union(entities2))
@@ -163,8 +163,8 @@ namespace Helion.Tests.Unit.GameAction
 
             foreach (var entity in entities1.Union(entities2))
             {
-                entity.Target.Entity.Should().BeNull();
-                entity.Tracer.Entity.Should().BeNull();
+                entity.Target.Get().Should().BeNull();
+                entity.Tracer.Get().Should().BeNull();
             }
         }
 
@@ -176,50 +176,50 @@ namespace Helion.Tests.Unit.GameAction
             var zombie = GameActions.CreateEntity(world, "ZombieMan", new Vec3D(-256, -64, 0));
 
             zombie.SetTarget(lostSoul);
-            zombie.Target.Entity.Should().Be(lostSoul);
-            zombie.Tracer.Entity.Should().BeNull();
-            zombie.OnEntity.Entity.Should().BeNull();
-            zombie.OverEntity.Entity.Should().BeNull();
-            zombie.Owner.Entity.Should().BeNull();
+            zombie.Target.Get().Should().Be(lostSoul);
+            zombie.Tracer.Get().Should().BeNull();
+            zombie.OnEntity.Get().Should().BeNull();
+            zombie.OverEntity.Get().Should().BeNull();
+            zombie.Owner.Get().Should().BeNull();
 
             zombie.SetTarget(null);
             zombie.SetTracer(lostSoul);
-            zombie.Target.Entity.Should().BeNull();
-            zombie.Tracer.Entity.Should().Be(lostSoul);
-            zombie.OnEntity.Entity.Should().BeNull();
-            zombie.OverEntity.Entity.Should().BeNull();
-            zombie.Owner.Entity.Should().BeNull();
+            zombie.Target.Get().Should().BeNull();
+            zombie.Tracer.Get().Should().Be(lostSoul);
+            zombie.OnEntity.Get().Should().BeNull();
+            zombie.OverEntity.Get().Should().BeNull();
+            zombie.Owner.Get().Should().BeNull();
 
             zombie.SetTracer(null);
             zombie.SetOnEntity(lostSoul);
-            zombie.Target.Entity.Should().BeNull();
-            zombie.Tracer.Entity.Should().BeNull();
-            zombie.OnEntity.Entity.Should().Be(lostSoul);
-            zombie.OverEntity.Entity.Should().BeNull();
-            zombie.Owner.Entity.Should().BeNull();
+            zombie.Target.Get().Should().BeNull();
+            zombie.Tracer.Get().Should().BeNull();
+            zombie.OnEntity.Get().Should().Be(lostSoul);
+            zombie.OverEntity.Get().Should().BeNull();
+            zombie.Owner.Get().Should().BeNull();
 
             zombie.SetOnEntity(null);
             zombie.SetOverEntity(lostSoul);
-            zombie.Target.Entity.Should().BeNull();
-            zombie.Tracer.Entity.Should().BeNull();
-            zombie.OnEntity.Entity.Should().BeNull();
-            zombie.OverEntity.Entity.Should().Be(lostSoul);
-            zombie.Owner.Entity.Should().BeNull();
+            zombie.Target.Get().Should().BeNull();
+            zombie.Tracer.Get().Should().BeNull();
+            zombie.OnEntity.Get().Should().BeNull();
+            zombie.OverEntity.Get().Should().Be(lostSoul);
+            zombie.Owner.Get().Should().BeNull();
 
             zombie.SetOverEntity(null);
             zombie.SetOwner(lostSoul);
-            zombie.Target.Entity.Should().BeNull();
-            zombie.Tracer.Entity.Should().BeNull();
-            zombie.OnEntity.Entity.Should().BeNull();
-            zombie.OverEntity.Entity.Should().BeNull();
-            zombie.Owner.Entity.Should().Be(lostSoul);
+            zombie.Target.Get().Should().BeNull();
+            zombie.Tracer.Get().Should().BeNull();
+            zombie.OnEntity.Get().Should().BeNull();
+            zombie.OverEntity.Get().Should().BeNull();
+            zombie.Owner.Get().Should().Be(lostSoul);
 
             zombie.SetOwner(null);
-            zombie.Target.Entity.Should().BeNull();
-            zombie.Tracer.Entity.Should().BeNull();
-            zombie.OnEntity.Entity.Should().BeNull();
-            zombie.OverEntity.Entity.Should().BeNull();
-            zombie.Owner.Entity.Should().BeNull();
+            zombie.Target.Get().Should().BeNull();
+            zombie.Tracer.Get().Should().BeNull();
+            zombie.OnEntity.Get().Should().BeNull();
+            zombie.OverEntity.Get().Should().BeNull();
+            zombie.Owner.Get().Should().BeNull();
         }
 
         [Fact(DisplayName = "Do not free default instance to cache")]
@@ -262,23 +262,22 @@ namespace Helion.Tests.Unit.GameAction
             var zombie2 = GameActions.CreateEntity(world, "ZombieMan", new Vec3D(-256, -64, 0));
 
             zombie1.SetTarget(lostSoul1);
-            zombie1.Target.Entity.Should().Be(lostSoul1);
+            zombie1.Target.Get().Should().Be(lostSoul1);
             zombie2.SetTarget(lostSoul1);
             zombie1.SetTarget(null);
-            zombie1.Target.Entity.Should().BeNull();
-            zombie1.Target.Should().Be(WeakEntity.Default);
+            zombie1.Target.Get().Should().BeNull();
             zombie1.SetTarget(lostSoul1);
             zombie1.SetTarget(null);
             zombie1.SetTarget(caco1);
 
-            zombie1.Target.Entity.Should().Be(caco1);
-            zombie2.Target.Entity.Should().Be(lostSoul1);
+            zombie1.Target.Get().Should().Be(caco1);
+            zombie2.Target.Get().Should().Be(lostSoul1);
 
             lostSoul1.Kill(null);
             GameActions.TickWorld(world, 200);
 
-            zombie1.Target.Entity.Should().Be(caco1);
-            zombie2.Target.Entity.Should().BeNull();
+            zombie1.Target.Get().Should().Be(caco1);
+            zombie2.Target.Get().Should().BeNull();
 
             var lostSoul2 = GameActions.CreateEntity(world, "LostSoul", new Vec3D(-256, -64, 0));
             zombie1.SetTarget(lostSoul2);
@@ -288,8 +287,8 @@ namespace Helion.Tests.Unit.GameAction
             lostSoul2.Kill(null);
             GameActions.TickWorld(world, 200);
 
-            zombie2.Target.Entity.Should().Be(caco1);
-            zombie1.Target.Entity.Should().BeNull();
+            zombie2.Target.Get().Should().Be(caco1);
+            zombie1.Target.Get().Should().BeNull();
         }
 
         [Fact(DisplayName = "Dispose ref")]
@@ -306,7 +305,7 @@ namespace Helion.Tests.Unit.GameAction
             lostSoul1.Kill(null);
             GameActions.TickWorld(world, 200);
 
-            caco1.Target.Entity.Should().BeNull();
+            caco1.Target.Get().Should().BeNull();
         }
 
         //[Fact(DisplayName = "Dispose ref")]

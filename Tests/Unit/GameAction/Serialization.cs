@@ -120,9 +120,9 @@ public class Serialization : IDisposable
         GameActions.PlayerFirePistol(world, world.Player);
         GameActions.TickWorld(world, 10);
 
-        GameActions.GetSector(world, 0).SoundTarget.Entity.Should().Be(world.Player);
+        GameActions.GetSector(world, 0).SoundTarget.Get().Should().Be(world.Player);
         var zombieman = Zombieman(world);
-        zombieman.Target.Entity.Should().Be(world.Player);
+        zombieman.Target.Get().Should().Be(world.Player);
         world.Player.Velocity = new Vec3D(0, 16, 2);
     }
 
@@ -130,13 +130,13 @@ public class Serialization : IDisposable
     {
         var revenant = GameActions.CreateEntity(world, "Revenant", new Vec3D(-256, -16, 0), frozen: false);
         revenant.AngleRadians = GameActions.GetAngle(Bearing.South);
-        GameActions.TickWorld(world, () => { return revenant.Target.Entity == null; }, () => { });
-        revenant.Target.Entity.Should().Be(world.Player);
+        GameActions.TickWorld(world, () => { return revenant.Target.Get() == null; }, () => { });
+        revenant.Target.Get().Should().Be(world.Player);
 
         EntityActionFunctions.A_SkelMissile(revenant);
         var tracer = GameActions.GetEntity(world, "RevenantTracer");
         tracer.SetTracer(world.Player);
-        tracer.Tracer.Entity.Should().Be(world.Player);
+        tracer.Tracer.Get().Should().Be(world.Player);
     }
 
     private static void ChangeWorld2(SinglePlayerWorld world)
@@ -265,7 +265,7 @@ public class Serialization : IDisposable
             sector.Secret.Should().Be(newSector.Secret);
             sector.DamageAmount .Should().Be(newSector.DamageAmount);
             sector.DataChanges.Should().Be(newSector.DataChanges);
-            sector.SoundTarget.Entity?.Id.Should().Be(newSector.SoundTarget.Entity?.Id);
+            sector.SoundTarget.Get()?.Id.Should().Be(newSector.SoundTarget.Get()?.Id);
             sector.KillEffect.Should().Be(newSector.KillEffect);
             sector.SectorEffect.Should().Be(newSector.SectorEffect);
             sector.FloorSkyTextureHandle.Should().Be(newSector.FloorSkyTextureHandle);
@@ -323,11 +323,11 @@ public class Serialization : IDisposable
             for (int i = 0; i < entity.IntersectSectors.Length; i++)
                 entity.IntersectSectors[i].Id.Should().Be(newEntity.IntersectSectors[i].Id);
 
-            entity.Target.Entity?.Id.Should().Be(newEntity.Target.Entity?.Id);
-            entity.Tracer.Entity?.Id.Should().Be(newEntity.Tracer.Entity?.Id);
-            entity.OnEntity.Entity?.Id.Should().Be(newEntity.OnEntity.Entity?.Id);
-            entity.OverEntity.Entity?.Id.Should().Be(newEntity.OverEntity.Entity?.Id);
-            entity.Owner.Entity?.Id.Should().Be(newEntity.Owner.Entity?.Id);
+            entity.Target.Get()?.Id.Should().Be(newEntity.Target.Get()?.Id);
+            entity.Tracer.Get()?.Id.Should().Be(newEntity.Tracer.Get()?.Id);
+            entity.OnEntity.Get()?.Id.Should().Be(newEntity.OnEntity.Get()?.Id);
+            entity.OverEntity.Get()?.Id.Should().Be(newEntity.OverEntity.Get()?.Id);
+            entity.Owner.Get()?.Id.Should().Be(newEntity.Owner.Get()?.Id);
 
             entity.Threshold.Should().Be(newEntity.Threshold);
             entity.ReactionTime.Should().Be(newEntity.ReactionTime);

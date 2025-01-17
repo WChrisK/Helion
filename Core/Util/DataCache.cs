@@ -65,8 +65,6 @@ public class DataCache
     private readonly DynamicArray<EntityModel> m_entityModels = new(DefaultLength);
     private readonly DynamicArray<PlayerModel> m_playerModels = new(32);
 
-    public WeakEntity?[] WeakEntities = new WeakEntity?[DefaultLength];
-
     public bool CacheEntities = true;
 
     public DataCache()

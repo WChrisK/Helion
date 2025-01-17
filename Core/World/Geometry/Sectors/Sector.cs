@@ -299,7 +299,7 @@ public sealed class Sector
             Id = Id,
             SoundValidationCount = SoundValidationCount,
             SoundBlock = SoundBlock,
-            SoundTarget = SoundTarget.Entity?.Id,
+            SoundTarget = SoundTarget.Get()?.Id,
             SectorSpecialType = (int)SectorSpecialType,
             SectorDataChanges = (int)DataChanges,
             FloorSkyTexture = FloorSkyTextureHandle,
@@ -361,7 +361,7 @@ public sealed class Sector
         SoundValidationCount = sectorModel.SoundValidationCount;
         SoundBlock = sectorModel.SoundBlock;
         if (sectorModel.SoundTarget.HasValue && result.Entities.TryGetValue(sectorModel.SoundTarget.Value, out var soundTarget))
-            SetSoundTarget(soundTarget.Entity);
+            SoundTarget = new(soundTarget.Entity);
 
         if (sectorModel.SectorDataChanges > 0)
         {
@@ -483,9 +483,6 @@ public sealed class Sector
         Entities.Add(node);
         return node;
     }
-
-    public void SetSoundTarget(Entity? entity) =>
-        SoundTarget = WeakEntity.GetReference(entity);
 
     public double ToFloorZ(in Vec2D position) => Floor.Plane.ToZ(position);
     public double ToFloorZ(in Vec3D position) => Floor.Plane.ToZ(position);

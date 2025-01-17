@@ -156,7 +156,7 @@ public partial class WorldBase
         for (int i = 0; i < Sectors.Count; i++)
         {
             Sector sector = Sectors[i];
-            if (sector.SoundTarget.Entity != null || sector.DataChanged)
+            if (sector.SoundTarget.NotNull() || sector.DataChanged)
                 sectorModels.Add(sector.ToSectorModel(this));
             if (sector.SectorDamageSpecial != null)
                 sectorDamageSpecialModels.Add(sector.SectorDamageSpecial.ToSectorDamageSpecialModel());

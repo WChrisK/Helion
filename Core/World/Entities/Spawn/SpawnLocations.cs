@@ -99,8 +99,9 @@ public class SpawnLocations
     {
         for (int i = spawns.Count - 1; i >= 0; i--)
         {
-            if (spawns[i].Entity != null)
-                return spawns[i].Entity;
+            var entity = spawns[i].Get();
+            if (entity != null)
+                return entity;
         }
 
         return null;
@@ -109,7 +110,7 @@ public class SpawnLocations
     public IList<Entity> GetPlayerSpawns(int playerIndex)
     {
         if (m_playerStarts.TryGetValue(playerIndex, out IList<WeakEntity>? spawns))
-            return spawns.Where(x => x.Entity != null).Select(x => x.Entity!).ToList();
+            return spawns.Where(x => x.Get() != null).Select(x => x.Get()!).ToList();
 
         return Array.Empty<Entity>();
     }
@@ -137,11 +138,11 @@ public class SpawnLocations
 
         if (m_playerStarts.TryGetValue(playerIndex, out IList<WeakEntity>? spawns))
         {
-            Precondition(!spawns.Any(x => entity.Id.Equals(x.Entity?.Id)), "Trying to add the same entity twice to the deathmatch spawns");
-            spawns.Add(WeakEntity.GetReference(entity));
+            Precondition(!spawns.Any(x => entity.Id.Equals(x.Get()?.Id)), "Trying to add the same entity twice to the deathmatch spawns");
+            spawns.Add(new WeakEntity(entity));
         }
         else
-            m_playerStarts[playerIndex] = new List<WeakEntity> { WeakEntity.GetReference(entity) };
+            m_playerStarts[playerIndex] = [new WeakEntity(entity)];
     }
 
     private void AddDeathmatchStart(Entity entity)

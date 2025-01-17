@@ -154,14 +154,14 @@ public sealed class PhysicsManager
         for (int i = 0; i < entities.Length; i++)
         {
             var entity = entities[i];
-            bool hasOnEntity = entity.OnEntity != WeakEntity.Default;
+            var onEntity = entity.OnEntity.Get();
+            bool hasOnEntity = onEntity != null;
             if (!hasOnEntity && entity.HadOnEntity)
             {
                 ClampBetweenFloorAndCeiling(entity, entity.IntersectSectors, smoothZ: false, clampToLinkedSectors: true);
                 continue;
             }
 
-            var onEntity = entity.OnEntity.Entity;
             if (onEntity!.Position.Z + onEntity.Height < entity.Position.Z || !onEntity.Overlaps2D(entity))
                 ClampBetweenFloorAndCeiling(entity, entity.IntersectSectors, smoothZ: false, clampToLinkedSectors: true);
         }
@@ -210,8 +210,9 @@ public sealed class PhysicsManager
                 entity.OnGround && entity.HighestFloorSector == sector)
             {
                 double top = destZ;
-                if (entity.OnEntity.Entity != null)
-                    top = entity.OnEntity.Entity.Position.Z + entity.OnEntity.Entity.Height;
+                var onEntity = entity.OnEntity.Get();
+                if (onEntity != null)
+                    top = onEntity.Position.Z + onEntity.Height;
                 entity.Position.Z = top;
                 // Setting this so SetEntityBoundsZ does not mess with forcing this entity to to the floor
                 // Otherwise this is a problem with the instant lift hack
@@ -516,8 +517,9 @@ public sealed class PhysicsManager
         LinkableNode<Entity>? node = sector.Entities.Head;
         while (node != null)
         {
-            Entity checkEntity = node.Value;
-            if (checkEntity.OverEntity.Entity != null && ContainsEntity(crushEntities, checkEntity.OverEntity.Entity))
+            var checkEntity = node.Value;
+            var overEntity = checkEntity.OverEntity.Get();
+            if (overEntity != null && ContainsEntity(crushEntities, overEntity))
                 m_stackCrush.Add(checkEntity);
             node = node.Next;
         }
@@ -591,9 +593,10 @@ public sealed class PhysicsManager
 
         pusher.Position.Z = pusher.LowestCeilingZ - pusher.Height;
 
-        if (pusher.OnEntity.Entity != null)
+        var onEntity = pusher.OnEntity.Get();
+        if (onEntity != null)
         {
-            Entity? current = pusher.OnEntity.Entity;
+            Entity? current = onEntity;
             while (current != null)
             {
                 if (current.HighestFloorObject is Sector && current.HighestFloorZ > pusher.Position.Z - current.Height)
@@ -601,7 +604,7 @@ public sealed class PhysicsManager
 
                 current.Position.Z = pusher.Position.Z - current.Height;
                 pusher = current;
-                current = pusher.OnEntity.Entity;
+                current = pusher.OnEntity.Get();
             }
         }
     }
@@ -708,7 +711,7 @@ public sealed class PhysicsManager
             return;
 
         double prevHighestFloorZ = entity.HighestFloorZ;
-        Entity? prevOnEntity = entity.OnEntity.Entity;
+        var prevOnEntity = entity.OnEntity.Get();
         SetEntityBoundsZ(entity, intersectSectors, clampToLinkedSectors, tryMove);
         entity.SetOnEntity(null);
 
@@ -755,7 +758,7 @@ public sealed class PhysicsManager
             SetEntityOnFloorOrEntity(entity, highestFloor, smoothZ && prevHighestFloorZ != entity.HighestFloorZ);
         }
 
-        if (prevOnEntity != null && prevOnEntity != entity.OnEntity.Entity)
+        if (prevOnEntity != null && prevOnEntity != entity.OnEntity.Get())
             prevOnEntity.SetOverEntity(null);
 
         entity.CheckOnGround();
@@ -1157,10 +1160,11 @@ doneLinkToSectors:
 
     public unsafe bool IsPositionValid(Entity entity, double x, double y, TryMoveData tryMove)
     {
-        if (!WorldStatic.InfinitelyTallThings && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && !entity.IsPlayer && entity.OnEntity.Entity != null
-            && (entity.OnEntity.Entity.Flags.Flags1 & EntityFlags.ActsLikeBridgeFlag) == 0)
+        if (!WorldStatic.InfinitelyTallThings && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && !entity.IsPlayer)
         {
-            return false;
+            var onEntity = entity.OnEntity.Get();
+            if (onEntity != null && (onEntity.Flags.Flags1 & EntityFlags.ActsLikeBridgeFlag) == 0)
+                return false;
         }
 
         tryMove.Success = true;
@@ -1722,7 +1726,7 @@ doneLinkToSectors:
         // Adds z velocity on the first tick, then adds -2 on the second instead of -1 on the first and -1 on the second.
         bool noVelocity = entity.Velocity.Z == 0;
         bool shouldApplyGravity = entity.ShouldApplyGravity();
-        if (noVelocity && !shouldApplyGravity && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && entity.OnEntity == WeakEntity.Default)
+        if (noVelocity && !shouldApplyGravity && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && entity.OnEntity.IsNull())
             return;
 
         if (entity.Flags.NoGravity && entity.ShouldApplyFriction())
@@ -1732,7 +1736,7 @@ doneLinkToSectors:
 
         double floatZ = entity.GetEnemyFloatMove();
         // Only return if OnEntity is null. Need to apply clamping to prevent issues with this entity floating when the entity beneath is no longer blocking.
-        if (noVelocity && floatZ == 0 && entity.OnEntity == WeakEntity.Default)
+        if (noVelocity && floatZ == 0 && entity.OnEntity.IsNull())
             return;
 
         Vec3D previousVelocity = entity.Velocity;

@@ -107,7 +107,7 @@ public class WorldSoundManager(IWorld world, IAudioSystem audioSystem) : SoundMa
             return 1;
 
         // Checking there is no owner, otherwise rockets set the see type and get bumped out by moving floors
-        if (soundSource is Entity entity && !entity.IsPlayer && entity.Owner.Entity == null)
+        if (soundSource is Entity entity && !entity.IsPlayer && entity.Owner.IsNull())
         {
             switch (soundParams.SoundType)
             {

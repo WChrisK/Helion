@@ -255,9 +255,9 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         entityModel.Armor = Armor;
         entityModel.FrozenTics = FrozenTics;
         entityModel.MoveCount = MoveCount;
-        entityModel.Owner = Owner.Entity?.Id;
-        entityModel.Target = Target.Entity?.Id;
-        entityModel.Tracer = Tracer.Entity?.Id;
+        entityModel.Owner = Owner.Get()?.Id;
+        entityModel.Target = Target.Get()?.Id;
+        entityModel.Tracer = Tracer.Get()?.Id;
         entityModel.MoveLinked = MoveLinked;
         entityModel.Respawn = Respawn;
         entityModel.Sector = Sector.Id;
@@ -294,26 +294,26 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetTarget(Entity? entity) =>
-        Target = WeakEntity.GetReference(entity);
+        Target = new WeakEntity(entity);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetTracer(Entity? entity) =>
-        Tracer = WeakEntity.GetReference(entity);
+        Tracer = new WeakEntity(entity);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetOnEntity(Entity? entity)
     {
-        HadOnEntity = HadOnEntity || OnEntity != WeakEntity.Default;
-        OnEntity = WeakEntity.GetReference(entity);
+        HadOnEntity = HadOnEntity || OnEntity.NotNull();
+        OnEntity = new WeakEntity(entity);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetOverEntity(Entity? entity) =>
-        OverEntity = WeakEntity.GetReference(entity);
+        OverEntity = new WeakEntity(entity);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetOwner(Entity? entity) =>
-        Owner = WeakEntity.GetReference(entity);
+        Owner = new WeakEntity(entity);
 
     public double PitchTo(Entity entity) => Position.Pitch(entity.Position, Position.XY.Distance(entity.Position.XY));
     public double PitchTo(Vec3D start, Entity entity) => start.Pitch(entity.Position, Position.XY.Distance(entity.Position.XY));
@@ -620,7 +620,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public virtual bool CanDamage(Entity source, DamageType damageType)
     {
-        Entity damageSource = source.Owner.Entity ?? source;
+        Entity damageSource = source.Owner.Get() ?? source;
         if (damageSource.IsPlayer)
             return true;
 
@@ -662,12 +662,12 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         bool willRetaliate = false;
         if (source != null)
         {
-            damageSource = source.Owner.Entity ?? source;
+            damageSource = source.Owner.Get() ?? source;
             if (!CanDamage(source, damageType))
                 return false;
 
             canRetaliate = WillRetaliateFrom(damageSource) && Threshold <= 0 && !damageSource.IsDead && damageSource != this;
-            willRetaliate = canRetaliate && damageSource != Target.Entity;
+            willRetaliate = canRetaliate && damageSource != Target.Get();
             if (willRetaliate && !damageSource.Flags.NoTarget && !IsFriend(damageSource))
                 SetTarget(damageSource);
         }
@@ -747,7 +747,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public bool CanBlockEntity(Entity other)
     {
-        if (this == other || Owner.Entity == other || other.Flags.NoClip)
+        if (this == other || Owner.Get() == other || other.Flags.NoClip)
             return false;
 
         if (Flags.Ripper)
@@ -936,6 +936,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         if (IsDisposed)
             return;
 
+        Id = int.MinValue;
         IsDisposed = true;
         UnlinkFromWorld();
         Unlink();
@@ -951,9 +952,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         OnEntity = WeakEntity.Default;
         OverEntity = WeakEntity.Default;
         Owner = WeakEntity.Default;
-        PickupPlayer = null;
-
-        WeakEntity.DisposeEntity(this, World.DataCache);
+        PickupPlayer = null;        
 
         if (World.DataCache.FreeEntity(this))
             Definition = null!;

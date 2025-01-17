@@ -210,7 +210,7 @@ public class Player : Entity
         if (playerModel.Attacker.HasValue && entities.TryGetValue(playerModel.Attacker.Value, out var attacker))
             SetAttacker(attacker.Entity);
         if (playerModel.Killer.HasValue && entities.TryGetValue(playerModel.Killer.Value, out var killer))
-            m_killer = WeakEntity.GetReference(killer.Entity);
+            m_killer = new WeakEntity(killer.Entity);
 
         PrevAngle = AngleRadians;
         m_prevPitch = PitchRadians;
@@ -262,10 +262,10 @@ public class Player : Entity
     }
 
     public void SetAttacker(Entity? entity) =>
-        Attacker = WeakEntity.GetReference(entity);
+        Attacker = new WeakEntity(entity);
 
     public void SetCrosshairTarget(Entity? entity) =>
-        CrosshairTarget = WeakEntity.GetReference(entity);
+        CrosshairTarget = new WeakEntity(entity);
 
     private void SetPlayerInfo()
     {
@@ -289,8 +289,8 @@ public class Player : Entity
         playerModel.Bob = m_viewBob;
         playerModel.WeaponBobX = WeaponBobOffset.X;
         playerModel.WeaponBobY = WeaponBobOffset.Y;
-        playerModel.Killer = m_killer.Entity?.Id;
-        playerModel.Attacker = Attacker.Entity?.Id;
+        playerModel.Killer = m_killer.Get()?.Id;
+        playerModel.Attacker = Attacker.Get()?.Id;
         playerModel.KillCount = KillCount;
         playerModel.ItemCount = ItemCount;
         playerModel.SecretsFound = SecretsFound;
@@ -493,7 +493,7 @@ public class Player : Entity
         base.SetRaiseState();
         PendingWeapon = Weapon;
         BringupWeapon();
-        m_killer = WeakEntity.GetReference(null);
+        m_killer = new WeakEntity(null);
     }
 
     public override bool CanDamage(Entity source, DamageType damageType)
@@ -1026,9 +1026,10 @@ public class Player : Entity
                 PitchRadians = 0.0;
         }
 
-        if (m_killer.Entity != null)
+        var killer = m_killer.Get();
+        if (killer != null)
         {
-            double angle = MathHelper.GetPositiveAngle(Position.Angle(m_killer.Entity.Position));
+            double angle = MathHelper.GetPositiveAngle(Position.Angle(killer.Position));
             double diff = angle - AngleRadians;
             double addAngle = 0.08726646; // 5 Degrees
 
@@ -1571,7 +1572,7 @@ public class Player : Entity
         bool damageApplied = base.Damage(source, damage, setPainState, damageType);
         if (damageApplied)
         {
-            SetAttacker(source?.Owner.Entity ?? source);
+            SetAttacker(source?.Owner.Get() ?? source);
             PlayPainSound(damage);
             DamageCount += damage;
             DamageCount = Math.Min(DamageCount, Definition.Properties.Health);
@@ -1617,9 +1618,9 @@ public class Player : Entity
         m_deathTics = MathHelper.Clamp((int)(Definition.Properties.Player.ViewHeight - DeathHeight), 0, (int)Definition.Properties.Player.ViewHeight);
 
         if (source != null)
-            m_killer = WeakEntity.GetReference(source.Owner.Entity ?? source);
-        if (m_killer.Entity == this)
-            m_killer = WeakEntity.GetReference(null);
+            m_killer = new WeakEntity(source.Owner.Get() ?? source);
+        if (m_killer.Get() == this)
+            m_killer = new WeakEntity(null);
 
         ForceLowerWeapon(true);
     }
@@ -1683,7 +1684,7 @@ public class Player : Entity
             player.m_viewZ == m_viewZ &&
             player.DeltaViewHeight == DeltaViewHeight &&
             player.m_viewBob == m_viewBob &&
-            player.m_killer.Entity?.Id == m_killer.Entity?.Id;
+            player.m_killer.Get()?.Id == m_killer.Get()?.Id;
     }
 
     public override int GetHashCode()

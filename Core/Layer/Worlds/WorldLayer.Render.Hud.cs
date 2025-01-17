@@ -541,7 +541,7 @@ public partial class WorldLayer
         int Length = (int)(5 * m_scale * m_config.Hud.CrosshairScale.Value);
 
         Color color;
-        bool target = Player.CrosshairTarget.Entity != null;
+        bool target = Player.CrosshairTarget.Get() != null;
         bool shouldShrink = m_config.Hud.CrosshairTargetShrink.Value && target;
         int crosshairLength = shouldShrink ? (int)(Length * 0.8f) : Length;
 

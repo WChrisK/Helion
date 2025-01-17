@@ -699,7 +699,7 @@ public abstract partial class WorldBase : IWorld
     public void NoiseAlert(Entity target, Entity source)
     {
         m_soundCount++;
-        RecursiveSound(WeakEntity.GetReference(target), source.Sector, 0);
+        RecursiveSound(new(target), source.Sector, 0);
     }
 
     private void RecursiveSound(WeakEntity target, Sector sector, int block)
@@ -755,8 +755,6 @@ public abstract partial class WorldBase : IWorld
 
     public virtual void Tick()
     {
-        DebugCheck();
-
         if (Paused)
         {
             TickPlayerStatusBars();
@@ -838,13 +836,6 @@ public abstract partial class WorldBase : IWorld
             player.StatusBar.Tick();
     }
 
-    [Conditional("DEBUG")]
-    private static void DebugCheck()
-    {
-        if (WeakEntity.Default.Entity != null)
-            Fail("Static WeakEntity default reference was changed.");
-    }
-
     private void TickEntities()
     {
         Profiler.World.TickEntity.Start();
@@ -875,7 +866,7 @@ public abstract partial class WorldBase : IWorld
                 entity.SectorDamageSpecial?.Tick(entity);
                                 
                 if (!WorldStatic.InfinitelyTallThings &&
-                    (entity.HadOnEntity || entity.OnEntity != WeakEntity.Default) &&
+                    (entity.HadOnEntity || entity.OnEntity.NotNull()) &&
                     !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&                    
                     entity.Velocity.Z == 0 && entity.Position.Z > entity.HighestFloorSector.Floor.Z)
                 {
@@ -1588,7 +1579,7 @@ public abstract partial class WorldBase : IWorld
     public virtual bool DamageEntity(Entity target, Entity? source, int damage, DamageType damageType,
         Thrust thrust = Thrust.HorizontalAndVertical, Sector? sectorSource = null)
     {
-        if (source != null && source.Owner.Entity == target)
+        if (source != null && source.Owner.Get() == target)
             damage = (int)(damage * source.Properties.SelfDamageFactor);
 
         if (!target.Flags.Shootable || damage == 0 || target.IsDead)
@@ -1599,7 +1590,7 @@ public abstract partial class WorldBase : IWorld
         {
             Vec3D savePos = source.Position;
             // Check if the source is owned by this target and the same position and move to get a valid thrust angle. (player shot missile against wall)
-            if (source.Owner.Entity == target && source.Position.XY == target.Position.XY)
+            if (source.Owner.Get() == target && source.Position.XY == target.Position.XY)
             {
                 Vec3D move = (source.Position.XY + Vec2D.UnitCircle(target.AngleRadians) * 2).To3D(source.Position.Z);
                 source.Position = move;
@@ -1625,7 +1616,7 @@ public abstract partial class WorldBase : IWorld
             {
                 // Player rocket jumping check, back up the source Z to get a valid pitch
                 // Only done for players, otherwise blowing up enemies will launch them in the air
-                if (zEqual && target.IsPlayer && source.Owner.Entity == target)
+                if (zEqual && target.IsPlayer && source.Owner.Get() == target)
                 {
                     Vec3D sourcePos = new Vec3D(source.Position.X, source.Position.Y, source.Position.Z - 1.0);
                     pitch = sourcePos.Pitch(target.Position, 0.0);
@@ -1863,7 +1854,7 @@ public abstract partial class WorldBase : IWorld
             if (!entity.OverlapsZ(intersectEntity) || entity == intersectEntity)
                 continue;
 
-            if (entity.Flags.Ripper && entity.Owner.Entity != intersectEntity)
+            if (entity.Flags.Ripper && entity.Owner.Get() != intersectEntity)
                 RipDamage(entity, intersectEntity);
             if (intersectEntity.Flags.Touchy && ShouldDieFromTouch(entity, intersectEntity))
                 intersectEntity.Kill(null);
@@ -2108,7 +2099,7 @@ public abstract partial class WorldBase : IWorld
 
         // If the player killed themself then don't display the obituary message
         // There is probably a special string for this in multiplayer for later
-        Entity killer = deathSource.Owner.Entity ?? deathSource;
+        Entity killer = deathSource.Owner.Get() ?? deathSource;
         if (player == killer)
             return;
 
@@ -2306,7 +2297,7 @@ public abstract partial class WorldBase : IWorld
         if (applyDamage <= 0)
             return;
 
-        Entity? originalOwner = source.Owner.Entity;
+        Entity? originalOwner = source.Owner.Get();
         source.SetOwner(attackSource);
         DamageEntity(entity, source, applyDamage, DamageType.AlwaysApply, thrust);
         source.SetOwner(originalOwner);
@@ -2762,7 +2753,7 @@ public abstract partial class WorldBase : IWorld
         entity.Flags.Solid = true;
         entity.Height = entity.Definition.Properties.Height;
 
-        Entity? saveTarget = healChaseEntity.Target?.Entity;
+        var saveTarget = healChaseEntity.Target.Get();
         healChaseEntity.SetTarget(entity);
         EntityActionFunctions.A_FaceTarget(healChaseEntity);
         healChaseEntity.SetTarget(saveTarget);
@@ -2785,7 +2776,8 @@ public abstract partial class WorldBase : IWorld
 
     public void TracerSeek(Entity entity, double threshold, double maxTurnAngle, GetTracerVelocityZ velocityZ)
     {
-        if (entity.Tracer.Entity == null || entity.Tracer.Entity.IsDead)
+        var tracer = entity.Tracer.Get();
+        if (tracer == null || tracer.IsDead)
             return;
 
         SetTracerAngle(entity, threshold, maxTurnAngle);
@@ -2794,13 +2786,13 @@ public abstract partial class WorldBase : IWorld
         entity.Velocity = Vec3D.UnitSphere(entity.AngleRadians, 0.0) * entity.Definition.Properties.MissileMovementSpeed;
         entity.Velocity.Z = z;
 
-        entity.Velocity.Z = velocityZ(entity, entity.Tracer.Entity);
+        entity.Velocity.Z = velocityZ(entity, tracer);
     }
 
     public void SetNewTracerTarget(Entity entity, double fieldOfViewRadians, double radius)
     {
         m_newTracerTargetData.Entity = entity;
-        m_newTracerTargetData.Owner = entity.Owner.Entity ?? entity;
+        m_newTracerTargetData.Owner = entity.Owner.Get() ?? entity;
         m_newTracerTargetData.FieldOfViewRadians = fieldOfViewRadians;
         BlockmapTraverser.EntityTraverse(new Box2D(entity.Position.X, entity.Position.Y, radius), m_setNewTracerTargetAction);
     }
@@ -2897,11 +2889,12 @@ public abstract partial class WorldBase : IWorld
 
     private static void SetTracerAngle(Entity entity, double threshold, double maxTurnAngle)
     {
-        if (entity.Tracer.Entity == null)
+        var tracer = entity.Tracer.Get();
+        if (tracer == null)
             return;
         // Doom's angles were always 0-360 and did not allow negatives (thank you arithmetic overflow)
         // To keep this code familiar GetPositiveAngle will keep angle between 0 and 2pi
-        double exact = MathHelper.GetPositiveAngle(entity.Position.Angle(entity.Tracer.Entity.Position));
+        double exact = MathHelper.GetPositiveAngle(entity.Position.Angle(tracer.Position));
         double currentAngle = MathHelper.GetPositiveAngle(entity.AngleRadians);
         double diff = MathHelper.GetPositiveAngle(exact - currentAngle);
 

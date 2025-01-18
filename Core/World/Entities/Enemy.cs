@@ -319,7 +319,7 @@ public partial class Entity
             MoveCount = WorldStatic.Random.NextByte() & 15;
 
         if (WorldStatic.SlowTickEnabled)
-            ChaseFailureSkipCount = WorldStatic.SlowTickChaseFailureSkipCount + (ChaseFailureCount++ & 1);
+            ChaseFailureSkipCount = (short)(WorldStatic.SlowTickChaseFailureSkipCount + (ChaseFailureCount++ & 1));
 
         // Need to try to use the monster's normal movement speed if stuck. Otherwise they may never move or correctly cross teleport lines.
         ClosetChaseSpeed = MonsterMovementSpeed;

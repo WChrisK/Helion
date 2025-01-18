@@ -109,7 +109,7 @@ public sealed class SectorPlane : ISoundSource
         Vec2D pos2D = listener.Position.XY;
         // Do not count being in the sector if this is a bad self-referencing subsector. E.g. hr2final map01 sector 160
         if (ReferenceEquals(listener.Sector, Sector)&&
-            !WorldStatic.World.Geometry.IslandGeometry.BadSubsectors.Contains(listener.Subsector.Id))
+            !WorldStatic.World.Geometry.IslandGeometry.BadSubsectors.Contains(listener.SubsectorId))
         {
             return pos2D.To3D(type == SectorPlaneFace.Floor ? Sector.ToFloorZ(pos2D) : Sector.ToCeilingZ(pos2D));
         }

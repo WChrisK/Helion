@@ -495,11 +495,11 @@ public abstract partial class WorldBase : IWorld
         WorldStatic.Frames = ArchiveCollection.Definitions.EntityFrameTable.Frames;
         WorldStatic.Random = Random;
         WorldStatic.SlowTickEnabled = Config.SlowTick.Enabled.Value;
-        WorldStatic.SlowTickChaseFailureSkipCount = Config.SlowTick.ChaseFailureSkipCount;
-        WorldStatic.SlowTickDistance = Config.SlowTick.Distance;
-        WorldStatic.SlowTickChaseMultiplier = Config.SlowTick.ChaseMultiplier;
-        WorldStatic.SlowTickLookMultiplier = Config.SlowTick.LookMultiplier;
-        WorldStatic.SlowTickTracerMultiplier = Config.SlowTick.TracerMultiplier;
+        WorldStatic.SlowTickChaseFailureSkipCount = (short)Config.SlowTick.ChaseFailureSkipCount;
+        WorldStatic.SlowTickDistance = (short)Config.SlowTick.Distance;
+        WorldStatic.SlowTickChaseMultiplier = (short)Config.SlowTick.ChaseMultiplier;
+        WorldStatic.SlowTickLookMultiplier = (short)Config.SlowTick.LookMultiplier;
+        WorldStatic.SlowTickTracerMultiplier = (short)Config.SlowTick.TracerMultiplier;
         WorldStatic.IsFastMonsters = IsFastMonsters;
         WorldStatic.IsSlowMonsters = SkillDefinition.SlowMonsters;
         WorldStatic.InfinitelyTallThings = Config.Compatibility.InfinitelyTallThings;
@@ -555,13 +555,13 @@ public abstract partial class WorldBase : IWorld
     private void SlowTickDistance_OnChanged(object? sender, int distance) =>
         WorldStatic.SlowTickDistance = distance;
     private void SlowTickChaseFailureSkipCount_OnChanged(object? sender, int value) =>
-        WorldStatic.SlowTickChaseFailureSkipCount = value;
+        WorldStatic.SlowTickChaseFailureSkipCount = (short)value;
     private void SlowTickChaseMultiplier_OnChanged(object? sender, int value) =>
-        WorldStatic.SlowTickChaseMultiplier = value;
+        WorldStatic.SlowTickChaseMultiplier = (short)value;
     private void SlowTickLookMultiplier_OnChanged(object? sender, int value) =>
-        WorldStatic.SlowTickLookMultiplier = value;
+        WorldStatic.SlowTickLookMultiplier = (short)value;
     private void SlowTickTracerMultiplier_OnChanged(object? sender, int value) =>
-        WorldStatic.SlowTickTracerMultiplier = value;
+        WorldStatic.SlowTickTracerMultiplier = (short)value;
     private void FastMonsters_OnChanged(object? sender, bool enabled)
     {
         IsFastMonsters = SkillDefinition.IsFastMonsters(Config);
@@ -2829,10 +2829,10 @@ public abstract partial class WorldBase : IWorld
             if ((entity.ClosetFlags & ClosetFlags.MonsterCloset) != 0)
                 continue;
 
-            if (entity.Subsector.Id < 0 || entity.Subsector.Id >= Geometry.BspTree.Subsectors.Count)
+            if (entity.SubsectorId < 0 || entity.SubsectorId >= Geometry.BspTree.Subsectors.Count)
                 continue;
 
-            var subsector = Geometry.BspTree.Subsectors[entity.Subsector.Id];
+            var subsector = Geometry.BspTree.Subsectors[entity.SubsectorId];
             if (subsector.IslandId < 0 || subsector.IslandId >= Geometry.IslandGeometry.Islands.Count)
                 continue;
 

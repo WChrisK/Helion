@@ -20,7 +20,6 @@ using System;
 using System.Diagnostics;
 using static Helion.Util.Assertion.Assert;
 using Helion.World.Blockmap;
-using Helion.World.Geometry.Subsectors;
 using Helion.Graphics.Palettes;
 using System.Runtime.CompilerServices;
 using Helion.World.Special.Specials;
@@ -50,7 +49,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public int BlockmapCount;
     public EntityFlags Flags;
-    public Subsector Subsector;
+    public int SubsectorId;
     public FrameState FrameState;
     public double AngleRadians;
     public Vec3D Position;
@@ -102,8 +101,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public int LastRenderGametick;
     public double RenderDistanceSquared = double.MaxValue;
-    public int SlowTickMultiplier = 1;
-    public int ChaseFailureSkipCount;
+    public short SlowTickMultiplier = 1;
+    public short ChaseFailureSkipCount;
     public double ClosetChaseSpeed = DefaultClosetChaseSpeed;
     public virtual SoundChannel WeaponSoundChannel => SoundChannel.Default;
     public virtual int ProjectileKickBack => Properties.ProjectileKickBack;
@@ -138,7 +137,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         LowestCeilingSector = null!;
         SectorDamageSpecial = null;
         Sector = Sector.Default;
-        Subsector = Subsector.Default;
+        SubsectorId = 0;
         Properties = null!;
     }
 
@@ -940,7 +939,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         BlockingEntity = null;
         BlockingSectorPlane = null;
         Sector = Sector.Default;
-        Subsector = Subsector.Default;
+        SubsectorId = 0;
         HighestFloorObject = Sector.Default;
         LowestCeilingObject = Sector.Default;
         HighestFloorSector = Sector.Default;

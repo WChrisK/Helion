@@ -20,7 +20,7 @@ public static class ClosetClassifier
                 if (entity.Flags.Friendly)
                     continue;
 
-                var subsector = world.Geometry.BspTree.Subsectors[entity.Subsector.Id];
+                var subsector = world.Geometry.BspTree.Subsectors[entity.SubsectorId];
                 if (subsector.IslandId < 0 || subsector.IslandId >= world.Geometry.IslandGeometry.Islands.Count)
                     continue;
                 var island = world.Geometry.IslandGeometry.Islands[subsector.IslandId];
@@ -82,7 +82,7 @@ public static class ClosetClassifier
 
         for (var entity = world.EntityManager.Head; entity != null; entity = entity.Next)
         {
-            var subsector = world.Geometry.BspTree.Subsectors[entity.Subsector.Id];
+            var subsector = world.Geometry.BspTree.Subsectors[entity.SubsectorId];
             islandToEntity[subsector.IslandId].Add(entity);
             entityToSubsector[entity.Id] = subsector;
         }

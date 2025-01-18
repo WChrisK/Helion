@@ -1,5 +1,4 @@
 using Helion.Geometry;
-using Helion.Geometry.Grids;
 using Helion.Geometry.Vectors;
 using Helion.Maps;
 using Helion.Maps.Components;
@@ -8,7 +7,6 @@ using Helion.Models;
 using Helion.Util;
 using Helion.Util.Container;
 using Helion.Util.Extensions;
-using Helion.World.Blockmap;
 using Helion.World.Entities.Definition;
 using Helion.World.Entities.Definition.Composer;
 using Helion.World.Entities.Inventories;
@@ -272,15 +270,16 @@ public class EntityManager : IDisposable
 
         for (int i = 0; i < worldModel.Players.Count; i++)
         {
-            bool isVoodooDoll = players.Any(x => x.PlayerNumber == worldModel.Players[i].Number);
-            Player? player = CreatePlayerFromModel(worldModel.Players[i], entities, isVoodooDoll);
+            var playerModel = worldModel.Players[i];
+            bool isVoodooDoll = players.Any(x => x.PlayerNumber == playerModel.Number);
+            Player? player = CreatePlayerFromModel(playerModel, entities, isVoodooDoll);
             if (player == null)
             {
-                Log.Error($"Failed to create player {worldModel.Players[i].Name}.");
+                Log.Error($"Failed to create player {playerModel.Name}.");
                 continue;
             }
-
             players.Add(player);
+            m_spawnPoints[player.Index] = new Vec3D(playerModel.SpawnPointX, playerModel.SpawnPointY, playerModel.SpawnPointZ);
         }
 
         for (int i = 0; i < worldModel.Entities.Count; i++)
@@ -309,6 +308,8 @@ public class EntityManager : IDisposable
                 if (tracerTarget != null)
                     entity.Entity.SetTracer(tracerTarget.Entity);
             }
+
+            m_spawnPoints[entity.Entity.Index] = new Vec3D(entity.Model.SpawnPointX, entity.Model.SpawnPointY, entity.Model.SpawnPointZ);
         }
 
         EntityCount = worldModel.Entities.Count;
@@ -528,6 +529,7 @@ public class EntityManager : IDisposable
         MusicChangers.Clear();
         RealPlayersByNumber.SetAll(null);
         TeleportSpots.Clear();
+        m_spawnPoints.Clear();
     }
 
     private void ClearEntities()

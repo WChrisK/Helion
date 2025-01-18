@@ -1583,7 +1583,11 @@ public class Player : Entity
         if (Sector.SectorSpecialType == ZDoomSectorSpecialType.DamageEnd && damage >= Health)
             damage = Health - 1;
 
-        damage = WorldStatic.World.SkillDefinition.GetDamage(damage);
+        if (damage < KillDamage)
+        {
+            damage = WorldStatic.World.SkillDefinition.GetDamage(damage);
+            damage = ApplyArmorDamage(damage);
+        }
 
         bool damageApplied = base.Damage(source, damage, setPainState, damageType);
         if (damageApplied)
@@ -1641,7 +1645,7 @@ public class Player : Entity
         ForceLowerWeapon(true);
     }
 
-    protected override int ApplyArmorDamage(int damage)
+    private int ApplyArmorDamage(int damage)
     {
         if (ArmorProperties == null || Armor == 0)
             return damage;

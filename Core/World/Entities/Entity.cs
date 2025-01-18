@@ -73,9 +73,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public Vec3D CenterPoint => new(Position.X, Position.Y, Position.Z + (Height / 2));
     public Vec3D ProjectileAttackPos => new(Position.X, Position.Y, Position.Z + 32);
     public Vec3D HitscanAttackPos => new(Position.X, Position.Y, Position.Z + (Height / 2) + 8);
-    public int Armor;
-    public EntityProperties? ArmorProperties => ArmorDefinition?.Properties;
-    public EntityDefinition? ArmorDefinition;
     public int FrozenTics;
     public Sector Sector;
     public Sector HighestFloorSector;
@@ -197,7 +194,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         ReactionTime = entityModel.ReactionTime;
 
         Health = entityModel.Health;
-        Armor = entityModel.Armor;
 
         AngleRadians = entityModel.AngleRadians;
 
@@ -223,9 +219,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         HighestFloorObject = Sector;
         LowestCeilingObject = Sector;
 
-        if (entityModel.ArmorDefinition != null)
-            ArmorDefinition = WorldStatic.EntityManager.DefinitionComposer.GetByName(entityModel.ArmorDefinition);
-
         Alpha = (float)Properties.Alpha;
         MonsterMovementSpeed = Properties.MonsterMovementSpeed;
 
@@ -250,7 +243,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         entityModel.VelocityY = Velocity.Y;
         entityModel.VelocityZ = Velocity.Z;
         entityModel.Health = Health;
-        entityModel.Armor = Armor;
         entityModel.FrozenTics = FrozenTics;
         entityModel.MoveCount = MoveCount;
         entityModel.Owner = Owner.Get()?.Id;
@@ -261,7 +253,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         entityModel.Sector = Sector.Id;
         entityModel.MoveDir = (int)m_direction;
         entityModel.BlockFloat = Flags.InFloat;
-        entityModel.ArmorDefinition = ArmorDefinition?.Name;
         entityModel.Frame = FrameState.ToFrameStateModel();
         entityModel.Flags = Flags.ToEntityFlagsModel();
         entityModel.Threshold = Threshold;
@@ -286,8 +277,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     {
         Flags = entity.Flags;
         Health = entity.Health;
-        Armor = entity.Armor;
-        ArmorDefinition = entity.ArmorDefinition;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -716,25 +705,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public void SetRandomizeTicks(int opAnd = 3) =>
         FrameState.SetTics(FrameState.CurrentTick - (WorldStatic.Random.NextByte() & opAnd));
 
-    private int ApplyArmorDamage(int damage)
-    {
-        if (ArmorProperties == null || Armor == 0)
-            return damage;
-        if (ArmorProperties.Armor.SavePercent == 0)
-            return damage;
-
-        int armorDamage = (int)(damage * (ArmorProperties.Armor.SavePercent / 100.0));
-        if (Armor < armorDamage)
-            armorDamage = Armor;
-
-        Armor -= armorDamage;
-        damage = MathHelper.Clamp(damage - armorDamage, 0, damage);
-
-        if (Armor <= 0)
-            ArmorDefinition = null;
-
-        return damage;
-    }
+    protected virtual int ApplyArmorDamage(int damage) => damage;
 
     protected static bool IsWeapon(EntityDefinition definition) => definition.IsType(Inventory.WeaponClassName);
     protected static bool IsAmmo(EntityDefinition definition) => definition.IsType(Inventory.AmmoClassName);

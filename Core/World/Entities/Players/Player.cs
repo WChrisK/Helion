@@ -14,6 +14,7 @@ using Helion.World.Cheats;
 using Helion.World.Entities.Definition;
 using Helion.World.Entities.Definition.Composer;
 using Helion.World.Entities.Definition.Flags;
+using Helion.World.Entities.Definition.Properties;
 using Helion.World.Entities.Definition.Properties.Components;
 using Helion.World.Entities.Definition.States;
 using Helion.World.Entities.Inventories;
@@ -62,12 +63,15 @@ public class Player : Entity
     public double PrevAngle;
     public int DamageCount;
     public int BonusCount;
+    public int Armor;
     public TickCommand TickCommand = new();
     public int ExtraLight;
     public int TurnTics;
     public int KillCount;
     public int ItemCount;
     public int SecretsFound;
+    public EntityProperties? ArmorProperties => ArmorDefinition?.Properties;
+    public EntityDefinition? ArmorDefinition;
 
     protected double m_prevPitch;
     protected double m_viewZ;
@@ -113,6 +117,7 @@ public class Player : Entity
     // Possible line with middle texture clipping player's view.
     public bool ViewLineClip;
     public bool ViewPlaneClip;
+
     public override Player? PlayerObj => this;
     public override bool IsPlayer => true;
     public override int ProjectileKickBack => Weapon == null ? WorldStatic.World.GameInfo.DefKickBack : Weapon.KickBack;
@@ -197,8 +202,12 @@ public class Player : Entity
         SecretsFound = playerModel.SecretsFound;
         AttackDown = playerModel.AttackDown;
         Refire = playerModel.Refire;
+        Armor = playerModel.Armor;
 
         Inventory = new Inventory(playerModel, this, world.EntityManager.DefinitionComposer);
+
+        if (playerModel.ArmorDefinition != null)
+            ArmorDefinition = WorldStatic.EntityManager.DefinitionComposer.GetByName(playerModel.ArmorDefinition);
 
         if (playerModel.Weapon != null)
             Weapon = Inventory.Weapons.GetWeapon(playerModel.Weapon);
@@ -305,6 +314,8 @@ public class Player : Entity
         playerModel.WeaponFlashFrame = AnimationWeapon?.FlashState.ToFrameStateModel();
         playerModel.AttackDown = AttackDown;
         playerModel.Refire = Refire;
+        playerModel.ArmorDefinition = ArmorDefinition?.Name;
+        playerModel.Armor = Armor;
 
         Inventory.ToInventoryModel(playerModel.Inventory);
 
@@ -319,10 +330,12 @@ public class Player : Entity
 
     public void VoodooSync(Player player)
     {
+        Armor = player.Armor;
+        ArmorDefinition = player.ArmorDefinition;
         base.CopyProperties(player);
-
         // NoClip did not apply to the player
         Flags.NoClip = false;
+
         var items = player.Inventory.GetInventoryItems();
         for (int i = 0; i < items.Count; i++)
         {
@@ -357,6 +370,9 @@ public class Player : Entity
 
             foreach (CheatType cheat in player.Cheats.GetActiveCheats())
                 Cheats.SetCheatActive(cheat);
+
+            ArmorDefinition = player.ArmorDefinition;
+            Armor = player.Armor;
         }
 
         base.CopyProperties(entity);
@@ -1623,6 +1639,26 @@ public class Player : Entity
             m_killer = new WeakEntity(null);
 
         ForceLowerWeapon(true);
+    }
+
+    protected override int ApplyArmorDamage(int damage)
+    {
+        if (ArmorProperties == null || Armor == 0)
+            return damage;
+        if (ArmorProperties.Armor.SavePercent == 0)
+            return damage;
+
+        int armorDamage = (int)(damage * (ArmorProperties.Armor.SavePercent / 100.0));
+        if (Armor < armorDamage)
+            armorDamage = Armor;
+
+        Armor -= armorDamage;
+        damage = MathHelper.Clamp(damage - armorDamage, 0, damage);
+
+        if (Armor <= 0)
+            ArmorDefinition = null;
+
+        return damage;
     }
 
     public void Jump()

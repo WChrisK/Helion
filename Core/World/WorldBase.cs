@@ -2135,12 +2135,13 @@ public abstract partial class WorldBase : IWorld
     private void HandleRespawn(Entity entity)
     {
         entity.Respawn = false;
-        if (entity.Definition.Flags.Solid && IsPositionBlockedByEntity(entity, entity.SpawnPoint))
+        var spawnPoint = EntityManager.GetSpawnPoint(entity);
+        if (entity.Definition.Flags.Solid && IsPositionBlockedByEntity(entity, spawnPoint))
             return;
 
-        var newEntity = EntityManager.Create(entity.Definition, entity.SpawnPoint, 0, entity.AngleRadians, entity.ThingId, true);
+        var newEntity = EntityManager.Create(entity.Definition, spawnPoint, 0, entity.AngleRadians, entity.ThingId, true);
         CreateTeleportFog(entity.Position);
-        CreateTeleportFog(entity.SpawnPoint);
+        CreateTeleportFog(spawnPoint);
 
         newEntity.Flags.Friendly = entity.Flags.Friendly;
         newEntity.AngleRadians = entity.AngleRadians;

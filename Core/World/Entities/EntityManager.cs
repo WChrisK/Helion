@@ -49,19 +49,18 @@ public class EntityManager : IDisposable
     public IWorld World;    
 
     public EntityDefinitionComposer DefinitionComposer;
-    public List<Player> Players = new();
-    public List<Player> VoodooDolls = new();
-    public List<Entity> MusicChangers = new();
-    private LookupArray<Player?> RealPlayersByNumber = new();
-    private readonly Dictionary<int, ISet<Entity>> TidToEntity = new();
-    private readonly UniformGrid<Block> m_blocks;
+    public List<Player> Players = [];
+    public List<Player> VoodooDolls = [];
+    public List<Entity> MusicChangers = [];
+    private readonly LookupArray<Player?> RealPlayersByNumber = new();
+    private readonly Dictionary<int, ISet<Entity>> TidToEntity = [];
+    private readonly Dictionary<int, Vec3D> m_spawnPoints = [];
 
     public EntityManager(IWorld world)
     {
         World = world;
         SpawnLocations = new SpawnLocations(world);
         DefinitionComposer = world.ArchiveCollection.EntityDefinitionComposer;
-        m_blocks = world.Blockmap.Blocks;
     }
 
     private static bool ZHeightSet(double z)
@@ -363,6 +362,13 @@ public class EntityManager : IDisposable
         return player;
     }
 
+    public Vec3D GetSpawnPoint(Entity entity)
+    {
+        if (m_spawnPoints.TryGetValue(entity.Index, out var spawnPoint))
+            return spawnPoint;
+        return default;
+    }
+
     private static object GetBoundingObject(WorldModelPopulateResult result, Sector sector, int? entityId)
     {
         if (!entityId.HasValue)
@@ -461,8 +467,8 @@ public class EntityManager : IDisposable
             World.Link(entity);
 
         FinalizeEntity(entity, checkOnGround, zHeight, initSpawn);
-
-        entity.SpawnPoint = entity.Position;
+                
+        m_spawnPoints[entity.Index] = entity.Position;
         // Vanilla did not execute action functions on creation, it just set the state
         // Action functions will not execute until Tick() is called
         if (entity.Definition.SpawnState != null)

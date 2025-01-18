@@ -86,7 +86,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public double LowestCeilingZ;
     public double HighestFloorZ;
     public DynamicArray<Sector> IntersectSectors = new();
-    public Vec3D SpawnPoint;
     public int Id;
     public int ThingId;
     public Line? BlockingLine;
@@ -209,7 +208,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
         PrevPosition = entityModel.Box.GetCenter();
         Velocity = entityModel.GetVelocity();
-        SpawnPoint = entityModel.GetSpawnPoint();
         Sector = world.Sectors[entityModel.Sector];
         SectorDamageSpecial = Sector.SectorDamageSpecial;
                 
@@ -240,13 +238,14 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public EntityModel ToEntityModel(EntityModel entityModel)
     {
+        var spawnPoint = World.EntityManager.GetSpawnPoint(this);
         entityModel.Name = Definition.Name;
         entityModel.Id = Id;
         entityModel.ThingId = ThingId;
         entityModel.AngleRadians = AngleRadians;
-        entityModel.SpawnPointX = SpawnPoint.X;
-        entityModel.SpawnPointY = SpawnPoint.Y;
-        entityModel.SpawnPointZ = SpawnPoint.Z;
+        entityModel.SpawnPointX = spawnPoint.X;
+        entityModel.SpawnPointY = spawnPoint.Y;
+        entityModel.SpawnPointZ = spawnPoint.Z;
         entityModel.Box = ToEntityBoxModel();
         entityModel.VelocityX = Velocity.X;
         entityModel.VelocityY = Velocity.Y;
@@ -759,6 +758,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
         return other.Flags.Solid;
     }
+
+    public Vec3D GetSpawnPoint() => World.EntityManager.GetSpawnPoint(this);
 
     public double GetMaxStepHeight()
     {

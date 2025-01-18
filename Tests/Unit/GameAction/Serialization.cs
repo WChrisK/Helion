@@ -308,7 +308,7 @@ public class Serialization : IDisposable
             entity.AngleRadians.Should().Be(newEntity.AngleRadians);
             // Prev position is loaded as Postion when loading a serialized world.
             entity.Position.Should().Be(newEntity.PrevPosition);
-            entity.SpawnPoint.Should().Be(newEntity.SpawnPoint);
+            entity.GetSpawnPoint().Should().Be(newEntity.GetSpawnPoint());
             entity.Position.Should().Be(newEntity.Position);
             entity.Velocity.Should().Be(newEntity.Velocity);
             entity.FrozenTics.Should().Be(newEntity.FrozenTics);

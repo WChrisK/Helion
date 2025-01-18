@@ -33,6 +33,7 @@ using Helion.Maps;
 using Helion.Util.Container;
 using Helion.Maps.Shared;
 using Helion.World.Geometry.Subsectors;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Helion.World;
 
@@ -178,6 +179,7 @@ public interface IWorld : IDisposable
     void FindExits();
     bool SetSkillLevel(SkillLevel skill);
     Subsector ToSubsector(double x, double y);
+    bool GetPickupPlayer(Entity entity, [NotNullWhen(true)] out Player? player);
 
     WorldModel ToWorldModel();
     GameFilesModel GetGameFilesModel();

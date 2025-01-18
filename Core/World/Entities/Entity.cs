@@ -91,7 +91,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public Line? BlockingLine;
     public Entity? BlockingEntity;
     public SectorPlane? BlockingSectorPlane;
-    public Player? PickupPlayer;
     public SectorDamageSpecial? SectorDamageSpecial;
 
     // Values that are modified from EntityProperties
@@ -952,8 +951,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Tracer = WeakEntity.Default;
         OnEntity = WeakEntity.Default;
         OverEntity = WeakEntity.Default;
-        Owner = WeakEntity.Default;
-        PickupPlayer = null;        
+        Owner = WeakEntity.Default;      
 
         if (World.DataCache.FreeEntity(this))
             Definition = null!;

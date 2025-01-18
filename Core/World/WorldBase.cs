@@ -53,7 +53,6 @@ using static Helion.Dehacked.DehackedDefinition;
 using Helion.Resources.Definitions.MusInfo;
 using Helion.Util.Extensions;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics;
 using Helion.Resources.Archives.Entries;
 using Helion.Maps.Doom;
 using Helion.Maps.Specials.Vanilla;
@@ -170,13 +169,14 @@ public abstract partial class WorldBase : IWorld
     private int m_lastBumpActivateGametick;
     private LevelChangeType m_levelChangeType = LevelChangeType.Next;
     private LevelChangeFlags m_levelChangeFlags;
-    private Entity[] m_bossBrainTargets = Array.Empty<Entity>();
-    private readonly List<IMonsterCounterSpecial> m_bossDeathSpecials = new();
-    private readonly byte[] m_lineOfSightReject = Array.Empty<byte>();
+    private Entity[] m_bossBrainTargets = [];
+    private readonly List<IMonsterCounterSpecial> m_bossDeathSpecials = [];
+    private readonly byte[] m_lineOfSightReject = [];
     private readonly Func<DamageFuncParams, int> m_defaultDamageAction;
     private readonly EntityDefinition? m_teleportFogDef;
-    private readonly Dictionary<int, MusInfoDef> m_sectorToMusicChange = new();
+    private readonly Dictionary<int, MusInfoDef> m_sectorToMusicChange = [];
     private readonly DynamicArray<Entity> m_fallCheckEntities = new(32);
+    private readonly Dictionary<int, Player> m_itemPickupIndexToPlayers = [];
     private MusInfoDef? m_lastMusicChange;
     private int m_changeMusicTicks = 0;
     private int m_losDistance = DefaultLineOfSightDistance;
@@ -1767,8 +1767,9 @@ public abstract partial class WorldBase : IWorld
             player = findPlayer;
         }
 
-        item.PickupPlayer = player;
+        m_itemPickupIndexToPlayers[item.Index] = player; 
         item.FrameState.SetState(Constants.FrameStates.Pickup, warn: false);
+        m_itemPickupIndexToPlayers.Remove(item.Index);
 
         if (item.Flags.CountItem)
         {
@@ -3180,4 +3181,6 @@ public abstract partial class WorldBase : IWorld
     }
 
     public virtual Player GetCameraPlayer() => Player;
+
+    public bool GetPickupPlayer(Entity entity, [NotNullWhen(true)] out Player? player) => m_itemPickupIndexToPlayers.TryGetValue(entity.Index, out player);
 }

@@ -1322,7 +1322,7 @@ public static class EntityActionFunctions
 
     private static void A_GiveInventory(Entity entity)
     {
-        if (entity.PickupPlayer == null || entity.Frame.Args.Values.Count == 0)
+        if (!entity.World.GetPickupPlayer(entity, out var player) || entity.Frame.Args.Values.Count == 0)
             return;
 
         int amount = 1;
@@ -1334,7 +1334,7 @@ public static class EntityActionFunctions
             return;
 
         for (int i = 0; i < amount; i++)
-            entity.PickupPlayer.GiveItem(def, null);
+            player.GiveItem(def, null);
     }
 
     private static void A_GiveToChildren(Entity entity)
@@ -2125,14 +2125,14 @@ public static class EntityActionFunctions
 
     private static void A_SelectWeapon(Entity entity)
     {
-        if (entity.PickupPlayer == null || entity.Frame.Args.Values.Count == 0)
+        if (!entity.World.GetPickupPlayer(entity, out var player) || entity.Frame.Args.Values.Count == 0)
             return;
 
-        Weapon? weapon = entity.PickupPlayer.Inventory.Weapons.GetWeapon(entity.Frame.Args.GetString(0));
+        var weapon = player.Inventory.Weapons.GetWeapon(entity.Frame.Args.GetString(0));
         if (weapon == null)
             return;
 
-        entity.PickupPlayer.ChangeWeapon(weapon);
+        player.ChangeWeapon(weapon);
     }
 
     private static void A_SentinelBob(Entity entity)
@@ -2772,12 +2772,12 @@ public static class EntityActionFunctions
 
     private static void HealThing(Entity entity)
     {
-        if (entity.PickupPlayer == null)
+        if (!entity.World.GetPickupPlayer(entity, out var player))
             return;
 
         int healAmount = entity.Frame.Args.GetInt(0);
-        if (healAmount > 0 && entity.PickupPlayer.Health < healAmount)
-            entity.PickupPlayer.Health = healAmount;
+        if (healAmount > 0 && player.Health < healAmount)
+            player.Health = healAmount;
     }
 
     private static void A_Die(Entity entity)

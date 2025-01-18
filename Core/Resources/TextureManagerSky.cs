@@ -209,7 +209,8 @@ public partial class TextureManager
 
     private Texture? MapSkyTexture(string textureName, Id24SkyDefinition skyDefinition)
     {
-        if (!m_textureLookup.TryGetValue(textureName, out var texture))
+        var texture = GetTexture(textureName, ResourceNamespace.Textures);
+        if (texture.Index == Constants.NoTextureIndex)
         {
             Log.Error($"Could not find texture {textureName} for sky {textureName}");
             return null;

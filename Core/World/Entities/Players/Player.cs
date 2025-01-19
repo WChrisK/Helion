@@ -5,6 +5,7 @@ using Helion.Maps.Specials.ZDoom;
 using Helion.Models;
 using Helion.Render.Common.World;
 using Helion.Render.OpenGL.Shared;
+using Helion.Resources.Archives.Entries;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Resources.Definitions.SoundInfo;
 using Helion.Util;
@@ -756,14 +757,14 @@ public class Player : Entity
             FrameState.Frame.MasterFrameIndex == Definition.SpawnState.Value &&
             Definition.SeeState.HasValue)
         {
-            FrameState.SetFrameIndex(Definition.SeeState.Value);
+            FrameState.SetFrameIndex(this, Definition.SeeState.Value);
         }
         else if (!hasMoveSpeed && Velocity == Vec3D.Zero && Definition.SpawnState.HasValue &&
             FrameState.Frame.MasterFrameIndex != Definition.SpawnState.Value &&
             // Doom hard-coded this to check for any of the 4 running states S_PLAY_RUN1 - S_PLAY_RUN4
             FrameState.Frame.MasterFrameIndex - Definition.SeeState.Value < 4)
         {
-            FrameState.SetFrameIndex(Definition.SpawnState.Value);
+            FrameState.SetFrameIndex(this, Definition.SpawnState.Value);
         }
     }
 
@@ -1432,12 +1433,12 @@ public class Player : Entity
         if (Weapon.Definition.Flags.WeaponMeleeWeapon)
         {
             if (Definition.MissileState.HasValue)
-                FrameState.SetFrameIndex(Definition.MissileState.Value);
+                FrameState.SetFrameIndex(this, Definition.MissileState.Value);
             return;
         }
 
         if (Definition.MeleeState.HasValue)
-            FrameState.SetFrameIndex(Definition.MeleeState.Value);
+            FrameState.SetFrameIndex(this, Definition.MeleeState.Value);
     }
 
     /// <summary>
@@ -1535,7 +1536,7 @@ public class Player : Entity
 
     private void SetWeaponFrameState(Weapon weapon, string label)
     {
-        weapon.FrameState.SetState(label);
+        weapon.FrameState.SetState(this, weapon.Definition, label);
     }
 
     public void SetWeaponUp()

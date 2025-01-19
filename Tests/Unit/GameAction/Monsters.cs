@@ -390,7 +390,7 @@ namespace Helion.Tests.Unit.GameAction
             source.Target().Should().Be(Player);
 
             Player.Health = 0;
-            source.FrameState.SetFrameIndex(frameIndex);
+            source.FrameState.SetFrameIndex(source,frameIndex);
             GameActions.AssertAnySound(World, source);
 
             source.Target().Should().Be(Player);
@@ -416,7 +416,7 @@ namespace Helion.Tests.Unit.GameAction
 
             GameActions.SetEntityOutOfBounds(World, dest);
             GameActions.SetEntityPosition(World, Player, new Vec2D(-256, -416));
-            source.FrameState.SetFrameIndex(frameIndex);
+            source.FrameState.SetFrameIndex(source, frameIndex);
             World.CheckLineOfSight(source, Player).Should().BeTrue();
             source.Target().Should().Be(Player);
             GameActions.SetEntityOutOfBounds(World, Player);
@@ -437,7 +437,7 @@ namespace Helion.Tests.Unit.GameAction
             source.Target().Should().Be(dest);
 
             GameActions.SetEntityOutOfBounds(World, dest);
-            source.FrameState.SetFrameIndex(frameIndex);
+            source.FrameState.SetFrameIndex(source, frameIndex);
             GameActions.AssertAnySound(World, source);
             World.CheckLineOfSight(source, Player).Should().BeFalse();
             source.Target().Should().Be(Player);

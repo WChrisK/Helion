@@ -189,7 +189,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Alpha = (float)Properties.Alpha;
         MonsterMovementSpeed = Properties.MonsterMovementSpeed;
 
-        FrameState = new(this, definition);
+        FrameState = new(definition);
     }
 
     public void Set(int index, EntityModel entityModel, EntityDefinition definition, IWorld world)
@@ -430,7 +430,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         if (Flags.BossSpawnShot && ReactionTime > 0)
             ReactionTime--;
 
-        FrameState.Tick();
+        FrameState.Tick(this);
 
         if (IsDisposed)
             return;
@@ -482,25 +482,25 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public void SetSpawnState()
     {
         if (Definition.SpawnState != null)
-            FrameState.SetFrameIndex(Definition.SpawnState.Value);
+            FrameState.SetFrameIndex(this, Definition.SpawnState.Value);
     }
 
     public void SetSeeState()
     {
         if (Definition.SeeState != null)
-            FrameState.SetFrameIndex(Definition.SeeState.Value);
+            FrameState.SetFrameIndex(this, Definition.SeeState.Value);
     }
 
     public void SetMissileState()
     {
         if (Definition.MissileState != null)
-            FrameState.SetFrameIndex(Definition.MissileState.Value);
+            FrameState.SetFrameIndex(this, Definition.MissileState.Value);
     }
 
     public void SetMeleeState()
     {
         if (Definition.MeleeState != null)
-            FrameState.SetFrameIndex(Definition.MeleeState.Value);
+            FrameState.SetFrameIndex(this, Definition.MeleeState.Value);
     }
 
     public void SetDeathState(Entity? source)
@@ -510,7 +510,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         if (!IsDisposed)
             SetDeath(source, false);
                 
-        FrameState.SetFrameIndex(deathState);
+        FrameState.SetFrameIndex(this, deathState);
 
         if (!IsDisposed)
             SetDeathRandomizeTicks();
@@ -522,7 +522,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
             SetDeath(source, true);
 
         if (Definition.XDeathState.HasValue)
-            FrameState.SetFrameIndex(Definition.XDeathState.Value);
+            FrameState.SetFrameIndex(this, Definition.XDeathState.Value);
 
         if (!IsDisposed)
             SetDeathRandomizeTicks();
@@ -548,8 +548,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public bool SetCrushState()
     {
         // Check if there is a Crush state, otherwise default to GenericCrush
-        if (FrameState.SetState(Constants.FrameStates.Crush, warn: false) ||
-            FrameState.SetState(Constants.FrameStates.GenericCrush, warn: false))
+        if (FrameState.SetState(this, Definition, Constants.FrameStates.Crush, warn: false) ||
+            FrameState.SetState(this, Definition, Constants.FrameStates.GenericCrush, warn: false))
         {
             Flags.DontGib = true;
             Flags.Solid = false;
@@ -564,7 +564,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     {        
         if (Definition.RaiseState != null)
         {
-            FrameState.SetFrameIndex(Definition.RaiseState.Value);
+            FrameState.SetFrameIndex(this, Definition.RaiseState.Value);
             Health = Definition.Properties.Health;
             Height = Definition.Properties.Height;
             Flags.CrushGiblets = false;
@@ -574,7 +574,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     }
 
     public void SetHealState() =>
-        FrameState.SetState(Constants.FrameStates.Heal);
+        FrameState.SetState(this, Definition, Constants.FrameStates.Heal);
 
     public void PlaySeeSound(SoundContext ctx = default)
     {
@@ -708,7 +708,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         else if (setPainState && !Flags.Skullfly && Definition.PainState != null)
         {
             Flags.JustHit = true;
-            FrameState.SetFrameIndex(Definition.PainState.Value);
+            FrameState.SetFrameIndex(this, Definition.PainState.Value);
         }
 
         // Skullfly is not turned off here as the original game did not do this
@@ -934,7 +934,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         UnlinkFromWorld();
         Unlink();
 
-        FrameState.SetFrameIndex(Constants.NullFrameIndex);
+        FrameState.SetFrameIndex(this, Constants.NullFrameIndex);
 
         BlocksLength = 0;
         SectorNodes.Clear();

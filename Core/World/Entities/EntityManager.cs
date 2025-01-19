@@ -473,7 +473,7 @@ public class EntityManager : IDisposable
         // Vanilla did not execute action functions on creation, it just set the state
         // Action functions will not execute until Tick() is called
         if (entity.Definition.SpawnState != null)
-            entity.FrameState.SetFrameIndexNoAction(entity.Definition.SpawnState.Value);
+            entity.FrameState.SetFrameIndexNoAction(entity, entity.Definition.SpawnState.Value);
 
         if (entity.Definition.Flags.CountKill || entity.Definition.Flags.IsMonster)
             entity.Health = Math.Max((int)(entity.Health * World.SkillDefinition.MonsterHealthFactor), 1);

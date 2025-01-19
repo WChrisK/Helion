@@ -7,6 +7,7 @@ using Helion.Maps.Specials;
 using Helion.Maps.Specials.Compatibility;
 using Helion.Maps.Specials.Vanilla;
 using Helion.Maps.Specials.ZDoom;
+using Helion.Resources.Archives.Entries;
 using Helion.Util;
 using Helion.Util.RandomGenerators;
 using Helion.World.Entities.Inventories;
@@ -770,7 +771,7 @@ public static class EntityActionFunctions
         if (target != null && entity.Definition.MeleeState != null && entity.InMeleeRange(target))
         {
             entity.PlayAttackSound();
-            entity.FrameState.SetFrameIndex(entity.Definition.MeleeState.Value);
+            entity.FrameState.SetFrameIndex(entity, entity.Definition.MeleeState.Value);
         }
 
         if (entity.IsDisposed)
@@ -784,7 +785,7 @@ public static class EntityActionFunctions
             entity.Definition.MissileState != null && entity.CheckMissileRange())
         {
             entity.Flags.JustAttacked = true;
-            entity.FrameState.SetFrameIndex(entity.Definition.MissileState.Value);
+            entity.FrameState.SetFrameIndex(entity, entity.Definition.MissileState.Value);
         }
         else if (WorldStatic.Random.NextByte() < 3)
         {
@@ -1362,7 +1363,7 @@ public static class EntityActionFunctions
         if (entity.PlayerObj != null)
         {
             if (entity.Definition.MissileState != null)
-                entity.FrameState.SetFrameIndex(entity.Definition.MissileState.Value);
+                entity.FrameState.SetFrameIndex(entity, entity.Definition.MissileState.Value);
             entity.PlayerObj.Weapon?.SetFlashState();
         }
     }
@@ -1828,7 +1829,7 @@ public static class EntityActionFunctions
         if (entity.PlayerObj.IsDead)
         {
             entity.PlayerObj.WeaponOffset.Y = Constants.WeaponBottom;
-            entity.PlayerObj.AnimationWeapon.FrameState.SetState("NULL");
+            entity.PlayerObj.AnimationWeapon.FrameState.SetState(entity, entity.Definition, "NULL");
             return;
         }
 
@@ -1883,7 +1884,7 @@ public static class EntityActionFunctions
         if (WorldStatic.Dehacked)
             playReadySound = player.Weapon.FrameState.Frame.VanillaIndex == (int)ThingState.SAW;
         else
-            playReadySound = player.Weapon.FrameState.IsState(Constants.FrameStates.Ready);
+            playReadySound = player.Weapon.FrameState.IsState(player.Weapon.Definition, Constants.FrameStates.Ready);
 
         if (!player.IsVooDooDoll && player.Weapon.Definition.Properties.Weapons.ReadySound.Length > 0 && playReadySound)
         {
@@ -2791,7 +2792,7 @@ public static class EntityActionFunctions
         if (WorldStatic.World.Random.NextByte() < entity.Frame.DehackedMisc2 &&
             entityFrameTable.VanillaFrameMap.TryGetValue(entity.Frame.DehackedMisc1, out EntityFrame? newFrame))
         {
-            entity.FrameState.SetState(newFrame);
+            entity.FrameState.SetState(entity, newFrame);
         }
     }
 
@@ -2985,7 +2986,7 @@ public static class EntityActionFunctions
 
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (WorldStatic.Random.NextByte() < chance && entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
-            entity.PlayerObj!.Weapon!.FrameState.SetState(newFrame);
+            entity.PlayerObj!.Weapon!.FrameState.SetState(entity, newFrame);
     }
 
     private static void A_ConsumeAmmo(Entity entity)
@@ -3014,7 +3015,7 @@ public static class EntityActionFunctions
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (entity.PlayerObj!.Inventory.Amount(weapon.Definition.Properties.Weapons.AmmoType) < amount &&
             entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
-            weapon.FrameState.SetState(newFrame);
+            weapon.FrameState.SetState(entity, newFrame);
     }
 
     public static void A_FireRailGun(Entity entity)
@@ -3047,7 +3048,7 @@ public static class EntityActionFunctions
         Weapon weapon = entity.PlayerObj!.Weapon!;
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
-            weapon.FrameState.SetState(newFrame);
+            weapon.FrameState.SetState(entity, newFrame);
     }
 
     private static void A_GunFlashTo(Entity entity)
@@ -3060,7 +3061,7 @@ public static class EntityActionFunctions
         bool thirdPersonFrame = frame.DehackedArgs2 == 0;
 
         if (thirdPersonFrame)
-            entity.PlayerObj!.FrameState.SetState(Constants.FrameStates.Missile);
+            entity.PlayerObj!.FrameState.SetState(entity, entity.Definition, Constants.FrameStates.Missile);
 
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
@@ -3264,7 +3265,7 @@ public static class EntityActionFunctions
 
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (entity.Health < health && entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
-            entity.FrameState.SetState(newFrame);
+            entity.FrameState.SetState(entity, newFrame);
     }
 
     private static void A_JumpIfTargetInSight(Entity entity)
@@ -3290,7 +3291,7 @@ public static class EntityActionFunctions
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (distance > entity.Position.ApproximateDistance2D(target.Position) &&
             entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
-            entity.FrameState.SetState(newFrame);
+            entity.FrameState.SetState(entity, newFrame);
     }
 
     private static void A_JumpIfTracerInSight(Entity entity)
@@ -3316,7 +3317,7 @@ public static class EntityActionFunctions
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (distance > entity.Position.ApproximateDistance2D(tracer.Position) &&
             entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
-            entity.FrameState.SetState(newFrame);
+            entity.FrameState.SetState(entity, newFrame);
     }
 
     private static void A_JumpIfFlagsSet(Entity entity)
@@ -3332,7 +3333,7 @@ public static class EntityActionFunctions
 
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
-            entity.FrameState.SetState(newFrame);
+            entity.FrameState.SetState(entity, newFrame);
     }
 
     private static void A_AddFlags(Entity entity)
@@ -3384,7 +3385,7 @@ public static class EntityActionFunctions
         if (!WorldStatic.World.CheckLineOfSight(from, to))
             return;
 
-        from.FrameState.SetState(newFrame);
+        from.FrameState.SetState(from, newFrame);
     }
 
     private static bool GetDehackedActorDefinition(Entity entity, int index, [NotNullWhen(true)] out EntityDefinition? def)

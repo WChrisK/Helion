@@ -101,7 +101,7 @@ public partial class Entity
 
     public void SetClosetLook()
     {
-        FrameState.SetFrameIndex(WorldStatic.World.ArchiveCollection.EntityFrameTable.ClosetLookFrameIndex);
+        FrameState.SetFrameIndex(this, WorldStatic.World.ArchiveCollection.EntityFrameTable.ClosetLookFrameIndex);
         AddFrameTicks(ClosetLookCount);
         ClosetLookCount++;
     }
@@ -114,7 +114,7 @@ public partial class Entity
     public void SetClosetChase()
     {
         ClosetFlags = ClosetFlags & ~ClosetFlags.ClosetLook;
-        FrameState.SetFrameIndex(WorldStatic.World.ArchiveCollection.EntityFrameTable.ClosetChaseFrameIndex);
+        FrameState.SetFrameIndex(this, WorldStatic.World.ArchiveCollection.EntityFrameTable.ClosetChaseFrameIndex);
         AddFrameTicks(ClosetChaseCount);
         ClosetChaseCount++;
     }

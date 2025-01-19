@@ -1768,7 +1768,7 @@ public abstract partial class WorldBase : IWorld
         }
 
         m_itemPickupIndexToPlayers[item.Index] = player; 
-        item.FrameState.SetState(Constants.FrameStates.Pickup, warn: false);
+        item.FrameState.SetState(item, item.Definition, Constants.FrameStates.Pickup, warn: false);
         m_itemPickupIndexToPlayers.Remove(item.Index);
 
         if (item.Flags.CountItem)
@@ -2400,7 +2400,7 @@ public abstract partial class WorldBase : IWorld
         if (offset == 0)
             blood.SetRandomizeTicks();
         else if (blood.Definition.SpawnState != null)
-            blood.FrameState.SetFrameIndex(blood.Definition.SpawnState.Value + offset);
+            blood.FrameState.SetFrameIndex(blood, blood.Definition.SpawnState.Value + offset);
     }
 
     private static void MoveIntersectCloser(in Vec3D start, ref Vec3D intersect, double angle, double distXY)
@@ -2759,7 +2759,7 @@ public abstract partial class WorldBase : IWorld
         healChaseEntity.SetTarget(entity);
         EntityActionFunctions.A_FaceTarget(healChaseEntity);
         healChaseEntity.SetTarget(saveTarget);
-        healChaseEntity.FrameState.SetState(m_healChaseData.HealState);
+        healChaseEntity.FrameState.SetState(entity, m_healChaseData.HealState);
 
         if (m_healChaseData.HealSound.Length > 0)
             WorldStatic.SoundManager.CreateSoundOn(entity, m_healChaseData.HealSound, new SoundParams(entity));

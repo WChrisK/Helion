@@ -1592,7 +1592,7 @@ public class Player : Entity
         bool damageApplied = base.Damage(source, damage, setPainState, damageType);
         if (damageApplied)
         {
-            SetAttacker(source?.Owner.Get() ?? source);
+            SetAttacker(source?.Owner() ?? source);
             PlayPainSound(damage);
             DamageCount += damage;
             DamageCount = Math.Min(DamageCount, Definition.Properties.Health);
@@ -1638,7 +1638,7 @@ public class Player : Entity
         m_deathTics = MathHelper.Clamp((int)(Definition.Properties.Player.ViewHeight - DeathHeight), 0, (int)Definition.Properties.Player.ViewHeight);
 
         if (source != null)
-            m_killer = new WeakEntity(source.Owner.Get() ?? source);
+            m_killer = new WeakEntity(source.Owner() ?? source);
         if (m_killer.Get() == this)
             m_killer = new WeakEntity(null);
 

@@ -58,11 +58,11 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public int Health;
     public int MoveCount;
 
-    public WeakEntity Target = WeakEntity.Default;
-    public WeakEntity Tracer = WeakEntity.Default;
-    public WeakEntity OnEntity = WeakEntity.Default;
-    public WeakEntity OverEntity = WeakEntity.Default;
-    public WeakEntity Owner = WeakEntity.Default;
+    public Entity? Target() => m_target != null && m_target.Id == m_targetId ? m_target : null;
+    public Entity? Tracer() => m_tracer != null && m_tracer.Id == m_tracerId ? m_tracer : null;
+    public Entity? Owner() => m_owner != null && m_owner.Id == m_ownerId ? m_owner : null;
+    public Entity? OnEntity() => m_onEntity != null && m_onEntity.Id == m_onEntityId ? m_onEntity : null;
+    public Entity? OverEntity() => m_overEntity != null && m_overEntity.Id == m_overEntityId ? m_overEntity : null;
 
     public EntityDefinition Definition;
     public EntityProperties Properties;
@@ -126,6 +126,19 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public virtual Player? PlayerObj => null;
     public virtual bool IsPlayer => false;
     public bool OnSectorFloorZ(Sector sector) => sector.ToFloorZ(Position) == Position.Z;
+
+    // This follows the pattern from WeakEntity.cs. Unrolled the properties here to save the padding from the struct.
+    private Entity? m_target;
+    private Entity? m_tracer;
+    private Entity? m_owner;
+    private Entity? m_onEntity;
+    private Entity? m_overEntity;
+
+    private int m_targetId;
+    private int m_tracerId;
+    private int m_ownerId;
+    private int m_onEntityId;
+    private int m_overEntityId;
 
     public Entity()
     {
@@ -244,9 +257,9 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         entityModel.Health = Health;
         entityModel.FrozenTics = FrozenTics;
         entityModel.MoveCount = MoveCount;
-        entityModel.Owner = Owner.Get()?.Id;
-        entityModel.Target = Target.Get()?.Id;
-        entityModel.Tracer = Tracer.Get()?.Id;
+        entityModel.Owner = Owner()?.Id;
+        entityModel.Target = Target()?.Id;
+        entityModel.Tracer = Tracer()?.Id;
         entityModel.MoveLinked = MoveLinked;
         entityModel.Respawn = Respawn;
         entityModel.Sector = Sector.Id;
@@ -279,27 +292,40 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetTarget(Entity? entity) =>
-        Target = new WeakEntity(entity);
+    public void SetTarget(Entity? entity)
+    {
+        m_target = entity;
+        m_targetId = entity == null ? 0 : entity.Id;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetTracer(Entity? entity) =>
-        Tracer = new WeakEntity(entity);
+    public void SetTracer(Entity? entity)
+    {
+        m_tracer = entity;
+        m_tracerId = entity == null ? 0 : entity.Id;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetOnEntity(Entity? entity)
     {
-        HadOnEntity = HadOnEntity || OnEntity.NotNull();
-        OnEntity = new WeakEntity(entity);
+        HadOnEntity = HadOnEntity || OnEntity() != null;
+        m_onEntity = entity;
+        m_onEntityId = entity == null ? 0 : entity.Id;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetOverEntity(Entity? entity) =>
-        OverEntity = new WeakEntity(entity);
+    public void SetOverEntity(Entity? entity)
+    {
+        m_overEntity = entity;
+        m_overEntityId = entity == null ? 0 : entity.Id;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetOwner(Entity? entity) =>
-        Owner = new WeakEntity(entity);
+    public void SetOwner(Entity? entity)
+    {
+        m_owner = entity;
+        m_ownerId = entity == null ? 0 : entity.Id;
+    }
 
     public double PitchTo(Entity entity) => Position.Pitch(entity.Position, Position.XY.Distance(entity.Position.XY));
     public double PitchTo(Vec3D start, Entity entity) => start.Pitch(entity.Position, Position.XY.Distance(entity.Position.XY));
@@ -606,7 +632,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public virtual bool CanDamage(Entity source, DamageType damageType)
     {
-        Entity damageSource = source.Owner.Get() ?? source;
+        Entity damageSource = source.Owner() ?? source;
         if (damageSource.IsPlayer)
             return true;
 
@@ -648,12 +674,12 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         bool willRetaliate = false;
         if (source != null)
         {
-            damageSource = source.Owner.Get() ?? source;
+            damageSource = source.Owner() ?? source;
             if (!CanDamage(source, damageType))
                 return false;
 
             canRetaliate = WillRetaliateFrom(damageSource) && Threshold <= 0 && !damageSource.IsDead && damageSource != this;
-            willRetaliate = canRetaliate && damageSource != Target.Get();
+            willRetaliate = canRetaliate && damageSource != Target();
             if (willRetaliate && !damageSource.Flags.NoTarget && !IsFriend(damageSource))
                 SetTarget(damageSource);
         }
@@ -712,7 +738,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public bool CanBlockEntity(Entity other)
     {
-        if (this == other || Owner.Get() == other || other.Flags.NoClip)
+        if (this == other || Owner() == other || other.Flags.NoClip)
             return false;
 
         if (Flags.Ripper)
@@ -914,11 +940,20 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         SectorNodes.Clear();
         IntersectSectors.Clear();
 
-        Target = WeakEntity.Default;
-        Tracer = WeakEntity.Default;
-        OnEntity = WeakEntity.Default;
-        OverEntity = WeakEntity.Default;
-        Owner = WeakEntity.Default;      
+        m_target = null;
+        m_targetId = 0;
+
+        m_tracer = null;
+        m_tracerId = 0;
+
+        m_owner = null;
+        m_ownerId = 0;
+
+        m_onEntity = null;
+        m_onEntityId = 0;
+
+        m_overEntity = null;
+        m_overEntityId = 0;
 
         if (World.DataCache.FreeEntity(this))
             Definition = null!;

@@ -74,14 +74,14 @@ namespace Helion.Tests.Unit.GameAction
             World.NoiseAlert(Player, Player);
             GameActions.TickWorld(World, 10);
 
-            imp1.Target.Get().Should().Be(Player);
-            imp2.Target.Get().Should().Be(Player);
+            imp1.Target().Should().Be(Player);
+            imp2.Target().Should().Be(Player);
 
             // Blocked by block sound line
-            imp3.Target.Get().Should().BeNull();
+            imp3.Target().Should().BeNull();
 
             // Separated
-            imp4.Target.Get().Should().BeNull();
+            imp4.Target().Should().BeNull();
         }
 
         [Fact(DisplayName = "Sound from sector 2")]

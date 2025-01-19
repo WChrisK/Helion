@@ -39,7 +39,7 @@ public partial class Entity
         m_direction = direction;
 
     public bool ValidEnemyTarget(Entity? entity) => entity != null &&
-        !entity.IsDead && (!IsFriend(entity) || Target.IsNull());
+        !entity.IsDead && (!IsFriend(entity) || Target() == null);
 
     public void SetMoveDirection(MoveDir dir) => m_direction = dir;
 
@@ -72,7 +72,7 @@ public partial class Entity
         {
             if (Flags.Friendly)
             {
-                var previousTarget = Target.Get();
+                var previousTarget = Target();
                 SetTarget(newTarget);
                 if (newTarget != null && newTarget.IsPlayer && newTarget != previousTarget && Definition.MissileState.HasValue)
                 {
@@ -169,7 +169,7 @@ public partial class Entity
         // Dehacked can modify things into enemies that can move but this flag doesn't exist in the original game.
         // Set this flag for anything that tries to move, otherwise they can clip ito other things and get stuck, especialliy with float.
         Flags.CanPass = true;
-        Assert.Precondition(Target.Get() != null, "Target is null");
+        Assert.Precondition(Target() != null, "Target is null");
 
         MoveDir dir0;
         MoveDir dir1;
@@ -180,7 +180,7 @@ public partial class Entity
         if (oppositeDirection != MoveDir.None)
             oppositeDirection = (MoveDir)(((int)oppositeDirection) ^ 4);
 
-        var target = Target.Get()!;
+        var target = Target()!;
         double dx = target.Position.X - Position.X;
         double dy = target.Position.Y - Position.Y;
 
@@ -408,7 +408,7 @@ public partial class Entity
         if (IsPlayer || IsDead || !Flags.Float || Flags.Skullfly || Flags.InFloat || OnGround)
             return 0.0;
 
-        var target = Target.Get();
+        var target = Target();
         if (target == null)
             return 0.0;
 
@@ -446,7 +446,7 @@ public partial class Entity
 
     public bool CheckMissileRange()
     {
-        var target = Target.Get();
+        var target = Target();
         if (target == null || IsFriend(target) || !WorldStatic.World.CheckLineOfSight(this, target))
             return false;
 

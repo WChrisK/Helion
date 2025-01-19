@@ -866,7 +866,7 @@ public abstract partial class WorldBase : IWorld
                 entity.SectorDamageSpecial?.Tick(entity);
                                 
                 if (!WorldStatic.InfinitelyTallThings &&
-                    (entity.HadOnEntity || entity.OnEntity.NotNull()) &&
+                    (entity.HadOnEntity || entity.OnEntity() != null) &&
                     !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&                    
                     entity.Velocity.Z == 0 && entity.Position.Z > entity.HighestFloorSector.Floor.Z)
                 {
@@ -1579,7 +1579,7 @@ public abstract partial class WorldBase : IWorld
     public virtual bool DamageEntity(Entity target, Entity? source, int damage, DamageType damageType,
         Thrust thrust = Thrust.HorizontalAndVertical, Sector? sectorSource = null)
     {
-        if (source != null && source.Owner.Get() == target)
+        if (source != null && source.Owner() == target)
             damage = (int)(damage * source.Properties.SelfDamageFactor);
 
         if (!target.Flags.Shootable || damage == 0 || target.IsDead)
@@ -1590,7 +1590,7 @@ public abstract partial class WorldBase : IWorld
         {
             Vec3D savePos = source.Position;
             // Check if the source is owned by this target and the same position and move to get a valid thrust angle. (player shot missile against wall)
-            if (source.Owner.Get() == target && source.Position.XY == target.Position.XY)
+            if (source.Owner() == target && source.Position.XY == target.Position.XY)
             {
                 Vec3D move = (source.Position.XY + Vec2D.UnitCircle(target.AngleRadians) * 2).To3D(source.Position.Z);
                 source.Position = move;
@@ -1616,7 +1616,7 @@ public abstract partial class WorldBase : IWorld
             {
                 // Player rocket jumping check, back up the source Z to get a valid pitch
                 // Only done for players, otherwise blowing up enemies will launch them in the air
-                if (zEqual && target.IsPlayer && source.Owner.Get() == target)
+                if (zEqual && target.IsPlayer && source.Owner() == target)
                 {
                     Vec3D sourcePos = new Vec3D(source.Position.X, source.Position.Y, source.Position.Z - 1.0);
                     pitch = sourcePos.Pitch(target.Position, 0.0);
@@ -1855,7 +1855,7 @@ public abstract partial class WorldBase : IWorld
             if (!entity.OverlapsZ(intersectEntity) || entity == intersectEntity)
                 continue;
 
-            if (entity.Flags.Ripper && entity.Owner.Get() != intersectEntity)
+            if (entity.Flags.Ripper && entity.Owner() != intersectEntity)
                 RipDamage(entity, intersectEntity);
             if (intersectEntity.Flags.Touchy && ShouldDieFromTouch(entity, intersectEntity))
                 intersectEntity.Kill(null);
@@ -2100,7 +2100,7 @@ public abstract partial class WorldBase : IWorld
 
         // If the player killed themself then don't display the obituary message
         // There is probably a special string for this in multiplayer for later
-        Entity killer = deathSource.Owner.Get() ?? deathSource;
+        Entity killer = deathSource.Owner() ?? deathSource;
         if (player == killer)
             return;
 
@@ -2299,7 +2299,7 @@ public abstract partial class WorldBase : IWorld
         if (applyDamage <= 0)
             return;
 
-        Entity? originalOwner = source.Owner.Get();
+        Entity? originalOwner = source.Owner();
         source.SetOwner(attackSource);
         DamageEntity(entity, source, applyDamage, DamageType.AlwaysApply, thrust);
         source.SetOwner(originalOwner);
@@ -2755,7 +2755,7 @@ public abstract partial class WorldBase : IWorld
         entity.Flags.Solid = true;
         entity.Height = entity.Definition.Properties.Height;
 
-        var saveTarget = healChaseEntity.Target.Get();
+        var saveTarget = healChaseEntity.Target();
         healChaseEntity.SetTarget(entity);
         EntityActionFunctions.A_FaceTarget(healChaseEntity);
         healChaseEntity.SetTarget(saveTarget);
@@ -2778,7 +2778,7 @@ public abstract partial class WorldBase : IWorld
 
     public void TracerSeek(Entity entity, double threshold, double maxTurnAngle, GetTracerVelocityZ velocityZ)
     {
-        var tracer = entity.Tracer.Get();
+        var tracer = entity.Tracer();
         if (tracer == null || tracer.IsDead)
             return;
 
@@ -2794,7 +2794,7 @@ public abstract partial class WorldBase : IWorld
     public void SetNewTracerTarget(Entity entity, double fieldOfViewRadians, double radius)
     {
         m_newTracerTargetData.Entity = entity;
-        m_newTracerTargetData.Owner = entity.Owner.Get() ?? entity;
+        m_newTracerTargetData.Owner = entity.Owner() ?? entity;
         m_newTracerTargetData.FieldOfViewRadians = fieldOfViewRadians;
         BlockmapTraverser.EntityTraverse(new Box2D(entity.Position.X, entity.Position.Y, radius), m_setNewTracerTargetAction);
     }
@@ -2891,7 +2891,7 @@ public abstract partial class WorldBase : IWorld
 
     private static void SetTracerAngle(Entity entity, double threshold, double maxTurnAngle)
     {
-        var tracer = entity.Tracer.Get();
+        var tracer = entity.Tracer();
         if (tracer == null)
             return;
         // Doom's angles were always 0-360 and did not allow negatives (thank you arithmetic overflow)

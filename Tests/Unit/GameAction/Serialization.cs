@@ -122,7 +122,7 @@ public class Serialization : IDisposable
 
         GameActions.GetSector(world, 0).SoundTarget.Get().Should().Be(world.Player);
         var zombieman = Zombieman(world);
-        zombieman.Target.Get().Should().Be(world.Player);
+        zombieman.Target().Should().Be(world.Player);
         world.Player.Velocity = new Vec3D(0, 16, 2);
     }
 
@@ -130,13 +130,13 @@ public class Serialization : IDisposable
     {
         var revenant = GameActions.CreateEntity(world, "Revenant", new Vec3D(-256, -16, 0), frozen: false);
         revenant.AngleRadians = GameActions.GetAngle(Bearing.South);
-        GameActions.TickWorld(world, () => { return revenant.Target.Get() == null; }, () => { });
-        revenant.Target.Get().Should().Be(world.Player);
+        GameActions.TickWorld(world, () => { return revenant.Target() == null; }, () => { });
+        revenant.Target().Should().Be(world.Player);
 
         EntityActionFunctions.A_SkelMissile(revenant);
         var tracer = GameActions.GetEntity(world, "RevenantTracer");
         tracer.SetTracer(world.Player);
-        tracer.Tracer.Get().Should().Be(world.Player);
+        tracer.Tracer().Should().Be(world.Player);
     }
 
     private static void ChangeWorld2(SinglePlayerWorld world)
@@ -323,11 +323,11 @@ public class Serialization : IDisposable
             for (int i = 0; i < entity.IntersectSectors.Length; i++)
                 entity.IntersectSectors[i].Id.Should().Be(newEntity.IntersectSectors[i].Id);
 
-            entity.Target.Get()?.Id.Should().Be(newEntity.Target.Get()?.Id);
-            entity.Tracer.Get()?.Id.Should().Be(newEntity.Tracer.Get()?.Id);
-            entity.OnEntity.Get()?.Id.Should().Be(newEntity.OnEntity.Get()?.Id);
-            entity.OverEntity.Get()?.Id.Should().Be(newEntity.OverEntity.Get()?.Id);
-            entity.Owner.Get()?.Id.Should().Be(newEntity.Owner.Get()?.Id);
+            entity.Target()?.Id.Should().Be(newEntity.Target()?.Id);
+            entity.Tracer()?.Id.Should().Be(newEntity.Tracer()?.Id);
+            entity.OnEntity()?.Id.Should().Be(newEntity.OnEntity()?.Id);
+            entity.OverEntity()?.Id.Should().Be(newEntity.OverEntity()?.Id);
+            entity.Owner()?.Id.Should().Be(newEntity.Owner()?.Id);
 
             entity.Threshold.Should().Be(newEntity.Threshold);
             entity.ReactionTime.Should().Be(newEntity.ReactionTime);

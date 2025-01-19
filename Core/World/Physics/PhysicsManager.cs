@@ -154,7 +154,7 @@ public sealed class PhysicsManager
         for (int i = 0; i < entities.Length; i++)
         {
             var entity = entities[i];
-            var onEntity = entity.OnEntity.Get();
+            var onEntity = entity.OnEntity();
             bool hasOnEntity = onEntity != null;
             if (!hasOnEntity && entity.HadOnEntity)
             {
@@ -210,7 +210,7 @@ public sealed class PhysicsManager
                 entity.OnGround && entity.HighestFloorSector == sector)
             {
                 double top = destZ;
-                var onEntity = entity.OnEntity.Get();
+                var onEntity = entity.OnEntity();
                 if (onEntity != null)
                     top = onEntity.Position.Z + onEntity.Height;
                 entity.Position.Z = top;
@@ -518,7 +518,7 @@ public sealed class PhysicsManager
         while (node != null)
         {
             var checkEntity = node.Value;
-            var overEntity = checkEntity.OverEntity.Get();
+            var overEntity = checkEntity.OverEntity();
             if (overEntity != null && ContainsEntity(crushEntities, overEntity))
                 m_stackCrush.Add(checkEntity);
             node = node.Next;
@@ -593,7 +593,7 @@ public sealed class PhysicsManager
 
         pusher.Position.Z = pusher.LowestCeilingZ - pusher.Height;
 
-        var onEntity = pusher.OnEntity.Get();
+        var onEntity = pusher.OnEntity();
         if (onEntity != null)
         {
             Entity? current = onEntity;
@@ -604,7 +604,7 @@ public sealed class PhysicsManager
 
                 current.Position.Z = pusher.Position.Z - current.Height;
                 pusher = current;
-                current = pusher.OnEntity.Get();
+                current = pusher.OnEntity();
             }
         }
     }
@@ -711,7 +711,7 @@ public sealed class PhysicsManager
             return;
 
         double prevHighestFloorZ = entity.HighestFloorZ;
-        var prevOnEntity = entity.OnEntity.Get();
+        var prevOnEntity = entity.OnEntity();
         SetEntityBoundsZ(entity, intersectSectors, clampToLinkedSectors, tryMove);
         entity.SetOnEntity(null);
 
@@ -758,7 +758,7 @@ public sealed class PhysicsManager
             SetEntityOnFloorOrEntity(entity, highestFloor, smoothZ && prevHighestFloorZ != entity.HighestFloorZ);
         }
 
-        if (prevOnEntity != null && prevOnEntity != entity.OnEntity.Get())
+        if (prevOnEntity != null && prevOnEntity != entity.OnEntity())
             prevOnEntity.SetOverEntity(null);
 
         entity.CheckOnGround();
@@ -1162,7 +1162,7 @@ doneLinkToSectors:
     {
         if (!WorldStatic.InfinitelyTallThings && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && !entity.IsPlayer)
         {
-            var onEntity = entity.OnEntity.Get();
+            var onEntity = entity.OnEntity();
             if (onEntity != null && (onEntity.Flags.Flags1 & EntityFlags.ActsLikeBridgeFlag) == 0)
                 return false;
         }
@@ -1726,7 +1726,7 @@ doneLinkToSectors:
         // Adds z velocity on the first tick, then adds -2 on the second instead of -1 on the first and -1 on the second.
         bool noVelocity = entity.Velocity.Z == 0;
         bool shouldApplyGravity = entity.ShouldApplyGravity();
-        if (noVelocity && !shouldApplyGravity && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && entity.OnEntity.IsNull())
+        if (noVelocity && !shouldApplyGravity && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && entity.OnEntity() == null)
             return;
 
         if (entity.Flags.NoGravity && entity.ShouldApplyFriction())
@@ -1736,7 +1736,7 @@ doneLinkToSectors:
 
         double floatZ = entity.GetEnemyFloatMove();
         // Only return if OnEntity is null. Need to apply clamping to prevent issues with this entity floating when the entity beneath is no longer blocking.
-        if (noVelocity && floatZ == 0 && entity.OnEntity.IsNull())
+        if (noVelocity && floatZ == 0 && entity.OnEntity() == null)
             return;
 
         Vec3D previousVelocity = entity.Velocity;

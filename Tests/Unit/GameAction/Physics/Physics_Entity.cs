@@ -386,7 +386,8 @@ namespace Helion.Tests.Unit.GameAction
             def.Flags.NoBlockmap = false;
 
             var monster = GameActions.CreateEntity(World, Zombieman, LiftCenter1.To3D(0));
-            monster.BlocksLength.Should().Be(1);
+            var blocks = (monster.BlockRange.EndX - monster.BlockRange.StartX) + (monster.BlockRange.EndY - monster.BlockRange.StartY);
+            blocks.Should().Be(0);
             monster.SectorNodes.Length.Should().Be(1);
             monster.Sector.Entities.Contains(monster).Should().BeTrue();
 

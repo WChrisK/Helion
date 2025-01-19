@@ -45,7 +45,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public Entity? RenderBlockNext;
     public Entity? RenderBlockPrevious;
     public Block? RenderBlock;
-    public BlockRange LastBlockRange;
+    public BlockRange BlockRange;
 
     public int BlockmapCount;
     public EntityFlags Flags;
@@ -108,8 +108,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public virtual int ProjectileKickBack => Properties.ProjectileKickBack;
 
     public bool IsBlocked() => BlockingEntity != null || BlockingLine != null || BlockingSectorPlane != null;
-    public Block[] Blocks = new Block[4];
-    public int BlocksLength;
     public readonly DynamicArray<LinkableNode<Entity>> SectorNodes = new();
     public bool IsDisposed;
 
@@ -152,6 +150,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Sector = Sector.Default;
         SubsectorId = 0;
         Properties = null!;
+        BlockRange.StartX = Constants.ClearBlock;
     }
 
     public void Set(int index, int id, int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
@@ -398,24 +397,30 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public unsafe void UnlinkBlockMapBlocks()
     {
-        for (int blockIndex = 0; blockIndex < BlocksLength; blockIndex++)
+        if (BlockRange.StartX == Constants.ClearBlock)
+            return;
+
+        var blocks = World.Blockmap.Blocks.Blocks;
+        for (var by = BlockRange.StartY; by <= BlockRange.EndY; by++)
         {
-            var block = Blocks[blockIndex];
-            var data = block.EntityIndices;
-            for (int index = block.EntityIndicesLength - 1; index >= 0; index--)
+            for (var bx = BlockRange.StartX; bx <= BlockRange.EndX; bx++)
             {
-                if (data[index] == Index)
+                var block = blocks[by * World.Blockmap.Blocks.Width + bx];
+                var data = block.EntityIndices;
+                for (int index = block.EntityIndicesLength - 1; index >= 0; index--)
                 {
-                    block.EntityIndicesLength--;
-                    if (index < block.EntityIndicesLength)
-                        Array.Copy(data, index + 1, data, index, block.EntityIndicesLength - index);
-                    break;
+                    if (data[index] == Index)
+                    {
+                        block.EntityIndicesLength--;
+                        if (index < block.EntityIndicesLength)
+                            Array.Copy(data, index + 1, data, index, block.EntityIndicesLength - index);
+                        break;
+                    }
                 }
             }
-
-            Blocks[blockIndex] = null!;
         }
-        BlocksLength = 0;
+
+        BlockRange.StartX = Constants.ClearBlock;
     }
 
     public virtual void Tick()
@@ -936,7 +941,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
         FrameState.SetFrameIndex(this, Constants.NullFrameIndex);
 
-        BlocksLength = 0;
         SectorNodes.Clear();
         IntersectSectors.Clear();
 
@@ -979,7 +983,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         SlowTickMultiplier = 1;
         ChaseFailureSkipCount = 0;
         ClosetChaseSpeed = DefaultClosetChaseSpeed;
-        LastBlockRange = default;
     }
 
     private void Unlink()

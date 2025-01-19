@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Grids;
 using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
+using Helion.Util;
 using Helion.Util.Assertion;
-using Helion.Util.Container;
 using Helion.World.Entities;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
@@ -78,7 +76,7 @@ public class BlockMap
 
     public void Link(Entity entity, bool checkLastBlock)
     {
-        Assert.Precondition(entity.BlocksLength == 0 || checkLastBlock, "Forgot to unlink entity from blockmap");
+        Assert.Precondition((entity.BlockRange.StartX == Constants.ClearBlock) || checkLastBlock, "Forgot to unlink entity from blockmap");
 
         var boxMinX = entity.Position.X - entity.Radius;
         var boxMaxX = entity.Position.X + entity.Radius;
@@ -89,17 +87,16 @@ public class BlockMap
         var blockEndX = (short)Math.Min((int)((boxMaxX - m_blocks.Bounds.Min.X) / m_blocks.Dimension), m_blocks.Width - 1);
         var blockEndY = (short)Math.Min((int)((boxMaxY - m_blocks.Bounds.Min.Y) / m_blocks.Dimension), m_blocks.Height - 1);
 
-        ref var range = ref entity.LastBlockRange;
         // If the block range matches then the entity will link to the same blocks.
         // The block stores entities by id in an array so this saves the array copy to remove the index.
-        if (checkLastBlock && range.StartX == blockStartX && range.StartY == blockStartY && range.EndX == blockEndX && range.EndY == blockEndY)
+        if (checkLastBlock && entity.BlockRange.StartX == blockStartX && entity.BlockRange.StartY == blockStartY && entity.BlockRange.EndX == blockEndX && entity.BlockRange.EndY == blockEndY)
             return;
 
-        entity.LastBlockRange.StartX = blockStartX;
-        entity.LastBlockRange.StartY = blockStartY;
-        entity.LastBlockRange.EndX = blockEndX;
-        entity.LastBlockRange.EndY =  blockEndY;
         entity.UnlinkBlockMapBlocks();
+        entity.BlockRange.StartX = blockStartX;
+        entity.BlockRange.StartY = blockStartY;
+        entity.BlockRange.EndX = blockEndX;
+        entity.BlockRange.EndY =  blockEndY;
 
         for (var by = blockStartY; by <= blockEndY; by++)
         {
@@ -111,11 +108,6 @@ public class BlockMap
                     Array.Resize(ref block.EntityIndices, block.EntityIndices.Length * 2);
 
                 block.EntityIndices[block.EntityIndicesLength++] = entity.Index;
-
-                if (entity.BlocksLength == entity.Blocks.Length)
-                    Array.Resize(ref entity.Blocks, entity.Blocks.Length * 2);
-
-                entity.Blocks[entity.BlocksLength++] = block;
             }
         }
     }

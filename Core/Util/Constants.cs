@@ -36,6 +36,8 @@ public static class Constants
 
     public const int HitscanTestDamage = int.MinValue;
 
+    public const short ClearBlock = short.MaxValue;
+
     /// <summary>
     /// The name of the decorate player class.
     /// </summary>

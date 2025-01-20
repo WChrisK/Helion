@@ -66,3 +66,4 @@
   - Fix map options not being set from default map (nojump nofreelook etc)
   - Fix issue where moving sectors may not render when inside a misclassified voodoo doll closet
   - Fix dehacked weapon ammo use amount
+  - Fix music changes not persisting through successive save games

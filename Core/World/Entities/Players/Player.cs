@@ -554,6 +554,8 @@ public class Player : Entity
         Vec3D position = prevPos.Interpolate(currentPos, t);
         CheckLineClip(currentPos);
         position = CheckPlaneClip(currentPos, prevPos, position);
+        if (!Flags.NoClip && position.Z <= HighestFloorZ)
+            position.Z = HighestFloorZ + 1;
 
         double playerAngle = AngleRadians;
         double playerPitch = PitchRadians;

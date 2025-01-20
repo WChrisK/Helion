@@ -180,6 +180,7 @@ public abstract partial class WorldBase : IWorld
     private MusInfoDef? m_lastMusicChange;
     private int m_changeMusicTicks = 0;
     private int m_losDistance = DefaultLineOfSightDistance;
+    private string m_activeMusic;
 
     private RadiusExplosionData m_radiusExplosion;
     private readonly Action<Entity> m_radiusExplosionAction;
@@ -809,7 +810,11 @@ public abstract partial class WorldBase : IWorld
         Profiler.World.Total.Stop();
     }
 
-    public virtual bool PlayLevelMusic(string name, byte[]? data, MusicFlags flags = MusicFlags.Loop) => true;
+    public virtual bool PlayLevelMusic(string name, byte[]? data, MusicFlags flags = MusicFlags.Loop)
+    {
+        m_activeMusic = name;
+        return true;
+    }
 
     protected void InvokeMusicChange(Entry entry, MusicFlags flags) => OnMusicChanged?.Invoke(this, new(entry, flags));
 

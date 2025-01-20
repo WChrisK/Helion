@@ -355,6 +355,7 @@ public class SinglePlayerWorld : WorldBase
 
     public override bool PlayLevelMusic(string name, byte[]? data, MusicFlags flags = MusicFlags.Loop)
     {
+        base.PlayLevelMusic(name, data, flags);
         GetMusicEntry(name, out var lookup, out var entry);
 
         if (data == null)

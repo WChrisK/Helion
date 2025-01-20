@@ -177,7 +177,6 @@ public abstract partial class WorldBase : IWorld
     private readonly Dictionary<int, MusInfoDef> m_sectorToMusicChange = [];
     private readonly DynamicArray<Entity> m_fallCheckEntities = new(32);
     private readonly Dictionary<int, Player> m_itemPickupIndexToPlayers = [];
-    private readonly HashSet<int> m_tickSectorDamageSpecials = new(1024);
     private MusInfoDef? m_lastMusicChange;
     private int m_changeMusicTicks = 0;
     private int m_losDistance = DefaultLineOfSightDistance;
@@ -861,7 +860,7 @@ public abstract partial class WorldBase : IWorld
                 if (entity.Respawn)
                     HandleRespawn(entity);
 
-                m_tickSectorDamageSpecials.Add(entity.Sector.Id);
+                entity.Sector.SectorDamageSpecial?.Tick(entity);
 
                 if (!WorldStatic.InfinitelyTallThings &&
                     (entity.HadOnEntity || entity.OnEntity() != null) &&
@@ -874,21 +873,6 @@ public abstract partial class WorldBase : IWorld
 
             entity = nextEntity;
         }
-
-        foreach (var sectorId in m_tickSectorDamageSpecials)
-        {
-            var sector = Sectors[sectorId];
-            if (sector.SectorDamageSpecial == null)
-                continue;
-
-            for (var node = sector.Entities.Head; node != null; node = node.Next)
-            {
-                if (node.Value.Sector == sector)
-                    sector.SectorDamageSpecial.Tick(node.Value);
-            }
-        }
-
-        m_tickSectorDamageSpecials.Clear();
 
         // Check entities that are subject to falling and may have been on top of another entity that is no longer valid.
         // This often happens with cacodemon clusters where a dead one is on top of many and needs to fall.

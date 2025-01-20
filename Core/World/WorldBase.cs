@@ -60,7 +60,6 @@ using Helion.Util.Loggers;
 using Helion.Graphics.Palettes;
 using Helion.Maps.Shared;
 using Helion.World.Geometry.Islands;
-using System.Diagnostics;
 
 namespace Helion.World;
 

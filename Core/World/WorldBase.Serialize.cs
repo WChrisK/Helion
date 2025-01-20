@@ -72,7 +72,7 @@ public partial class WorldBase
         s_worldModel.KillCount = LevelStats.KillCount;
         s_worldModel.ItemCount = LevelStats.ItemCount;
         s_worldModel.SecretCount = LevelStats.SecretCount;
-        s_worldModel.MusicName = m_lastMusicChange == null ? MapInfo.Music : m_lastMusicChange.Name;
+        s_worldModel.MusicName = m_lastMusicChange?.Name ?? s_worldModel.MusicName ?? MapInfo.Music;
         return s_worldModel;
     }
 

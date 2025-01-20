@@ -65,3 +65,4 @@
   - Fix transfer sky specials 171 and 172 to apply Y offset from line 
   - Fix map options not being set from default map (nojump nofreelook etc)
   - Fix issue where moving sectors may not render when inside a misclassified voodoo doll closet
+  - Fix dehacked weapon ammo use amount

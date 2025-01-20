@@ -1534,12 +1534,8 @@ public class Player : Entity
 
         // Doom hard coded the decrease amounts for each weapon fire. Have to check if ammo use was changed via dehacked.
         // Handles example case where weapon is rocket launcher but fire calls A_FireBFG.
-        if (amount <= 0 ||
-            Weapon.Definition.Properties.Weapons.AmmoUseSet ||
-            Weapon.AmmoDefinition?.Properties.Weapons.AmmoUseSet == true)
-        {
+        if (amount <= 0 || Weapon.Definition.Properties.Weapons.AmmoUseSet)
             amount = Weapon.Definition.Properties.Weapons.AmmoUse;
-        }
 
         Inventory.Remove(Weapon.Definition.Properties.Weapons.AmmoType, amount);
     }

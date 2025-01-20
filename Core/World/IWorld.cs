@@ -168,6 +168,8 @@ public interface IWorld : IDisposable
     void SetSectorLightLevel(Sector sector, short lightLevel);
     void SetSectorFloorLightLevel(Sector sector, short lightLevel);
     void SetSectorCeilingLightLevel(Sector sector, short lightLevel);
+    void SetSectorEffect(Sector sector, SectorEffect effect);
+    void SetSectorKillEffect(Sector sector, InstantKillEffect effect);
     void SetEntityPosition(Entity entity, Vec3D pos);
     void ToggleChaseCameraMode();
     void SectorInstantKillEffect(Entity entity, InstantKillEffect effect);

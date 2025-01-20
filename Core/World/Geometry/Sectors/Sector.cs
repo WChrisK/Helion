@@ -881,15 +881,6 @@ public sealed class Sector
                 SetSectorEffect(changes.SectorEffect.Value);
             if (changes.KillEffect.HasValue)
                 SetKillEffect(changes.KillEffect.Value);
-
-            var node = Entities.Head;
-            while (node != null)
-            {
-                var entity = node.Value;
-                if (entity.Sector == this)
-                    entity.SectorDamageSpecial = SectorDamageSpecial;
-                node = node.Next;
-            }
         }
     }
 }

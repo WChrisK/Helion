@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Helion.Audio;
 using Helion.Maps.Specials.ZDoom;
 using Helion.Models;
 using Helion.Util;
 using Helion.World.Entities;
-using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Physics;
 using Helion.World.Sound;
@@ -267,10 +265,10 @@ public class SectorMoveSpecial : ISectorSpecial
                 Sector.SectorDamageSpecial = null;
 
             if (MoveData.SectorEffect != null)
-                Sector.SetSectorEffect(MoveData.SectorEffect.Value);
+                m_world.SetSectorEffect(Sector, MoveData.SectorEffect.Value);
 
             if (MoveData.KillEffect != null)
-                Sector.SetKillEffect(MoveData.KillEffect.Value);
+                m_world.SetSectorKillEffect(Sector, MoveData.KillEffect.Value);
 
             StopMovementSound();
             Sector.ClearActiveMoveSpecial(MoveData.SectorMoveType);

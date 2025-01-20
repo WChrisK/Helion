@@ -60,6 +60,7 @@ using Helion.Util.Loggers;
 using Helion.Graphics.Palettes;
 using Helion.Maps.Shared;
 using Helion.World.Geometry.Islands;
+using System.Diagnostics;
 
 namespace Helion.World;
 
@@ -177,6 +178,7 @@ public abstract partial class WorldBase : IWorld
     private readonly Dictionary<int, MusInfoDef> m_sectorToMusicChange = [];
     private readonly DynamicArray<Entity> m_fallCheckEntities = new(32);
     private readonly Dictionary<int, Player> m_itemPickupIndexToPlayers = [];
+    private readonly HashSet<int> m_tickSectorDamageSpecials = new(1024);
     private MusInfoDef? m_lastMusicChange;
     private int m_changeMusicTicks = 0;
     private int m_losDistance = DefaultLineOfSightDistance;
@@ -603,9 +605,6 @@ public abstract partial class WorldBase : IWorld
         if (worldModel == null)
             SpecialManager.StartInitSpecials(LevelStats);
 
-        for (var entity = EntityManager.Head; entity != null; entity = entity.Next)
-            entity.SectorDamageSpecial = entity.Sector.SectorDamageSpecial;
-
         StaticDataApplier.DetermineStaticData(this);
         SpecialManager.SectorSpecialDestroyed += SpecialManager_SectorSpecialDestroyed;
     }
@@ -863,8 +862,8 @@ public abstract partial class WorldBase : IWorld
                 if (entity.Respawn)
                     HandleRespawn(entity);
 
-                entity.SectorDamageSpecial?.Tick(entity);
-                                
+                m_tickSectorDamageSpecials.Add(entity.Sector.Id);
+
                 if (!WorldStatic.InfinitelyTallThings &&
                     (entity.HadOnEntity || entity.OnEntity() != null) &&
                     !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&                    
@@ -876,7 +875,22 @@ public abstract partial class WorldBase : IWorld
 
             entity = nextEntity;
         }
-        
+
+        foreach (var sectorId in m_tickSectorDamageSpecials)
+        {
+            var sector = Sectors[sectorId];
+            if (sector.SectorDamageSpecial == null)
+                continue;
+
+            for (var node = sector.Entities.Head; node != null; node = node.Next)
+            {
+                if (node.Value.Sector == sector)
+                    sector.SectorDamageSpecial.Tick(node.Value);
+            }
+        }
+
+        m_tickSectorDamageSpecials.Clear();
+
         // Check entities that are subject to falling and may have been on top of another entity that is no longer valid.
         // This often happens with cacodemon clusters where a dead one is on top of many and needs to fall.
         PhysicsManager.EntityFallCheck(m_fallCheckEntities);
@@ -3163,6 +3177,16 @@ public abstract partial class WorldBase : IWorld
     {
         sector.SetCeilingLightLevel(lightLevel, Gametick);
         SectorLightChanged?.Invoke(this, sector);
+    }
+
+    public void SetSectorEffect(Sector sector, SectorEffect effect)
+    {
+        sector.SetSectorEffect(effect);
+    }
+
+    public void SetSectorKillEffect(Sector sector, InstantKillEffect effect)
+    {
+        sector.SetKillEffect(effect);
     }
 
     public void SetSectorColorMap(Sector sector, Colormap? colormap)

@@ -1040,7 +1040,6 @@ public sealed class PhysicsManager
 doneLinkToSectors:
         entity.SubsectorId = centerSubsector.Id;
         entity.Sector = centerSector;
-        entity.SectorDamageSpecial = centerSector.SectorDamageSpecial;
         entity.IntersectSectors.Add(centerSector);
         entity.SectorNodes.Add(centerSector.Link(entity));
     }

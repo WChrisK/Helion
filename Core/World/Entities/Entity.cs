@@ -22,7 +22,6 @@ using static Helion.Util.Assertion.Assert;
 using Helion.World.Blockmap;
 using Helion.Graphics.Palettes;
 using System.Runtime.CompilerServices;
-using Helion.World.Special.Specials;
 
 namespace Helion.World.Entities;
 
@@ -87,7 +86,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public Line? BlockingLine;
     public Entity? BlockingEntity;
     public SectorPlane? BlockingSectorPlane;
-    public SectorDamageSpecial? SectorDamageSpecial;
 
     // Values that are modified from EntityProperties
     public int Threshold;
@@ -146,7 +144,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         HighestFloorSector = null!;
         LowestCeilingObject = null!;
         LowestCeilingSector = null!;
-        SectorDamageSpecial = null;
         Sector = Sector.Default;
         SubsectorId = 0;
         Properties = null!;
@@ -180,7 +177,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         HighestFloorObject = sector;
         LowestCeilingSector = sector;
         LowestCeilingObject = sector;
-        SectorDamageSpecial = sector.SectorDamageSpecial;
         CheckOnGround();
 
         Properties.Threshold = 0;
@@ -215,7 +211,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         PrevPosition = entityModel.Box.GetCenter();
         Velocity = entityModel.GetVelocity();
         Sector = world.Sectors[entityModel.Sector];
-        SectorDamageSpecial = Sector.SectorDamageSpecial;
                 
         MoveLinked = entityModel.MoveLinked;
         Respawn = entityModel.Respawn;
@@ -392,7 +387,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         BlockingLine = null;
         BlockingEntity = null;
         BlockingSectorPlane = null;
-        SectorDamageSpecial = null;
     }
 
     public unsafe void UnlinkBlockMapBlocks()

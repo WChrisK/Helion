@@ -1494,8 +1494,9 @@ public abstract partial class WorldBase : IWorld
                     EntityActivatedSpecial(args);
                 }
 
-                intersect.X = bi.Intersection.X;
-                intersect.Y = bi.Intersection.Y;
+                var point = bi.Line.Segment.FromTime(bi.SegTime);
+                intersect.X = point.X;
+                intersect.Y = point.Y;
                 intersect.Z = start.Z + (Math.Tan(pitch) * bi.SegTime * segLength);
 
                 if (bi.Line.Back == null)

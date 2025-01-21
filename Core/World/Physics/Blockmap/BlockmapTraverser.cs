@@ -183,7 +183,6 @@ public class BlockmapTraverser
                     }
 
                     ref var bi = ref arrayData[length];
-                    bi.Intersection = intersect;
                     bi.Line = null;
                     bi.Entity = entity;
                     bi.SegTime = seg.ToTime(intersect);
@@ -377,7 +376,7 @@ public class BlockmapTraverser
                     {
                         m_checkedLines[line->LineId] = checkCounter;
                         Vec2D intersect = line->Segment.FromTime(t);
-                        intersections.Add(new BlockmapIntersect(line->Line, line->Segment.FromTime(t), intersect.Distance(seg.Start)));
+                        intersections.Add(new BlockmapIntersect(line->Line, intersect.Distance(seg.Start)));
                     }
                 }
             }

@@ -236,18 +236,25 @@ public class DefinitionEntries
         m_parseUniversalMapInfo = true;
         m_parseLegacyMapInfo = true;
 
+        bool skyDefs = archive.AnyEntryByName("SKYDEFS");
+        bool umapInfo = archive.AnyEntryByName("UMAPINFO");
+
         bool hasBoth = archive.AnyEntryByName("DEHACKED") && archive.AnyEntryByName("DECORATE");
         if (ConfigCompatibility.PreferDehacked && hasBoth)
             m_parseDecorate = false;
         else if (!ConfigCompatibility.PreferDehacked && hasBoth)
             m_parseDehacked = false;
 
-        var hasZmapinfo = archive.AnyEntryByName("ZMAPINFO");
-        if (hasZmapinfo)
-            m_parseLegacyMapInfo = false;
+        // Prioritize UMAPINFO when SKYDEFS is present since MAPINFO can conflict with SKYDEFS.
+        if (!(umapInfo && skyDefs))
+        {
+            var hasZmapinfo = archive.AnyEntryByName("ZMAPINFO");
+            if (hasZmapinfo)
+                m_parseLegacyMapInfo = false;
 
-        if (hasZmapinfo || archive.AnyEntryByName("MAPINFO"))
-            m_parseUniversalMapInfo = false;
+            if (hasZmapinfo || archive.AnyEntryByName("MAPINFO"))
+                m_parseUniversalMapInfo = false;
+        }
 
         m_pnamesTextureXCollection = new PnamesTextureXCollection();
 

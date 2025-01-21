@@ -314,19 +314,22 @@ public class SaveMenu : Menu
             // Handle all other typed input.
             if (input.ConsumePressOrContinuousHold(Key.Backspace))
             {
-                if (m_customNameBuilder.ToString() == m_defaultSavedGameName)
+                if (m_customNameBuilder.Length == m_defaultSavedGameName.Length &&
+                    m_customNameBuilder.ToString() == m_defaultSavedGameName)
                 {
                     m_customNameBuilder.Clear();
                 }
 
                 if (m_customNameBuilder.Length > 0)
-                {
                     m_customNameBuilder.Remove(m_customNameBuilder.Length - 1, 1);
-                }
             }
 
             var chars = input.ConsumeTypedCharacters();
             m_customNameBuilder.Append(chars);
+            m_defaultSavedGameName = string.Empty;
+
+            if (m_customNameBuilder.Length > 128)
+                m_customNameBuilder.Length = 128;
 
             savedGameRow.Text = m_customNameBuilder.ToString() + Blink();
         }

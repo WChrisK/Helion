@@ -180,7 +180,7 @@ public abstract partial class WorldBase : IWorld
     private MusInfoDef? m_lastMusicChange;
     private int m_changeMusicTicks = 0;
     private int m_losDistance = DefaultLineOfSightDistance;
-    private string m_activeMusic;
+    private string m_activeMusic = string.Empty;
 
     private RadiusExplosionData m_radiusExplosion;
     private readonly Action<Entity> m_radiusExplosionAction;

@@ -61,7 +61,7 @@ public static class HudExtensions
 
         var textSpan = text.AsSpan();
         int sub = 1;
-        while (sub < textSpan.Length && hud.MeasureText(textSpan, font, fontSize).Width > maxWidth)
+        while (sub < text.Length && hud.MeasureText(textSpan, font, fontSize).Width > maxWidth)
         {
             textSpan = text.AsSpan(0, text.Length - sub);
             sub++;
@@ -81,16 +81,16 @@ public static class HudExtensions
 
         var textSpan = text.AsSpan();
         int sub = 1;
-        while (sub < textSpan.Length && hud.MeasureText(textSpan, font, fontSize).Width > maxWidth)
+        while (sub < text.Length && hud.MeasureText(textSpan, font, fontSize).Width > maxWidth)
         {
             textSpan = text.AsSpan(sub, text.Length - sub);
             sub++;
         }
 
-        if (textSpan.Length - sub <= 0)
+        if (textSpan.Length <= 0)
             return string.Empty;
 
-        return text.AsSpan(sub).ToString();
+        return textSpan.ToString();
     }
 
     public static ReadOnlySpan<char> TruncateText(this IHudRenderContext hud, string inputText, string font, int fontSize, int maxWidth)

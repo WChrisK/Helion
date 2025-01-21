@@ -647,6 +647,11 @@ public sealed class PhysicsManager
         return m_lineOpening;
     }
 
+    public LineOpening GetLineOpening(in StructLine line)
+    {
+        m_lineOpening.Set(line);
+        return m_lineOpening;
+    }
 
     public unsafe LineOpening GetLineOpeningWithDropoff(double x, double y, BlockLine* line)
     {

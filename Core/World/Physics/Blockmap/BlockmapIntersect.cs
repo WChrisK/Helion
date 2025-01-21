@@ -6,14 +6,14 @@ namespace Helion.World.Physics.Blockmap;
 
 public struct BlockmapIntersect : IComparable<BlockmapIntersect>
 {
-    public Entity? Entity;
-    public Line? Line;
+    public int? Entity;
+    public int? Line;
     public double SegTime;
 
-    public BlockmapIntersect(Line line, double segTime)
+    public BlockmapIntersect(int lineId, double segTime)
     {
         Entity = null;
-        Line = line;
+        Line = lineId;
         SegTime = segTime;
     }
 

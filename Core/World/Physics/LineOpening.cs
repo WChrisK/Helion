@@ -90,6 +90,39 @@ public class LineOpening
         OpeningHeight = CeilingZ - FloorZ;
     }
 
+    public void Set(in StructLine line)
+    {
+        Assert.Precondition(line.BackSector != null, "Cannot create LineOpening with one sided line");
+
+        Sector front = line.FrontSector;
+        Sector back = line.BackSector!;
+
+        if (front.Ceiling.Z < back.Ceiling.Z)
+        {
+            CeilingZ = front.Ceiling.Z;
+            CeilingSector = front;
+        }
+        else
+        {
+            CeilingZ = back.Ceiling.Z;
+            CeilingSector = back;
+        }
+
+        if (front.Floor.Z > back.Floor.Z)
+        {
+            FloorZ = front.Floor.Z;
+            FloorSector = front;
+        }
+        else
+        {
+            FloorZ = back.Floor.Z;
+            FloorSector = back;
+        }
+
+        OpeningHeight = CeilingZ - FloorZ;
+    }
+
+
     public void SetTop(TryMoveData tryMove, Entity other, bool missileClipCompat)
     {
         CeilingZ = tryMove.LowestCeilingZ;

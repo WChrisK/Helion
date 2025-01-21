@@ -1,30 +1,35 @@
 using System;
+using System.Runtime.CompilerServices;
 namespace Helion.World.Physics.Blockmap;
+
+public enum IntersectType
+{
+    Line,
+    Entity
+}
 
 public struct BlockmapIntersect : IComparable<BlockmapIntersect>
 {
-    public const int EntityFlag = 1 << 31;
+    const int EntityFlagShift = 31;
+    public const int EntityFlag = 1 << EntityFlagShift;
     public const int EntityMask = ~EntityFlag;
 
+    // Packs to 8 bytes
     public int Index;
-    public float SegTime;
+    public double SegTime;
 
     public BlockmapIntersect(int lineId, double segTime)
     {
         Index = lineId;
-        SegTime = (float)segTime;
+        SegTime = segTime;
     }
 
-    public readonly bool GetLineIndex(out int index)
-    {
-        if ((Index & EntityFlag) == 0)
-        {
-            index = Index;
-            return true;
-        }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly IntersectType GetIndex(out int index)
+    {
         index = Index & EntityMask;
-        return false;
+        return (IntersectType)(((uint)Index & EntityFlag) >> EntityFlagShift);
     }
 
     public readonly int CompareTo(BlockmapIntersect other)

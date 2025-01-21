@@ -1214,8 +1214,8 @@ public abstract partial class WorldBase : IWorld
 
         for (int i = 0; i < intersections.Length; i++)
         {
-            BlockmapIntersect bi = intersections[i];
-            if (!bi.GetLineIndex(out var lineIndex))
+            ref var bi = ref intersections.Data[i];
+            if (bi.GetIndex(out var lineIndex) != IntersectType.Line)
                 continue;
 
             var line = Lines[lineIndex];
@@ -1276,8 +1276,8 @@ public abstract partial class WorldBase : IWorld
 
         for (int i = 0; i < intersections.Length; i++)
         {
-            BlockmapIntersect bi = intersections[i];
-            if (!bi.GetLineIndex(out var lineIndex))
+            ref var bi = ref intersections.Data[i];
+            if (bi.GetIndex(out var lineIndex) != IntersectType.Line)
                 continue;
 
             var line = Lines[lineIndex];
@@ -1463,14 +1463,14 @@ public abstract partial class WorldBase : IWorld
 
         if (shooter.PlayerObj != null && (options & HitScanOptions.DrawRail) != 0)
         {
-            Vec3D railEnd = bi != null && bi.Value.GetLineIndex(out _) ? intersect : end;
+            Vec3D railEnd = bi != null && bi.Value.GetIndex(out _) == IntersectType.Line ? intersect : end;
             shooter.PlayerObj.Tracers.AddTracer(PrimitiveRenderType.Rail, (start, railEnd), Gametick, (0.2f, 0.2f, 1), 35);
         }
 
         if (bi == null)
             return null;
 
-        if (!bi.Value.GetLineIndex(out int index))
+        if (bi.Value.GetIndex(out int index) == IntersectType.Entity)
             return DataCache.Entities[index];
 
         return null;
@@ -1494,7 +1494,7 @@ public abstract partial class WorldBase : IWorld
         for (int i = 0; i < length; i++)
         {
             ref BlockmapIntersect bi = ref data[i];
-            var isLine = bi.GetLineIndex(out var index);
+            var isLine = bi.GetIndex(out var index) == IntersectType.Line;
             if (isLine)
             {
                 ref var line = ref StructLines.Data[index];
@@ -1585,7 +1585,7 @@ public abstract partial class WorldBase : IWorld
         if (returnValue != null && damage > 0)
         {
             // Only move closer on a line hit
-            bool isLine = returnValue.Value.GetLineIndex(out var index);
+            bool isLine = returnValue.Value.GetIndex(out var index) == IntersectType.Line;
             if (isLine && hitSector == null)
                 MoveIntersectCloser(start, ref intersect, angle, returnValue.Value.SegTime * segLength);
             CreateBloodOrPulletPuff(isLine ? null : DataCache.Entities[index], intersect, angle, distance, damage);
@@ -2505,7 +2505,7 @@ public abstract partial class WorldBase : IWorld
         {
             ref BlockmapIntersect bi = ref data[i];
 
-            if (bi.GetLineIndex(out int index))
+            if (bi.GetIndex(out int index) == IntersectType.Line)
             {
                 ref var line = ref StructLines.Data[index];
                 if (line.BackSector == null)

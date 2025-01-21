@@ -1215,10 +1215,10 @@ public abstract partial class WorldBase : IWorld
         for (int i = 0; i < intersections.Length; i++)
         {
             BlockmapIntersect bi = intersections[i];
-            if (bi.Line == null)
+            if (!bi.GetLineIndex(out var lineIndex))
                 continue;
 
-            var line = Lines[bi.Line.Value];
+            var line = Lines[lineIndex];
             OnTryEntityUseLine(entity, line);
 
             if (line.Segment.OnRight(start))
@@ -1277,10 +1277,10 @@ public abstract partial class WorldBase : IWorld
         for (int i = 0; i < intersections.Length; i++)
         {
             BlockmapIntersect bi = intersections[i];
-            if (bi.Line == null)
+            if (!bi.GetLineIndex(out var lineIndex))
                 continue;
 
-            var line = Lines[bi.Line.Value];
+            var line = Lines[lineIndex];
             bool specialActivate = line.HasSpecial && line.Segment.OnRight(start);
             if (specialActivate)
                 shouldUse = true;
@@ -1463,15 +1463,17 @@ public abstract partial class WorldBase : IWorld
 
         if (shooter.PlayerObj != null && (options & HitScanOptions.DrawRail) != 0)
         {
-            Vec3D railEnd = bi != null && bi.Value.Line != null ? intersect : end;
+            Vec3D railEnd = bi != null && bi.Value.GetLineIndex(out _) ? intersect : end;
             shooter.PlayerObj.Tracers.AddTracer(PrimitiveRenderType.Rail, (start, railEnd), Gametick, (0.2f, 0.2f, 1), 35);
         }
 
-        var index = bi?.Entity;
-        if (index == null)
+        if (bi == null)
             return null;
 
-        return DataCache.Entities[index.Value];
+        if (!bi.Value.GetLineIndex(out int index))
+            return DataCache.Entities[index];
+
+        return null;
     }
 
     public virtual BlockmapIntersect? FireHitScan(Entity shooter, Vec3D start, Vec3D end, double angle, double pitch, double distance, int damage,
@@ -1492,9 +1494,10 @@ public abstract partial class WorldBase : IWorld
         for (int i = 0; i < length; i++)
         {
             ref BlockmapIntersect bi = ref data[i];
-            if (bi.Line != null)
+            var isLine = bi.GetLineIndex(out var index);
+            if (isLine)
             {
-                ref var line = ref StructLines.Data[bi.Line.Value];
+                ref var line = ref StructLines.Data[index];
                 if (damage != Constants.HitscanTestDamage && (line.Flags & StructLineFlags.HasSpecial) != 0 && 
                     CanActivate(shooter, line.Line, ActivationContext.HitscanImpactsWall))
                 {
@@ -1562,9 +1565,9 @@ public abstract partial class WorldBase : IWorld
                 continue;
             }
 
-            if (bi.Entity != null && shooter.Index != bi.Entity)
+            if (!isLine && shooter.Index != index)
             {
-                var entity = DataCache.Entities[bi.Entity.Value];
+                var entity = DataCache.Entities[index];
                 if (entity.BoxIntersects(start, end, ref intersect))
                 {
                     returnValue = bi;
@@ -1582,9 +1585,10 @@ public abstract partial class WorldBase : IWorld
         if (returnValue != null && damage > 0)
         {
             // Only move closer on a line hit
-            if (returnValue.Value.Entity == null && hitSector == null)
+            bool isLine = returnValue.Value.GetLineIndex(out var index);
+            if (isLine && hitSector == null)
                 MoveIntersectCloser(start, ref intersect, angle, returnValue.Value.SegTime * segLength);
-            CreateBloodOrPulletPuff(returnValue.Value.Entity.HasValue ? DataCache.Entities[returnValue.Value.Entity.Value] : null, intersect, angle, distance, damage);
+            CreateBloodOrPulletPuff(isLine ? null : DataCache.Entities[index], intersect, angle, distance, damage);
         }
 
         return returnValue;
@@ -2501,9 +2505,9 @@ public abstract partial class WorldBase : IWorld
         {
             ref BlockmapIntersect bi = ref data[i];
 
-            if (bi.Line != null)
+            if (bi.GetLineIndex(out int index))
             {
-                ref var line = ref StructLines.Data[bi.Line.Value];
+                ref var line = ref StructLines.Data[index];
                 if (line.BackSector == null)
                     return TraversalPitchStatus.Blocked;
 
@@ -2529,9 +2533,9 @@ public abstract partial class WorldBase : IWorld
                     return TraversalPitchStatus.Blocked;
                 }
             }
-            else if (bi.Entity != null && startEntity.Index != bi.Entity.Value)
+            else if (startEntity.Index != index)
             {
-                var currentEntity = DataCache.Entities[bi.Entity.Value];
+                var currentEntity = DataCache.Entities[index];
                 double thingTopPitch = start.Pitch(currentEntity.Position.Z + currentEntity.Height, bi.SegTime * segLength);
                 if (thingTopPitch < bottomPitch)
                     continue;
@@ -2605,11 +2609,11 @@ public abstract partial class WorldBase : IWorld
         if (line.Segment.OnRight(start))
         {
             front = line.FrontSector;
-            back = line.BackSector;
+            back = line.BackSector!;
         }
         else
         {
-            front = line.BackSector;
+            front = line.BackSector!;
             back = line.FrontSector;
         }
     }

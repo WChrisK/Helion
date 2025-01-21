@@ -107,9 +107,8 @@ public class BlockmapTraverser
                         }
 
                         ref var bi = ref arrayData[length];
-                        bi.Line = line->LineId;
-                        bi.Entity = null;
-                        bi.SegTime = t;
+                        bi.Index = line->LineId;
+                        bi.SegTime = (float)t;
                         length++;
                     }
                 }
@@ -157,9 +156,8 @@ public class BlockmapTraverser
                         }
 
                         ref var bi = ref arrayData[length];
-                        bi.Line = line->LineId;
-                        bi.Entity = null;
-                        bi.SegTime = t;
+                        bi.Index = line->LineId;
+                        bi.SegTime = (float)t;
                         length++;
                     }
                 }
@@ -183,9 +181,8 @@ public class BlockmapTraverser
                     }
 
                     ref var bi = ref arrayData[length];
-                    bi.Line = null;
-                    bi.Entity = entity.Index;
-                    bi.SegTime = seg.ToTime(intersect);
+                    bi.Index = entity.Index | BlockmapIntersect.EntityFlag;
+                    bi.SegTime = (float)seg.ToTime(intersect);
                     length++;
                 }
             }

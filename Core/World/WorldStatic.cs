@@ -60,10 +60,10 @@ public static class WorldStatic
 
     public static void FlushIntersectionReferences()
     {
-        for (int i = 0; i < Intersections.Capacity; i++)
-        {
-            Intersections.Data[i].Entity = null;
-            Intersections.Data[i].Line = null;
-        }
+        //for (int i = 0; i < Intersections.Capacity; i++)
+        //{
+        //    Intersections.Data[i].Entity = null;
+        //    Intersections.Data[i].Line = null;
+        //}
     }
 }

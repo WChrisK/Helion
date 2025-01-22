@@ -354,10 +354,15 @@ public partial class Client : IDisposable, IInputManagement
         worldLayer.ShouldRender = true;
         m_layerManager.Remove(m_layerManager.LoadingLayer);
 
-        Render();
-        _ = WriteAutoSave(m_loadMapResult);
+        var changeEvent = m_loadMapResult.EventContext;
+        if (changeEvent != null && (changeEvent.ChangeType == LevelChangeType.Next || changeEvent.ChangeType == LevelChangeType.SecretNext))
+        {
+            Render();
+            _ = WriteAutoSave(m_loadMapResult);
+        }
 
         m_loadMapResult = null;
+        m_levelChangeEvent = null;
         PlayTransition();
         UpdateVolume();
 

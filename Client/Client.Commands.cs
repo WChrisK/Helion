@@ -1,5 +1,4 @@
 using Helion.Geometry.Boxes;
-using Helion.Layer;
 using Helion.Layer.EndGame;
 using Helion.Layer.Transition;
 using Helion.Layer.Worlds;
@@ -44,6 +43,7 @@ public partial class Client
     private readonly Zdbsp m_zdbsp = new();
     private WorldModel? m_lastWorldModel;
     private bool m_isSecretExit;
+    private LevelChangeEvent? m_levelChangeEvent;
 
     [ConsoleCommand("setpos", "Sets the player's position (x y z). Ex setpos 100 100 0")]
     private void SetPosition(ConsoleCommandEventArgs args)
@@ -902,6 +902,7 @@ public partial class Client
             if (m_config.Game.LevelStat && ShouldWriteStatsFile(e.ChangeType))
                 WriteStatsFile(world);
 
+            m_levelChangeEvent = e;
             m_isSecretExit = false;
             switch (e.ChangeType)
             {
@@ -1018,7 +1019,7 @@ public partial class Client
             }
             else if (nextMapInfo != null)
             {
-                QueueLoadMap(nextMapInfo, null, world);
+                QueueLoadMap(nextMapInfo, null, world, m_levelChangeEvent);
             }
 
             if (!string.IsNullOrEmpty(nextMapResult.Error))

@@ -71,7 +71,7 @@ public partial class TextureManager : ITickable
             .Distinct()
             .ToList();
 
-        InitTextureArrays(m_archiveCollection.Definitions.Textures.GetValues(), flatEntries);
+        InitTextureArrays(m_archiveCollection.Definitions.Textures.GetValues(), flatEntries, out var flatIndexStart);
 
         SetSkyFireTextures();
 
@@ -79,9 +79,8 @@ public partial class TextureManager : ITickable
         for (int i = 0; i < m_textures.Count; i++)
             m_translations.Add(i);
 
-        int flatIndex = 0;
         foreach (var flat in flatEntries)
-            MapSkyFlat(flat.Path.Name, flatIndex++);
+            MapSkyFlat(flat.Path.Name, flatIndexStart++);
 
         InitAnimations();
         InitSwitches();
@@ -599,7 +598,7 @@ public partial class TextureManager : ITickable
     private bool HasAnimation(int translationIndex) =>
         m_animations.Any(x => x.TranslationIndex == translationIndex);
 
-    private void InitTextureArrays(List<TextureDefinition> textures, List<Entry> flatEntries)
+    private void InitTextureArrays(List<TextureDefinition> textures, List<Entry> flatEntries, out int flatIndexStart)
     {
         m_textures.Add(new Texture(Constants.NoTexture, ResourceNamespace.Textures, Constants.NoTextureIndex));
         m_textureLookup[Constants.NoTexture] = m_textures[Constants.NoTextureIndex];
@@ -623,6 +622,7 @@ public partial class TextureManager : ITickable
         m_textureLookup[blackTexture.Name] = blackTexture;
         index++;
 
+        flatIndexStart = index;
         string skyFlatName = m_archiveCollection.GameInfo.SkyFlatName;
         foreach (Entry flat in flatEntries)
         {

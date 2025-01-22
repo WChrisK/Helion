@@ -79,6 +79,10 @@ public partial class TextureManager : ITickable
         for (int i = 0; i < m_textures.Count; i++)
             m_translations.Add(i);
 
+        int flatIndex = 0;
+        foreach (var flat in flatEntries)
+            MapSkyFlat(flat.Path.Name, flatIndex++);
+
         InitAnimations();
         InitSwitches();
         MapSpriteIndexToEntries(spriteEntries, spriteNames);
@@ -628,7 +632,6 @@ public partial class TextureManager : ITickable
             if (flat.Path.Name.Equals(skyFlatName, StringComparison.OrdinalIgnoreCase))
                 m_skyIndex = index;
 
-            MapSkyFlat(flat.Path.Name, index);
             index++;
         }
     }

@@ -185,7 +185,7 @@ public partial class TextureManager
         return Math.Max((int)(fire.UpdateTime / seconds), 1);
     }
 
-    private void MapSkyFlat(string flatName, int textureIndex)
+    private void MapSkyFlat(string flatName, int flatIndex)
     {
         var skyDefinition = m_archiveCollection.Definitions.Id24SkyDefinition;
         if (!TryGetSkyTextureName(flatName, skyDefinition, out var textureName))
@@ -193,7 +193,7 @@ public partial class TextureManager
 
         var texture = MapSkyTexture(textureName, skyDefinition);
         if (texture != null)
-            m_flatIndexToSkyTextureIndex[textureIndex] = texture.Index;
+            m_flatIndexToSkyTextureIndex[flatIndex] = texture.Index;
     }
 
     private bool TryGetSkyTextureName(string flatName, Id24SkyDefinition skyDefinition, [NotNullWhen(true)] out string? textureName)

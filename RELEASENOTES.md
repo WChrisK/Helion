@@ -67,3 +67,4 @@
   - Fix issue where moving sectors may not render when inside a misclassified voodoo doll closet
   - Fix dehacked weapon ammo use amount
   - Fix music changes not persisting through successive save games
+  - Fix scrolling floors/ceilings stopping when completes a move special

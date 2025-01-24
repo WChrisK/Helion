@@ -148,8 +148,9 @@ public class StaticDataApplier
         // Floor and ceiling can move independently so don't clear it yet.
         if (plane.Sector.IsMoving || (plane.Dynamic & SectorDynamic.TransferHeights) != 0)
             return;
-
-        plane.Sector.UnlinkFromWorld(world);
+                
+        if ((plane.Sector.Floor.Dynamic & SectorDynamic.Scroll) == 0 && (plane.Sector.Ceiling.Dynamic & SectorDynamic.Scroll) == 0)
+            plane.Sector.UnlinkFromWorld(world);
 
         for (int i = 0; i < plane.Sector.Lines.Count; i++)
             ClearDynamicMovement(plane.Sector.Lines[i]);

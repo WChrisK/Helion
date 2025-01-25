@@ -283,8 +283,7 @@ public class UMapInfo
         map03.ClusterDef.Should().NotBeNull();
         cluster = map03.ClusterDef;
         cluster!.SecretExitText[0].Should().Be("secret exit");
-        cluster!.ExitText.Count.Should().Be(1);
-        cluster!.ExitText[0].Should().Be("$C1TEXT");
+        cluster!.ExitText.Count.Should().Be(0);
 
         getMap = mapInfoDef.MapInfo.GetMap("MAP06").MapInfo;
         getMap.Should().NotBeNull();

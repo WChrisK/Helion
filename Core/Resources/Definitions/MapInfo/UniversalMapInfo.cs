@@ -298,16 +298,18 @@ public partial class MapInfoDefinition
 
     private static bool IsDefaultClusterMap(IWadBaseType iwadType, MapInfoDef mapDef)
     {
+        var mapName = mapDef.MapName;
         if (iwadType == IWadBaseType.Doom1)
         {
-            if (mapDef.MapName.Length != 4)
+            if (mapName.Length != 4)
                 return false;
 
-            return mapDef.MapName[3] == '8';
+            return mapName[3] == '8';
         }
 
-        return mapDef.MapName.EqualsIgnoreCase("MAP06") || mapDef.MapName.EqualsIgnoreCase("MAP20") ||
-            mapDef.MapName.EqualsIgnoreCase("MAP30") || mapDef.MapName.EqualsIgnoreCase("MAP31");
+        return mapName.EqualsIgnoreCase("MAP06") || mapName.EqualsIgnoreCase("MAP11") || 
+            mapName.EqualsIgnoreCase("MAP20") || mapName.EqualsIgnoreCase("MAP30") || 
+            mapName.EqualsIgnoreCase("MAP31") || mapName.EqualsIgnoreCase("MAP32");
     }
 
     private static ClusterDef CreateDefaultClusterDef(IWadBaseType type, string mapName)

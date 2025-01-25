@@ -5,6 +5,7 @@ using Helion.Resources.Definitions.MapInfo;
 using Helion.Util;
 using Helion.Util.Configs.Components;
 using Helion.Util.RandomGenerators;
+using Helion.World;
 using Helion.World.Cheats;
 using Helion.World.Entities.Players;
 using System;
@@ -279,7 +280,7 @@ public partial class Client
         if (!loadMap.Map.Equals(m_layerManager.WorldLayer.CurrentMap.MapName, StringComparison.OrdinalIgnoreCase) || advanceAmount < 0)
         {
             var param = new AdvanceDemoParams(commandIndex, isPaused, consoleShowing);
-            QueueLoadMap(GetMapInfo(loadMap.Map), null, null, AdvanceDemoLoadComplete, param, null, transition: false);
+            QueueLoadMap(GetMapInfo(loadMap.Map), null, null, AdvanceDemoLoadComplete, param, LevelChangeEvent.Default, transition: false);
         }
     }
 

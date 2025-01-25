@@ -14,6 +14,7 @@ using Helion.Util;
 using Helion.Util.CommandLine;
 using Helion.Util.Configs.Components;
 using Helion.Util.Consoles;
+using Helion.World;
 using Helion.World.Util;
 
 namespace Helion.Client;
@@ -267,7 +268,7 @@ public partial class Client
 
     private void LoadMap(string mapName, CommandLineArgs? args = null)
     {
-        QueueLoadMap(GetMapInfo(mapName), null, null, OnLoadMapCommandComplete, args);
+        QueueLoadMap(GetMapInfo(mapName), null, null, OnLoadMapCommandComplete, args, LevelChangeEvent.Default);
     }
 
     private void OnLoadMapCommandComplete(object? value)

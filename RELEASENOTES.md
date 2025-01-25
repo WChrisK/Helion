@@ -68,3 +68,4 @@
   - Fix dehacked weapon ammo use amount
   - Fix music changes not persisting through successive save games
   - Fix scrolling floors/ceilings stopping when completes a move special
+  - Fix mouse focus issue when loading/reloading a map

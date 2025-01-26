@@ -70,3 +70,4 @@
   - Fix scrolling floors/ceilings stopping when completes a move special
   - Fix mouse focus issue when loading/reloading a map
   - Fix default intermission background images and music for UMAPINFO
+  - Fix bex string parsing for mnemonics that have more than two strings

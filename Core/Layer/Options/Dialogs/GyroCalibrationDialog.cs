@@ -3,6 +3,7 @@
     using System;
     using System.Timers;
     using Helion.Geometry.Vectors;
+    using Helion.Graphics;
     using Helion.Render.Common.Renderers;
     using Helion.Util.Configs.Components;
     using Helion.Window;
@@ -20,11 +21,12 @@
 
         private const string NOGYRO = "Gyro not detected";
         private const string PRECALIBRATIONPROMPT = "Place controller on a flat surface";
-        private const string CALIBRATIONPROMPT = "Calibrating; leave controller still";
-        private const string CALIBRATIONFINISHED = "Calibration finished; press OK to apply calibration or Cancel to clear all calibration data";
+        private const string CALIBRATIONPROMPT = "Calibrating";
+        private const string CALIBRATIONDETAIL = "Leave controller stationary";
+        private const string CALIBRATIONFINISHED = "Calibration finished";
 
         public GyroCalibrationDialog(ConfigWindow config, ConfigController controllerConfig, IInputManager inputMgr)
-            : base(config, "OK", "Cancel")
+            : base(config, "Accept", "Clear")
         {
             m_controllerConfig = controllerConfig;
             m_inputManager = inputMgr;
@@ -36,6 +38,9 @@
         protected override void RenderDialogContents(IRenderableSurfaceContext ctx, IHudRenderContext hud, bool sizeChanged)
         {
             hud.AddOffset((m_dialogOffset.X + m_padding, 0));
+            RenderDialogText(hud, "Gyro Calibration");
+            RenderDialogText(hud, string.Empty);
+
             if (m_inputManager.AnalogAdapter?.HasGyro != true)
             {
                 m_timer.Stop();
@@ -57,15 +62,16 @@
                         m_timer.Start();
                         break;
                     case 1:
-                        RenderDialogText(hud, PRECALIBRATIONPROMPT);
-                        RenderDialogText(hud, m_timerMessage);
+                        RenderDialogText(hud, PRECALIBRATIONPROMPT, color: Color.Red);
+                        RenderDialogText(hud, m_timerMessage, color: Color.Yellow);
                         break;
                     case 2:
-                        RenderDialogText(hud, CALIBRATIONPROMPT);
-                        RenderDialogText(hud, m_timerMessage);
+                        RenderDialogText(hud, CALIBRATIONPROMPT, color: Color.Red);
+                        RenderDialogText(hud, CALIBRATIONDETAIL, color: Color.Red);
+                        RenderDialogText(hud, m_timerMessage, color: Color.Yellow);
                         break;
                     default:
-                        RenderDialogText(hud, CALIBRATIONFINISHED);
+                        RenderDialogText(hud, CALIBRATIONFINISHED, color: Color.Red);
                         break;
 
                 }

@@ -1,12 +1,11 @@
 ﻿namespace Helion.Layer.Options.Dialogs
 {
+    using System;
+    using System.Timers;
     using Helion.Geometry.Vectors;
     using Helion.Render.Common.Renderers;
     using Helion.Util.Configs.Components;
     using Helion.Window;
-    using System;
-    using System.Data.SqlTypes;
-    using System.Timers;
 
     internal class GyroCalibrationDialog : DialogBase
     {
@@ -22,7 +21,7 @@
         private const string NOGYRO = "Gyro not detected";
         private const string PRECALIBRATIONPROMPT = "Place controller on a flat surface";
         private const string CALIBRATIONPROMPT = "Calibrating; leave controller still";
-        private const string CALIBRATIONFINISHED = "Calibration finished";
+        private const string CALIBRATIONFINISHED = "Calibration finished; press OK to apply calibration or Cancel to clear all calibration data";
 
         public GyroCalibrationDialog(ConfigWindow config, ConfigController controllerConfig, IInputManager inputMgr)
             : base(config, "OK", "Cancel")
@@ -50,6 +49,7 @@
                 switch (m_calibrationStatus)
                 {
                     case 0:
+                        m_dialogIsLocked = true;
                         m_calibrationStatus = 1;
                         m_timerCountdown = 5;
                         m_calibrationCountdown = 10;
@@ -98,6 +98,13 @@
             m_controllerConfig.GyroNoise.Set(noise);
             m_controllerConfig.GyroDrift.Set(drift);
             m_calibrationStatus = 3;
+            m_dialogIsLocked = false;
+        }
+
+        public void ClearCalibration()
+        {
+            m_controllerConfig.GyroNoise.Set(Vec3D.Zero);
+            m_controllerConfig.GyroDrift.Set(Vec3D.Zero);
         }
     }
 }

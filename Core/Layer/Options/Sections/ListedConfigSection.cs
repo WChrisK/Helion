@@ -283,6 +283,11 @@ public class ListedConfigSection : IOptionSection
         }
         else
         {
+            if (sender is GyroCalibrationDialog gyroDialog)
+            {
+                // If the user canceled out of gyro calibration, treat that as "clear all gyro calibration".
+                gyroDialog.ClearCalibration();
+            }
             ReleaseEditRow();
         }
 

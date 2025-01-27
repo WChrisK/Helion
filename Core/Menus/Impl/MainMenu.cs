@@ -9,6 +9,7 @@ using Helion.Menus.Base;
 using Helion.Render.Common.Enums;
 using Helion.Resources.Archives.Collection;
 using Helion.Resources.IWad;
+using Helion.Util;
 using Helion.Util.Configs;
 using Helion.Util.Consoles;
 using Helion.Util.Extensions;
@@ -27,7 +28,7 @@ public class MainMenu : Menu
     private readonly OptionsLayer m_optionsLayer;
 
     public MainMenu(MenuLayer parent, IConfig config, HelionConsole console, SoundManager soundManager,
-        ArchiveCollection archiveCollection, SaveGameManager saveManager, OptionsLayer optionsLayer)
+        ArchiveCollection archiveCollection, SaveGameManager saveManager, OptionsLayer optionsLayer, IScreenshotGenerator screenshotGenerator)
         : base(config, console, soundManager, archiveCollection)
     {
         m_parent = parent;
@@ -43,8 +44,8 @@ public class MainMenu : Menu
             new MenuImageComponent("M_DOOM", offsetX: 94, paddingTopY: 2, imageAlign: Align.TopLeft, addToOffsetY: false),
             CreateMenuOption("M_NGAME", OffsetX, offsetY, CreateNewGameMenu()),
             CreateMenuOption("M_OPTION", OffsetX, PaddingY, CreateOptionsLayer()),
-            CreateMenuOption("M_LOADG", OffsetX, PaddingY, () => new SaveMenu(m_parent, config, Console, soundManager, ArchiveCollection, saveManager, false, false, false)),
-            CreateMenuOption("M_SAVEG", OffsetX, PaddingY, CreateSaveMenu(saveManager))
+            CreateMenuOption("M_LOADG", OffsetX, PaddingY, () => new SaveMenu(m_parent, config, Console, soundManager, ArchiveCollection, saveManager, screenshotGenerator, false, false, false)),
+            CreateMenuOption("M_SAVEG", OffsetX, PaddingY, CreateSaveMenu(saveManager, screenshotGenerator))
         };
 
         if (archiveCollection.Definitions.MapInfoDefinition.GameDefinition.DrawReadThis)
@@ -72,12 +73,12 @@ public class MainMenu : Menu
         };
     }
 
-    private Func<Menu?> CreateSaveMenu(SaveGameManager saveManager)
+    private Func<Menu?> CreateSaveMenu(SaveGameManager saveManager, IScreenshotGenerator screenshotGenerator)
     {
         return () =>
         {
             bool hasWorld = m_parent.Manager.WorldLayer != null && m_parent.Manager.EndGameLayer == null;
-            return new SaveMenu(m_parent, Config, Console, SoundManager, ArchiveCollection, saveManager,
+            return new SaveMenu(m_parent, Config, Console, SoundManager, ArchiveCollection, saveManager, screenshotGenerator,
                 hasWorld, true, false);
         };
     }

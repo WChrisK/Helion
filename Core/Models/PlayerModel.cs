@@ -1,10 +1,19 @@
-using System;
 using System.Collections.Generic;
 
 namespace Helion.Models;
 
 public class PlayerModel : EntityModel
 {
+    // JSON calls default constructor so the list allocations are in static Create methods
+    public static PlayerModel Create()
+    {
+        return new()
+        {
+            Inventory = InventoryModel.Create(),
+            Cheats = []
+        };
+    }
+
     public int Number { get; set; }
     public double PitchRadians { get; set; }
     public int DamageCount { get; set; }
@@ -34,6 +43,6 @@ public class PlayerModel : EntityModel
     public InventoryModel Inventory { get; set; } = null!;
     public FrameStateModel? AnimationWeaponFrame { get; set; }
     public FrameStateModel? WeaponFlashFrame { get; set; }
-    public IList<int> Cheats { get; set; } = Array.Empty<int>();
+    public List<int> Cheats { get; set; } = null!;
     public bool AttackDown { get; set; }
 }

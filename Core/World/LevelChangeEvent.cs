@@ -6,6 +6,8 @@ namespace Helion.World;
 
 public class LevelChangeEvent
 {
+    public static readonly LevelChangeEvent Default = new(LevelChangeType.Default, LevelChangeFlags.None);
+
     public readonly LevelChangeType ChangeType;
     public readonly LevelChangeFlags Flags;
     public readonly int LevelNumber = 1;
@@ -33,6 +35,7 @@ public class LevelChangeEvent
 
 public enum LevelChangeType
 {
+    Default,
     Next,
     SecretNext,
     SpecificLevel,

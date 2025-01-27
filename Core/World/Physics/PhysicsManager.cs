@@ -122,16 +122,10 @@ public sealed class PhysicsManager
         return compare;
     }
 
-    /// <summary>
-    /// Links an entity to the world.
-    /// </summary>
-    /// <param name="entity">The entity to link.</param>
-    /// <param name="tryMove">Optional data used for when linking during movement.</param>
-    /// <param name="clampToLinkedSectors">If the entity should be clamped between linked sectors. If false then on the current Sector ceiling/floor will be used. (Doom compatibility).</param>
-    public void LinkToWorld(Entity entity, TryMoveData? tryMove = null, bool clampToLinkedSectors = true)
+    public void LinkToWorld(Entity entity, TryMoveData? tryMove = null, bool clampToLinkedSectors = true, bool checkLastBlock = false)
     {
         if (!entity.Flags.NoBlockmap)
-            m_blockmap.Link(entity);
+            m_blockmap.Link(entity, checkLastBlock);
 
         m_world.RenderBlockmap.RenderLink(entity);
 
@@ -160,14 +154,14 @@ public sealed class PhysicsManager
         for (int i = 0; i < entities.Length; i++)
         {
             var entity = entities[i];
-            bool hasOnEntity = entity.OnEntity != WeakEntity.Default;
+            var onEntity = entity.OnEntity();
+            bool hasOnEntity = onEntity != null;
             if (!hasOnEntity && entity.HadOnEntity)
             {
                 ClampBetweenFloorAndCeiling(entity, entity.IntersectSectors, smoothZ: false, clampToLinkedSectors: true);
                 continue;
             }
 
-            var onEntity = entity.OnEntity.Entity;
             if (onEntity!.Position.Z + onEntity.Height < entity.Position.Z || !onEntity.Overlaps2D(entity))
                 ClampBetweenFloorAndCeiling(entity, entity.IntersectSectors, smoothZ: false, clampToLinkedSectors: true);
         }
@@ -193,7 +187,8 @@ public sealed class PhysicsManager
         sectorPlane.SetZ(destZ);
 
         bool isCompleted = moveSpecial.IsFinalDestination(destZ);
-        if (!m_world.Config.Compatibility.VanillaSectorPhysics && IsSectorMovementBlocked(sector, startZ, destZ, moveSpecial))
+        // Doors can't be part of the clip check. Maps are reliant on this behavior (e.g. Going Down Turbo MAP23 invul)
+        if (!moveSpecial.IsDoor && !m_world.Config.Compatibility.VanillaSectorPhysics && IsSectorMovementBlocked(sector, startZ, destZ, moveSpecial))
         {
             FixPlaneClip(sector, sectorPlane, moveType);
             status = SectorMoveStatus.BlockedAndStop;
@@ -215,8 +210,9 @@ public sealed class PhysicsManager
                 entity.OnGround && entity.HighestFloorSector == sector)
             {
                 double top = destZ;
-                if (entity.OnEntity.Entity != null)
-                    top = entity.OnEntity.Entity.Position.Z + entity.OnEntity.Entity.Height;
+                var onEntity = entity.OnEntity();
+                if (onEntity != null)
+                    top = onEntity.Position.Z + onEntity.Height;
                 entity.Position.Z = top;
                 // Setting this so SetEntityBoundsZ does not mess with forcing this entity to to the floor
                 // Otherwise this is a problem with the instant lift hack
@@ -521,8 +517,9 @@ public sealed class PhysicsManager
         LinkableNode<Entity>? node = sector.Entities.Head;
         while (node != null)
         {
-            Entity checkEntity = node.Value;
-            if (checkEntity.OverEntity.Entity != null && ContainsEntity(crushEntities, checkEntity.OverEntity.Entity))
+            var checkEntity = node.Value;
+            var overEntity = checkEntity.OverEntity();
+            if (overEntity != null && ContainsEntity(crushEntities, overEntity))
                 m_stackCrush.Add(checkEntity);
             node = node.Next;
         }
@@ -596,9 +593,10 @@ public sealed class PhysicsManager
 
         pusher.Position.Z = pusher.LowestCeilingZ - pusher.Height;
 
-        if (pusher.OnEntity.Entity != null)
+        var onEntity = pusher.OnEntity();
+        if (onEntity != null)
         {
-            Entity? current = pusher.OnEntity.Entity;
+            Entity? current = onEntity;
             while (current != null)
             {
                 if (current.HighestFloorObject is Sector && current.HighestFloorZ > pusher.Position.Z - current.Height)
@@ -606,7 +604,7 @@ public sealed class PhysicsManager
 
                 current.Position.Z = pusher.Position.Z - current.Height;
                 pusher = current;
-                current = pusher.OnEntity.Entity;
+                current = pusher.OnEntity();
             }
         }
     }
@@ -713,7 +711,7 @@ public sealed class PhysicsManager
             return;
 
         double prevHighestFloorZ = entity.HighestFloorZ;
-        Entity? prevOnEntity = entity.OnEntity.Entity;
+        var prevOnEntity = entity.OnEntity();
         SetEntityBoundsZ(entity, intersectSectors, clampToLinkedSectors, tryMove);
         entity.SetOnEntity(null);
 
@@ -760,7 +758,7 @@ public sealed class PhysicsManager
             SetEntityOnFloorOrEntity(entity, highestFloor, smoothZ && prevHighestFloorZ != entity.HighestFloorZ);
         }
 
-        if (prevOnEntity != null && prevOnEntity != entity.OnEntity.Entity)
+        if (prevOnEntity != null && prevOnEntity != entity.OnEntity())
             prevOnEntity.SetOverEntity(null);
 
         entity.CheckOnGround();
@@ -1012,7 +1010,7 @@ public sealed class PhysicsManager
 
                             m_checkedBlockLines[line->LineId] = checkCounter;
 
-                            if (line->Segment.Intersects(box))
+                            if (line->Segment.Intersects(box.Min.X, box.Min.Y, box.Max.X, box.Max.Y))
                             {
                                 // Doomism: Ignore for moving sectors if blocked by flags only.
                                 if (Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, line->Segment, line->OneSided, line->Flags, WorldStatic.Mbf21))
@@ -1040,9 +1038,8 @@ public sealed class PhysicsManager
             }
         }
 doneLinkToSectors:
-        entity.Subsector = centerSubsector;
+        entity.SubsectorId = centerSubsector.Id;
         entity.Sector = centerSector;
-        entity.SectorDamageSpecial = centerSector.SectorDamageSpecial;
         entity.IntersectSectors.Add(centerSector);
         entity.SectorNodes.Add(centerSector.Link(entity));
     }
@@ -1162,10 +1159,11 @@ doneLinkToSectors:
 
     public unsafe bool IsPositionValid(Entity entity, double x, double y, TryMoveData tryMove)
     {
-        if (!WorldStatic.InfinitelyTallThings && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && !entity.IsPlayer && entity.OnEntity.Entity != null
-            && (entity.OnEntity.Entity.Flags.Flags1 & EntityFlags.ActsLikeBridgeFlag) == 0)
+        if (!WorldStatic.InfinitelyTallThings && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && !entity.IsPlayer)
         {
-            return false;
+            var onEntity = entity.OnEntity();
+            if (onEntity != null && (onEntity.Flags.Flags1 & EntityFlags.ActsLikeBridgeFlag) == 0)
+                return false;
         }
 
         tryMove.Success = true;
@@ -1360,14 +1358,14 @@ doneLinkToSectors:
 
     public void MoveTo(Entity entity, double x, double y, TryMoveData tryMove)
     {
-        entity.UnlinkFromWorld();
+        entity.UnlinkFromWorld(unlinkBlockmapBlocks: false);
 
         double prevX = entity.Position.X;
         double prevY = entity.Position.Y;
         entity.Position.X = x;
         entity.Position.Y = y;
 
-        LinkToWorld(entity, tryMove);
+        LinkToWorld(entity, tryMove, checkLastBlock: true);
 
         if (entity.Flags.Teleport || entity.Flags.NoClip)
             return;
@@ -1727,7 +1725,7 @@ doneLinkToSectors:
         // Adds z velocity on the first tick, then adds -2 on the second instead of -1 on the first and -1 on the second.
         bool noVelocity = entity.Velocity.Z == 0;
         bool shouldApplyGravity = entity.ShouldApplyGravity();
-        if (noVelocity && !shouldApplyGravity && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && entity.OnEntity == WeakEntity.Default)
+        if (noVelocity && !shouldApplyGravity && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && entity.OnEntity() == null)
             return;
 
         if (entity.Flags.NoGravity && entity.ShouldApplyFriction())
@@ -1737,7 +1735,7 @@ doneLinkToSectors:
 
         double floatZ = entity.GetEnemyFloatMove();
         // Only return if OnEntity is null. Need to apply clamping to prevent issues with this entity floating when the entity beneath is no longer blocking.
-        if (noVelocity && floatZ == 0 && entity.OnEntity == WeakEntity.Default)
+        if (noVelocity && floatZ == 0 && entity.OnEntity() == null)
             return;
 
         Vec3D previousVelocity = entity.Velocity;

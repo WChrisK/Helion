@@ -1,5 +1,6 @@
 using GlmSharp;
 using Helion.Geometry.Vectors;
+using Helion.Render.OpenGL.Renderers.Legacy.World.Entities;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Shader;
 using Helion.Util.Configs.Components;
@@ -25,6 +26,8 @@ public class InterpolationShader : RenderProgram
     private readonly int m_colorMapIndexLocation;
     private readonly int m_lightModeLocation;
     private readonly int m_gammaCorrectionLocation;
+    private readonly int m_accumTextureLocation;
+    private readonly int m_accumCountTextureLocation;
 
     public InterpolationShader() : base("World")
     {
@@ -44,12 +47,16 @@ public class InterpolationShader : RenderProgram
         m_colorMapIndexLocation = Uniforms.GetLocation("colormapIndex");
         m_lightModeLocation = Uniforms.GetLocation("lightMode");
         m_gammaCorrectionLocation = Uniforms.GetLocation("gammaCorrection");
+        m_accumTextureLocation = Uniforms.GetLocation("accum");
+        m_accumCountTextureLocation = Uniforms.GetLocation("accumCount");
     }
 
     public void BoundTexture(TextureUnit unit) => Uniforms.Set(unit, m_boundTextureLocation);
     public void SectorLightTexture(TextureUnit unit) => Uniforms.Set(unit, m_sectorLightTextureLocation);
     public void ColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_colormapTextureLocation);
     public void SectorColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_sectorColormapTextureLocation);
+    public void AccumTexture(TextureUnit unit) => Uniforms.Set(unit, m_accumTextureLocation);
+    public void AccumCountTextre(TextureUnit unit) => Uniforms.Set(unit, m_accumCountTextureLocation);
 
     public void HasInvulnerability(bool invul) => Uniforms.Set(invul, m_hasInvulnerabilityLocation);
     public void Mvp(mat4 mvp) => Uniforms.Set(mvp, m_mvpLocation);
@@ -117,7 +124,7 @@ public class InterpolationShader : RenderProgram
         flat in float alphaFrag;
         flat in float addAlphaFrag;
 
-        out vec4 fragColor;
+        ${OutFragColor}
 
         uniform int hasInvulnerability;
         uniform sampler2D boundTexture;
@@ -127,6 +134,7 @@ public class InterpolationShader : RenderProgram
 
         ${LightLevelFragVariables}
         ${SectorColorMapFragVariables}
+        ${OitVariables}
 
         void main() {
             ${LightLevelFragFunction}
@@ -136,7 +144,26 @@ public class InterpolationShader : RenderProgram
     "
     .Replace("${LightLevelFragFunction}", LightLevel.FragFunction)
     .Replace("${LightLevelFragVariables}", LightLevel.FragVariables(LightLevelOptions.Default))
-    .Replace("${FragColorFunction}", FragFunction.FragColorFunction(FragColorFunctionOptions.AddAlpha | FragColorFunctionOptions.Colormap))
+    .Replace("${FragColorFunction}", FragFunction.FragColorFunction(FragColorFunctionOptions.AddAlpha | FragColorFunctionOptions.Colormap, oitOptions: GetOitOptions()))
     .Replace("${SectorColorMapFragVariables}", SectorColorMap.FragVariables)
-    .Replace("${SectorColorMapFragFunction}", SectorColorMap.FragFunction);
+    .Replace("${SectorColorMapFragFunction}", SectorColorMap.FragFunction)
+    .Replace("${OitVariables}", FragFunction.OitFragVariables(GetOitOptions()))
+    .Replace("${OutFragColor}", GetOutFragColor());
+
+    private OitOptions GetOitOptions()
+    {
+        if (this is InterpolationTransparentShader)
+            return OitOptions.OitTransparentPass;
+        if (this is InterpolationCompositeShader)
+            return OitOptions.OitCompositePass;
+        return OitOptions.None;
+    }
+
+    private string GetOutFragColor()
+    {
+        var options = GetOitOptions();
+        if (options == OitOptions.OitTransparentPass)
+            return "";
+        return "out vec4 fragColor;";
+    }
 }

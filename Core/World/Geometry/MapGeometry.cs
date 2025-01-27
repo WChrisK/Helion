@@ -8,8 +8,6 @@ using Helion.World.Geometry.Islands;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Sides;
-using Helion.World.Geometry.Walls;
-using NLog;
 
 namespace Helion.World.Geometry;
 
@@ -17,10 +15,10 @@ public struct IslandGeometry
 {
     public IslandGeometry()
     {
-        BadSubsectors = new();
-        FloodSectors = new();
-        Islands = new();
-        SectorIslands = Array.Empty<List<Island>>();
+        BadSubsectors = [];
+        FloodSectors = [];
+        Islands = [];
+        SectorIslands = [];
     }
 
     public HashSet<int> BadSubsectors;
@@ -39,8 +37,8 @@ public class MapGeometry
 
     public IslandGeometry IslandGeometry = new();
 
-    private readonly Dictionary<int, IList<Sector>> m_tagToSector = new();
-    private readonly Dictionary<int, IList<Line>> m_idToLine = new();
+    private readonly Dictionary<int, IList<Sector>> m_tagToSector = [];
+    private readonly Dictionary<int, IList<Line>> m_idToLine = [];
 
     internal MapGeometry(IMap map, GeometryBuilder builder, CompactBspTree bspTree, BspTreeNew bspTreeNew)
     {

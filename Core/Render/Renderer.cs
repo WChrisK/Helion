@@ -26,8 +26,6 @@ using Helion.Util.Timing;
 using Helion.Window;
 using Helion.World;
 using Helion.World.Entities;
-using Helion.World.Entities.Inventories.Powerups;
-using Helion.World.Entities.Players;
 using Helion.World.Geometry.Sectors;
 using NLog;
 using OpenTK.Graphics.OpenGL;
@@ -44,7 +42,8 @@ public partial class Renderer : IDisposable
     public const float ZNearMax = 7.9f;
     public const float ZFar = 65536;
     public const float ReversedZNear = 0.01f;
-    public static readonly Color DefaultBackground = (16, 16, 16);
+    public static readonly Color OffBlackBackground = (16, 16, 16);
+    public static readonly Color BlackBackground = (0, 0, 0);
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
     private static bool InfoPrinted;
 
@@ -58,6 +57,7 @@ public partial class Renderer : IDisposable
     /// Framebuffer used to draw the world.
     /// </summary>
     private GLFramebuffer m_virtualFramebuffer;
+    private GLFramebuffer m_screenshotFramebuffer;
     public readonly LegacyGLTextureManager Textures;
     internal readonly IConfig m_config;
     internal readonly FpsTracker m_fpsTracker;
@@ -72,6 +72,7 @@ public partial class Renderer : IDisposable
     private IWorld? m_world;
     private GLBufferTextureStorage? m_colorMapBuffer;
     private Rectangle m_viewport = new(0, 0, 800, 600);
+    private uint[] m_frameBufferPixelData = [];
     private bool m_disposed;
 
     public Dimension RenderDimension => UseVirtualResolution ? m_config.Window.Virtual.Dimension : Window.Dimension;
@@ -97,13 +98,15 @@ public partial class Renderer : IDisposable
         Default = new(window, this);
         m_mainFramebuffer = GenerateMainFramebuffer();
         m_virtualFramebuffer = GenerateVirtualFramebuffer();
+        // Temporary frame buffer for smaller save game screenshots. Significantly than pulling the full sized pixel buffer and downsizing using image sharp.
+        m_screenshotFramebuffer = new("Screenshot", (Constants.ScreenshotSaveWidth, Constants.ScreenshotSaveHeight), 1);
 
         PrintGLInfo();
         SetGLStates();
     }
 
-    private GLFramebuffer GenerateMainFramebuffer() => new("Main", Window.Dimension, 1, RenderbufferStorage.Depth32fStencil8);
-    private GLFramebuffer GenerateVirtualFramebuffer() => new("Virtual", RenderDimension, 1, RenderbufferStorage.Depth32fStencil8);
+    private GLFramebuffer GenerateMainFramebuffer() => new("Main", Window.Dimension, 1);
+    private GLFramebuffer GenerateVirtualFramebuffer() => new("Virtual", RenderDimension, 1, GLFrameBufferOptions.DepthStencilAttachment);
 
     public unsafe void UploadColorMap()
     {
@@ -160,7 +163,7 @@ public partial class Renderer : IDisposable
 
     public static float GetFuzzDiv(ConfigRender config, in Rectangle viewport)
     {
-        return viewport.Height / 480f * (float)config.FuzzAmount;
+        return viewport.Height / 480f / 2 * (float)config.FuzzAmount;
     }
 
     public static ShaderUniforms GetShaderUniforms(IConfig config, IWorld world, RenderInfo renderInfo)
@@ -186,7 +189,7 @@ public partial class Renderer : IDisposable
             {
                 mix = 0.0f;
                 colorMapUniforms = GetColorMapUniforms(renderInfo.ViewerEntity, renderInfo.Camera);
-                paletteIndex = GetPalette(config, player);
+                paletteIndex = PaletteUtil.GetPalette(config, player);
                 if (!player.DrawInvulnerableColorMap() && player.DrawFullBright())
                     mix = 1.0f;
             }
@@ -201,60 +204,6 @@ public partial class Renderer : IDisposable
             GetTimeFrac(), drawInvulnerability, mix, extraLight, GetDistanceOffset(renderInfo),
             colorMix, GetFuzzDiv(renderInfo.Config, renderInfo.Viewport), colorMapUniforms, paletteIndex, config.Render.LightMode, 
             (float)config.Render.GammaCorrection, maxDistance);
-    }
-
-    private static PaletteIndex GetPalette(IConfig config, Player player)
-    {
-        var palette = PaletteIndex.Normal;
-        var powerup = player.Inventory.PowerupEffectColor;
-        int damageCount = player.DamageCount;
-
-        if (powerup != null && powerup.PowerupType == PowerupType.Strength)
-            damageCount = Math.Max(damageCount, 12 - (powerup.Ticks >> 6));
-
-        if (damageCount > 0)
-        {
-            if (damageCount == player.DamageCount)
-                damageCount = (int)(player.DamageCount * config.Game.PainIntensity);
-            else
-                damageCount = (int)(damageCount * config.Game.BerserkIntensity);
-
-            palette = GetDamagePalette(damageCount);
-        }
-        else if (player.BonusCount > 0)
-        {
-            palette = GetBonusPalette(player.BonusCount);
-        }
-
-        if (palette == PaletteIndex.Normal && powerup != null &&
-            powerup.PowerupType == PowerupType.IronFeet && powerup.DrawPowerupEffect)
-        {
-            palette = PaletteIndex.Green;
-        }
-
-        return palette;
-    }
-
-    private static PaletteIndex GetBonusPalette(int bonusCount)
-    {
-        const int BonusPals = 4;
-        const int StartBonusPals = 9;
-        int palette = (bonusCount + 7) >> 3;
-        if (palette >= BonusPals)
-            palette = BonusPals - 1;
-        palette += StartBonusPals;
-        return (PaletteIndex)palette;
-    }
-
-    private static PaletteIndex GetDamagePalette(int damageCount)
-    {
-        const int RedPals = 8;
-        const int StartRedPals = 1;
-        int palette = (damageCount + 7) >> 3;
-        if (palette >= RedPals)
-            palette = RedPals - 1;
-        palette += StartRedPals;
-        return (PaletteIndex)palette;
     }
 
     private static ColorMapUniforms GetColorMapUniforms(Entity viewer, OldCamera camera)
@@ -485,7 +434,8 @@ public partial class Renderer : IDisposable
         Log.Info("OpenGL Hardware: {0}", GLInfo.Renderer);
         Log.Info("OpenGL Extensions: {0}", GLExtensions.Count);
         Log.Info("GL_ARB_clip_control {0}", GLInfo.ClipControlSupported);
-        Log.Info("MapPersistentBit {0}", GLInfo.MapPersistentBitSupported);
+        Log.Info("GL_ARB_shader_image_load_store {0}", GLInfo.MemoryBarrierSupported);
+        Log.Info("GL_ARB_buffer_storage {0}", GLInfo.MapPersistentBitSupported);
 
         InfoPrinted = true;
     }
@@ -543,43 +493,64 @@ public partial class Renderer : IDisposable
         });
     }
 
-    public Image GetMainFramebufferData()
-    {
-        var (w, h, rgba) = GetMainFramebufferDataRaw();
-        int pixelCount = w * h;
-        uint[] argb = new uint[pixelCount];
-        int offset = 0;
-        for (int i = 0; i < pixelCount; i++)
-        {
-            uint r = rgba[offset];
-            uint g = rgba[offset + 1];
-            uint b = rgba[offset + 2];
-            // ignore the original alpha channel
-            argb[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
-            offset += 4;
-        }
+    public Image GetMainFramebufferData() => GenerateFrameBufferImage(m_mainFramebuffer);
 
-        var image = new Image(argb, (w, h), ImageType.Argb, (0, 0), Resources.ResourceNamespace.Global).FlipY();
-        return image;
+    public Image GetVirtualFrameBufferData() => GenerateFrameBufferImage(m_virtualFramebuffer);
+
+    public Image GetScreenshotFrameBufferData()
+    {
+        BlitToScreenshotBuffer();
+        return GenerateFrameBufferImage(m_screenshotFramebuffer);
     }
 
-    private unsafe (int width, int height, byte[] rgba) GetMainFramebufferDataRaw()
+    private readonly Image m_framebufferImage = new([], (0, 0), ImageType.Rgba, (0, 0), Resources.ResourceNamespace.Global);
+    private uint[] m_imageRowFlip = [];
+
+    private Image GenerateFrameBufferImage(GLFramebuffer framebuffer)
+    {
+        var (w, h, rgba) = GetFramebufferDataRaw(framebuffer);
+        if (w > m_imageRowFlip.Length)
+            m_imageRowFlip = new uint[Math.Max(w, m_mainFramebuffer.Dimension.Width)];
+
+        // OpenGL returns the Y pixel rows flipped
+        var rowSize = w;
+        for (int y = 0; y < h / 2; y++)
+        {
+            var topRowIndex = y * rowSize;
+            var bottomRowIndex = (h - y - 1) * rowSize;
+
+            Array.Copy(rgba, topRowIndex, m_imageRowFlip, 0, rowSize);
+            Array.Copy(rgba, bottomRowIndex, rgba, topRowIndex, rowSize);
+            Array.Copy(m_imageRowFlip, 0, rgba, bottomRowIndex, rowSize);
+        }
+
+        m_framebufferImage.SetPixels(rgba, (w, h));
+        return m_framebufferImage;
+    }
+
+    private unsafe (int width, int height, uint[] rgba) GetFramebufferDataRaw(GLFramebuffer framebuffer)
     {
         GL.Finish();
-        (int w, int h) = m_mainFramebuffer.Dimension;
-        byte[] rgba = new byte[w * h * 4];
+        (int w, int h) = framebuffer.Dimension;
+        if (m_frameBufferPixelData.Length < w * h)
+        {
+            // Keep array for framebuffer pixel data. Used for savegame and main buffer screenshots. Take the maximum to not realloc later.
+            var allocWidth = Math.Max(w, m_mainFramebuffer.Dimension.Width);
+            var allocHeight = Math.Max(h, m_mainFramebuffer.Dimension.Height);
+            m_frameBufferPixelData = new uint[allocWidth * allocHeight];
+        }
 
-        m_mainFramebuffer.BindRead();
-        fixed (byte* rgbPtr = rgba)
+        framebuffer.BindRead();
+        fixed (uint* rgbPtr = m_frameBufferPixelData)
         {
             IntPtr ptr = new(rgbPtr);
             GL.ReadPixels(0, 0, w, h, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
         }
 
-        return (w, h, rgba);
+        return (w, h, m_frameBufferPixelData);
     }
 
-    private void HandleClearCommand(ClearRenderCommand clearRenderCommand)
+    private static void HandleClearCommand(ClearRenderCommand clearRenderCommand)
     {
         Color color = clearRenderCommand.ClearColor;
         GL.ClearColor(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f);
@@ -657,7 +628,7 @@ public partial class Renderer : IDisposable
         }
 
         UpdateBuffers();
-        m_worldRenderer.Render(cmd.World, m_renderInfo);
+        m_worldRenderer.Render(cmd.World, m_renderInfo, m_virtualFramebuffer);
 
         if (ShaderVars.ReversedZ)
         {
@@ -678,8 +649,29 @@ public partial class Renderer : IDisposable
 
     private void DrawHudImagesIfAnyQueued(Rectangle viewport, ShaderUniforms uniforms)
     {
-        m_hudRenderer.Render(viewport, uniforms);
+        // Bind main buffer for fuzz refraction sampling when player has partial invisibility
+        GL.ActiveTexture(TextureUnit.Texture7);
+        GL.BindTexture(TextureTarget.Texture2D, m_mainFramebuffer.Textures[0].Name);
+        m_hudRenderer.Render(viewport, m_mainFramebuffer.Dimension, uniforms);
         m_hudRenderer.Clear();
+    }
+
+    private void BlitToScreenshotBuffer()
+    {
+        var screenshotDimension = m_screenshotFramebuffer.Dimension;
+        var virtualDimension = m_virtualFramebuffer.Dimension;
+        float scaleX = Math.Min(screenshotDimension.AspectRatio / virtualDimension.AspectRatio, 1.0f);
+        int sourceWidth = (int)(virtualDimension.Width * scaleX);
+        int offsetX = (virtualDimension.Width - sourceWidth) / 2;
+
+        m_screenshotFramebuffer.BindDraw();
+        m_virtualFramebuffer.BindRead();
+        GL.ClearColor(0, 0, 0, 1);
+        GL.Clear(ClearBufferMask.ColorBufferBit);
+        GL.BlitFramebuffer(
+            offsetX, 0, offsetX + sourceWidth, virtualDimension.Height,
+            0, 0, screenshotDimension.Width, screenshotDimension.Height,
+            ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
     }
 
     private void BlitVirtualFramebufferToMain()

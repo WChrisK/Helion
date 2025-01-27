@@ -8,6 +8,7 @@ using Helion.Render.Common.Renderers;
 using Helion.Util;
 using Helion.Util.Configs.Components;
 using Helion.Util.Configs.Extensions;
+using Helion.Util.Extensions;
 using Helion.Util.Timing;
 using Helion.Window;
 using Helion.Window.Input;
@@ -163,12 +164,12 @@ internal abstract class DialogBase(ConfigWindow config, string? acceptButton, st
 
     protected string TruncateTextToDialogWidth(string text, IHudRenderContext hud)
     {
-        return LineWrap.Truncate(text, Font, m_fontSize, m_box.Width, hud).ToString();
+        return hud.TruncateText(text, Font, m_fontSize, m_box.Width).ToString();
     }
 
     protected void WrapTextToDialogWidth(string text, IHudRenderContext hud, List<string> wrappedLines)
     {
-        LineWrap.Calculate(text, Font, m_fontSize, m_box.Width, hud, wrappedLines, m_textWrapBuilder, out _);
+        hud.LineWrap(text, Font, m_fontSize, m_box.Width, wrappedLines, m_textWrapBuilder, out _);
     }
 
     public virtual void RunLogic(TickerInfo tickerInfo)

@@ -2,7 +2,9 @@ using Helion.Geometry;
 using Helion.Geometry.Vectors;
 using Helion.Graphics.Palettes;
 using Helion.Resources;
+using Helion.Resources.Archives.Entries;
 using Helion.Util.Extensions;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using static Helion.Util.Assertion.Assert;
 
@@ -24,12 +26,14 @@ public class Image
     public static readonly Image WhiteImage = CreateWhiteImage();
     public static readonly Image TransparentImage = CreateTransparentImage();
 
+    public static Image CreateBlackImage() => new([Color.Black.Value], (1, 1), ImageType.PaletteWithArgb, (0, 0), ResourceNamespace.Global, indices: [0]);
+
     public Dimension Dimension;
     public ImageType ImageType;
     public ImageType UploadType;
     public readonly Vec2I Offset;
     public readonly ResourceNamespace Namespace;
-    public readonly uint[] m_pixels; // Stored as argb with a = high byte, b = low byte
+    public uint[] m_pixels; // Stored as argb with a = high byte, b = low byte
     public readonly byte[] m_indices;
     public readonly int UpscaleFactor;
 
@@ -54,7 +58,7 @@ public class Image
 
     public Image(uint[] pixels, Dimension dimension, ImageType imageType, Vec2I offset, ResourceNamespace ns, ushort[]? indices = null, int upscaleFactor = 1)
     {
-        Precondition(pixels.Length == dimension.Area, "Image size mismatch");
+        Precondition(pixels.Length >= dimension.Area, "Image size mismatch");
 
         UpscaleFactor = upscaleFactor;
         Dimension = dimension;
@@ -78,6 +82,13 @@ public class Image
         m_indices ??= [];
     }
 
+    public void SetPixels(uint[] pixels, Dimension dimension)
+    {
+        Precondition(pixels.Length >= dimension.Area, "Image size mismatch");
+        Dimension = dimension;
+        m_pixels = pixels;
+    }
+
     public void DisableIndexedUpload()
     {
         if (UploadType == ImageType.PaletteWithArgb)
@@ -96,6 +107,30 @@ public class Image
             return null;
 
         return new(indices, dimension, ImageType.Palette, offset, ns);
+    }
+
+    public static Image? FromImageSharp<TPixel>(SixLabors.ImageSharp.Image<TPixel> data, Vec2I imageOffset = default, ResourceNamespace ns = ResourceNamespace.Global)
+        where TPixel : unmanaged, IPixel<TPixel>
+    {
+        byte[] argbData = new byte[data.Height * data.Width * 4];
+        int offset = 0;
+        Rgba32 tempPixel = new();
+        for (int y = 0; y < data.Height; y++)
+        {
+            Span<TPixel> pixelRow = SixLabors.ImageSharp.Advanced.AdvancedImageExtensions.DangerousGetPixelRowMemory(data, y).Span;
+            foreach (ref TPixel pixel in pixelRow)
+            {
+                pixel.ToRgba32(ref tempPixel);
+
+                argbData[offset] = tempPixel.A;
+                argbData[offset + 1] = tempPixel.R;
+                argbData[offset + 2] = tempPixel.G;
+                argbData[offset + 3] = tempPixel.B;
+                offset += 4;
+            }
+        }
+
+        return FromArgbBytes((data.Width, data.Height), argbData, imageOffset, ns);
     }
 
     public static Image? FromArgbBytes(Dimension dimension, byte[] argbData, Vec2I offset = default, ResourceNamespace ns = ResourceNamespace.Global)
@@ -332,27 +367,6 @@ public class Image
                 m_indices[offset] = index;
             m_pixels[offset] = color.Uint;
         }
-    }
-
-    public Image FlipY()
-    {
-        uint[] flippedPixels = new uint[Dimension.Area];
-
-        for (int srcRow = 0; srcRow < Dimension.Height; srcRow++)
-        {
-            int destRow = Dimension.Height - 1 - srcRow;
-            int srcOffset = srcRow * Width;
-            int destOffset = destRow * Width;
-
-            for (int col = 0; col < Dimension.Width; col++)
-            {
-                flippedPixels[destOffset] = m_pixels[srcOffset];
-                srcOffset++;
-                destOffset++;
-            }
-        }
-
-        return new(flippedPixels, Dimension, ImageType, Offset, Namespace);
     }
 
     public void ConvertToGrayscale(bool normalize)

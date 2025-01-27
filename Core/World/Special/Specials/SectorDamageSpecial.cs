@@ -54,7 +54,8 @@ public class SectorDamageSpecial
             SectorId = m_sector.Id,
             Damage = m_damage,
             RadSuitLeak = m_radSuitLeakChance,
-            InstantKillEffect = InstantKillEffect
+            InstantKillEffect = InstantKillEffect,
+            End = false,
         };
     }
 

@@ -30,10 +30,10 @@ using Helion.Maps.Specials;
 using Helion.World.Impl.SinglePlayer;
 using Helion.World.Geometry;
 using Helion.Maps;
-using Helion.Resources.Archives.Entries;
 using Helion.Util.Container;
 using Helion.Maps.Shared;
 using Helion.World.Geometry.Subsectors;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Helion.World;
 
@@ -43,6 +43,7 @@ public interface IWorld : IDisposable
 {
     event EventHandler<LevelChangeEvent>? LevelExit;
     event EventHandler? LevelExiting;
+    event EventHandler? WorldPaused;
     event EventHandler? WorldResumed;
     event EventHandler? ClearConsole;
     event EventHandler? OnResetInterpolation;
@@ -125,7 +126,7 @@ public interface IWorld : IDisposable
     bool EntityUse(Entity entity);
     void OnTryEntityUseLine(Entity entity, Line line);
     bool CanActivate(Entity entity, Line line, ActivationContext context);
-    bool ActivateSpecialLine(Entity entity, Line line, ActivationContext context, bool fromFrom);
+    bool ActivateSpecialLine(Entity entity, Line line, ActivationContext context, bool fromFront);
     bool GetAutoAimEntity(Entity startEntity, in Vec3D start, double angle, double distance, out double pitch, out Entity? entity);
     Entity? FireProjectile(Entity shooter, double angle, double pitch, double autoAimDistance, bool autoAim, EntityDefinition projectileDef, out Entity? autoAimEntity,
         double addAngle = 0, double addPitch = 0, double zOffset = 0);
@@ -167,6 +168,8 @@ public interface IWorld : IDisposable
     void SetSectorLightLevel(Sector sector, short lightLevel);
     void SetSectorFloorLightLevel(Sector sector, short lightLevel);
     void SetSectorCeilingLightLevel(Sector sector, short lightLevel);
+    void SetSectorEffect(Sector sector, SectorEffect effect);
+    void SetSectorKillEffect(Sector sector, InstantKillEffect effect);
     void SetEntityPosition(Entity entity, Vec3D pos);
     void ToggleChaseCameraMode();
     void SectorInstantKillEffect(Entity entity, InstantKillEffect effect);
@@ -178,6 +181,7 @@ public interface IWorld : IDisposable
     void FindExits();
     bool SetSkillLevel(SkillLevel skill);
     Subsector ToSubsector(double x, double y);
+    bool GetPickupPlayer(Entity entity, [NotNullWhen(true)] out Player? player);
 
     WorldModel ToWorldModel();
     GameFilesModel GetGameFilesModel();

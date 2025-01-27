@@ -60,9 +60,6 @@ public class LegacyGLTextureManager : GLTextureManager<GLLegacyTexture>
     {
         foreach (var key in tracker.GetKeys())
         {
-            if (key == ResourceNamespace.Sprites)
-                continue;
-
             foreach (var texture in tracker.GetValues(key))
             {
                 texture.Bind();
@@ -106,6 +103,9 @@ public class LegacyGLTextureManager : GLTextureManager<GLLegacyTexture>
     {
         GL.BindTexture(texture.Target, texture.TextureId);
 
+        if (resourceNamespace == ResourceNamespace.Sprites || resourceNamespace == ResourceNamespace.Undefined)
+            flags = TextureFlags.ClampX | TextureFlags.ClampY;
+
         GLHelper.ObjectLabel(ObjectLabelIdentifier.Texture, texture.TextureId, $"Texture: {name} ({flags})");
 
         fixed (uint* pixelPtr = image.GetGlTexturePixels(ShaderVars.PaletteColorMode))
@@ -124,7 +124,7 @@ public class LegacyGLTextureManager : GLTextureManager<GLLegacyTexture>
         texture.Flags = flags;
     }
 
-    public unsafe void ReUpload(GLLegacyTexture texture, Image image, uint[] imagePixels)
+    public unsafe override void ReUpload(GLLegacyTexture texture, Image image, uint[] imagePixels)
     {
         GL.BindTexture(texture.Target, texture.TextureId);
 
@@ -172,66 +172,36 @@ public class LegacyGLTextureManager : GLTextureManager<GLLegacyTexture>
 
     private void SetTextureParameters(TextureTarget targetType, ResourceNamespace resourceNamespace, TextureFlags flags)
     {
-        if (resourceNamespace != ResourceNamespace.Sprites && resourceNamespace != ResourceNamespace.Graphics)
-        {
-            TextureWrapMode textureWrapS = flags.HasFlag(TextureFlags.ClampX) ? TextureWrapMode.ClampToEdge : TextureWrapMode.Repeat;
-            TextureWrapMode textureWrapT = flags.HasFlag(TextureFlags.ClampY) ? TextureWrapMode.ClampToEdge : TextureWrapMode.Repeat;
-            GL.TexParameter(targetType, TextureParameterName.TextureWrapS, (int)textureWrapS);
-            GL.TexParameter(targetType, TextureParameterName.TextureWrapT, (int)textureWrapT);
+        TextureWrapMode textureWrapS = flags.HasFlag(TextureFlags.ClampX) ? TextureWrapMode.ClampToEdge : TextureWrapMode.Repeat;
+        TextureWrapMode textureWrapT = flags.HasFlag(TextureFlags.ClampY) ? TextureWrapMode.ClampToEdge : TextureWrapMode.Repeat;
+        GL.TexParameter(targetType, TextureParameterName.TextureWrapS, (int)textureWrapS);
+        GL.TexParameter(targetType, TextureParameterName.TextureWrapT, (int)textureWrapT);
 
-            SetTextureFilter(targetType);
-            SetAnisotropicFiltering(targetType);
-            return;
-        }
-
-        // Sprites are a special case where we want to clamp to the edge.
-        // This stops artifacts from forming.
-        GL.TexParameter(targetType, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-        GL.TexParameter(targetType, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-
-        if (resourceNamespace == ResourceNamespace.Sprites)
-        {
-            GL.TexParameter(targetType, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(targetType, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-        }
-        else
-        {
-            SetTextureFilter(targetType);
-        }
+        SetTextureFilter(targetType);
+        SetAnisotropicFiltering(targetType);
     }
 
     public void SetTextureFilter(TextureTarget targetType)
     {
-        (int minFilter, int maxFilter) = FindFilterValues(Config.Render.Filter.Texture.Value);
-        GL.TexParameter(targetType, TextureParameterName.TextureMinFilter, minFilter);
-        GL.TexParameter(targetType, TextureParameterName.TextureMagFilter, maxFilter);
+        (var magFilter, var minFilter) = FindFilterValues(Config.Render.Filter.Texture.Value);
+        GL.TexParameter(targetType, TextureParameterName.TextureMagFilter, (int)magFilter);
+        GL.TexParameter(targetType, TextureParameterName.TextureMinFilter, (int)minFilter);
     }
 
-    private (int minFilter, int maxFilter) FindFilterValues(FilterType filterType)
+    private static (TextureMagFilter magFilter, TextureMinFilter minFilter) FindFilterValues(FilterType filterType)
     {
         // Filtering must be nearest for colormap support
-        int minFilter = (int)TextureMinFilter.Nearest;
-        int magFilter = (int)TextureMagFilter.Nearest;
-
         if (ShaderVars.PaletteColorMode)
-            return (minFilter, magFilter);
+            return (TextureMagFilter.Nearest, TextureMinFilter.Nearest);
 
-        switch (filterType)
+        return filterType switch
         {
-        case FilterType.Nearest:
-            // Already set as the default!
-            break;
-        case FilterType.Bilinear:
-            minFilter = (int)TextureMinFilter.Linear;
-            magFilter = (int)TextureMagFilter.Linear;
-            break;
-        case FilterType.Trilinear:
-            minFilter = (int)TextureMinFilter.LinearMipmapLinear;
-            magFilter = (int)TextureMagFilter.Linear;
-            break;
-        }
-
-        return (minFilter, magFilter);
+            FilterType.Bilinear => (TextureMagFilter.Linear, TextureMinFilter.Linear),
+            FilterType.Trilinear => (TextureMagFilter.Linear, TextureMinFilter.LinearMipmapLinear),
+            FilterType.NeareastBilinear => (TextureMagFilter.Nearest, TextureMinFilter.Linear),
+            FilterType.NearestTrilinear => (TextureMagFilter.Nearest, TextureMinFilter.LinearMipmapLinear),
+            _ => (TextureMagFilter.Nearest, TextureMinFilter.Nearest),
+        };
     }
 
     public void SetAnisotropicFiltering(TextureTarget targetType)

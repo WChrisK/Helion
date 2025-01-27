@@ -61,7 +61,9 @@ public class DataCache
     private readonly DynamicArray<ConsoleMessage> m_consoleMessages = new();
     private readonly DynamicArray<DynamicVertex[]> m_wallVertices = new(DefaultLength);
     private readonly DynamicArray<SkyGeometryVertex[]> m_skyWallVertices = new(DefaultLength);
-    public WeakEntity?[] WeakEntities = new WeakEntity?[DefaultLength];
+
+    private readonly DynamicArray<EntityModel> m_entityModels = new(DefaultLength);
+    private readonly DynamicArray<PlayerModel> m_playerModels = new(32);
 
     public bool CacheEntities = true;
 
@@ -440,7 +442,7 @@ public class DataCache
         return new SectorMoveSpecial();
     }
 
-    public SectorMoveSpecial GetSectorMoveSpecial(IWorld world, Sector sector, SectorMoveSpecialModel model)
+    public SectorMoveSpecial GetSectorMoveSpecial(IWorld world, Sector sector, in SectorMoveSpecialModel model)
     {
         if (m_sectorMoveSpecials.Length > 0)
         {
@@ -479,7 +481,7 @@ public class DataCache
         return new SwitchChangeSpecial(world, line, type);
     }
 
-    public SwitchChangeSpecial GetSwitchChangeSpecial(IWorld world, Line line, SwitchChangeSpecialModel model)
+    public SwitchChangeSpecial GetSwitchChangeSpecial(IWorld world, Line line, in SwitchChangeSpecialModel model)
     {
         if (m_switchSpecials.Length > 0)
         {
@@ -562,5 +564,29 @@ public class DataCache
     public void FreeSkyWallVertices(SkyGeometryVertex[] vertices)
     {
         m_skyWallVertices.Add(vertices);
+    }
+
+    public EntityModel GetEntityModel()
+    {
+        if (m_entityModels.Length > 0)
+            return m_entityModels.RemoveLast();
+        return new EntityModel();
+    }
+
+    public void FreeEntityModels(List<EntityModel> models)
+    {
+        m_entityModels.AddRange(models);
+    }
+
+    public PlayerModel GetPlayerModel()
+    {
+        if (m_playerModels.Length > 0)
+            return m_playerModels.RemoveLast();        
+        return PlayerModel.Create();
+    }
+
+    public void FreePlayerModels(List<PlayerModel> models)
+    {
+        m_playerModels.AddRange(models);
     }
 }

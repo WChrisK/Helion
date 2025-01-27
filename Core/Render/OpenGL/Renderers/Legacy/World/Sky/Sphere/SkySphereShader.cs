@@ -120,21 +120,6 @@ vec4 bottomFetchColor = bottomColor;
         uniform vec4 topColor;
         uniform vec4 bottomColor;
 
-        float paddingHeight = (1 - (skyHeight * 2)) / 2;
-
-        float skyStart1 = 1 - paddingHeight - skyHeight;
-        float skyStart2 = 1 - paddingHeight - (skyHeight * 2);
-        float skyV = 0;
-        vec4 fadeColor = vec4(0, 0, 0, 0);
-
-        float getSkyV(float skyStart) {
-            return (uvFrag.y - skyStart) / skyHeight;
-        }
-
-        vec2 getScaledWithOffset(float u, float skyV) {
-            return vec2(uvFrag.x / scale.x + scrollOffsetFrag.x, skyV + scrollOffsetFrag.y);
-        }
-
         vec4 blendSky(vec4 fragColor, vec4 topBlendColor, vec4 bottomBlendColor) {
             float blendAmount = skyHeight / 4.6;
             if (uvFrag.y < skyMax && uvFrag.y > skyMax - blendAmount)
@@ -145,13 +130,16 @@ vec4 bottomFetchColor = bottomColor;
         }
 
         void main() {
-            vec2 skyUV = vec2(uvFrag.x / scale.x + scrollOffsetFrag.x, (uvFrag.y - 0.5 + scrollOffsetFrag.y) / skyHeight);
-            fragColor = texture(boundTexture, skyUV);
             if (uvFrag.y < skyMin) {
                 fragColor = topColor;
             }
             else if (uvFrag.y > skyMax) {
                 fragColor = bottomColor;
+            }
+            else {
+                vec2 textureUV = uvFrag - skyMin;
+                vec2 offset = scrollOffsetFrag;
+                fragColor = texture(boundTexture, textureUV / scale + offset);
             }
 
             ${ColorMapFetch}

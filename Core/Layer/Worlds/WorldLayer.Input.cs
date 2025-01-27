@@ -45,6 +45,10 @@ public partial class WorldLayer
         (Input.WeaponSlot5,    TickCommands.WeaponSlot5),
         (Input.WeaponSlot6,    TickCommands.WeaponSlot6),
         (Input.WeaponSlot7,    TickCommands.WeaponSlot7),
+        (Input.WeaponGroup1,   TickCommands.WeaponGroup1),
+        (Input.WeaponGroup2,   TickCommands.WeaponGroup2),
+        (Input.WeaponGroup3,   TickCommands.WeaponGroup3),
+        (Input.WeaponGroup4,   TickCommands.WeaponGroup4),
     };
 
     // Convert analog inputs into movements, assumes analog values are in range [0..1]

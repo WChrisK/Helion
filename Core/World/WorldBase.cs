@@ -53,13 +53,13 @@ using static Helion.Dehacked.DehackedDefinition;
 using Helion.Resources.Definitions.MusInfo;
 using Helion.Util.Extensions;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics;
 using Helion.Resources.Archives.Entries;
 using Helion.Maps.Doom;
 using Helion.Maps.Specials.Vanilla;
 using Helion.Util.Loggers;
 using Helion.Graphics.Palettes;
 using Helion.Maps.Shared;
+using Helion.World.Geometry.Islands;
 
 namespace Helion.World;
 
@@ -84,6 +84,7 @@ public abstract partial class WorldBase : IWorld
 
     public event EventHandler<LevelChangeEvent>? LevelExit;
     public event EventHandler? LevelExiting;
+    public event EventHandler? WorldPaused;
     public event EventHandler? WorldResumed;
     public event EventHandler? ClearConsole;
     public event EventHandler? OnResetInterpolation;
@@ -168,16 +169,18 @@ public abstract partial class WorldBase : IWorld
     private int m_lastBumpActivateGametick;
     private LevelChangeType m_levelChangeType = LevelChangeType.Next;
     private LevelChangeFlags m_levelChangeFlags;
-    private Entity[] m_bossBrainTargets = Array.Empty<Entity>();
-    private readonly List<IMonsterCounterSpecial> m_bossDeathSpecials = new();
-    private readonly byte[] m_lineOfSightReject = Array.Empty<byte>();
+    private Entity[] m_bossBrainTargets = [];
+    private readonly List<IMonsterCounterSpecial> m_bossDeathSpecials = [];
+    private readonly byte[] m_lineOfSightReject = [];
     private readonly Func<DamageFuncParams, int> m_defaultDamageAction;
     private readonly EntityDefinition? m_teleportFogDef;
-    private readonly Dictionary<int, MusInfoDef> m_sectorToMusicChange = new();
+    private readonly Dictionary<int, MusInfoDef> m_sectorToMusicChange = [];
     private readonly DynamicArray<Entity> m_fallCheckEntities = new(32);
+    private readonly Dictionary<int, Player> m_itemPickupIndexToPlayers = [];
     private MusInfoDef? m_lastMusicChange;
     private int m_changeMusicTicks = 0;
     private int m_losDistance = DefaultLineOfSightDistance;
+    private string m_activeMusic = string.Empty;
 
     private RadiusExplosionData m_radiusExplosion;
     private readonly Action<Entity> m_radiusExplosionAction;
@@ -493,11 +496,11 @@ public abstract partial class WorldBase : IWorld
         WorldStatic.Frames = ArchiveCollection.Definitions.EntityFrameTable.Frames;
         WorldStatic.Random = Random;
         WorldStatic.SlowTickEnabled = Config.SlowTick.Enabled.Value;
-        WorldStatic.SlowTickChaseFailureSkipCount = Config.SlowTick.ChaseFailureSkipCount;
-        WorldStatic.SlowTickDistance = Config.SlowTick.Distance;
-        WorldStatic.SlowTickChaseMultiplier = Config.SlowTick.ChaseMultiplier;
-        WorldStatic.SlowTickLookMultiplier = Config.SlowTick.LookMultiplier;
-        WorldStatic.SlowTickTracerMultiplier = Config.SlowTick.TracerMultiplier;
+        WorldStatic.SlowTickChaseFailureSkipCount = (short)Config.SlowTick.ChaseFailureSkipCount;
+        WorldStatic.SlowTickDistance = (short)Config.SlowTick.Distance;
+        WorldStatic.SlowTickChaseMultiplier = (short)Config.SlowTick.ChaseMultiplier;
+        WorldStatic.SlowTickLookMultiplier = (short)Config.SlowTick.LookMultiplier;
+        WorldStatic.SlowTickTracerMultiplier = (short)Config.SlowTick.TracerMultiplier;
         WorldStatic.IsFastMonsters = IsFastMonsters;
         WorldStatic.IsSlowMonsters = SkillDefinition.SlowMonsters;
         WorldStatic.InfinitelyTallThings = Config.Compatibility.InfinitelyTallThings;
@@ -553,13 +556,13 @@ public abstract partial class WorldBase : IWorld
     private void SlowTickDistance_OnChanged(object? sender, int distance) =>
         WorldStatic.SlowTickDistance = distance;
     private void SlowTickChaseFailureSkipCount_OnChanged(object? sender, int value) =>
-        WorldStatic.SlowTickChaseFailureSkipCount = value;
+        WorldStatic.SlowTickChaseFailureSkipCount = (short)value;
     private void SlowTickChaseMultiplier_OnChanged(object? sender, int value) =>
-        WorldStatic.SlowTickChaseMultiplier = value;
+        WorldStatic.SlowTickChaseMultiplier = (short)value;
     private void SlowTickLookMultiplier_OnChanged(object? sender, int value) =>
-        WorldStatic.SlowTickLookMultiplier = value;
+        WorldStatic.SlowTickLookMultiplier = (short)value;
     private void SlowTickTracerMultiplier_OnChanged(object? sender, int value) =>
-        WorldStatic.SlowTickTracerMultiplier = value;
+        WorldStatic.SlowTickTracerMultiplier = (short)value;
     private void FastMonsters_OnChanged(object? sender, bool enabled)
     {
         IsFastMonsters = SkillDefinition.IsFastMonsters(Config);
@@ -600,9 +603,6 @@ public abstract partial class WorldBase : IWorld
 
         if (worldModel == null)
             SpecialManager.StartInitSpecials(LevelStats);
-
-        for (var entity = EntityManager.Head; entity != null; entity = entity.Next)
-            entity.SectorDamageSpecial = entity.Sector.SectorDamageSpecial;
 
         StaticDataApplier.DetermineStaticData(this);
         SpecialManager.SectorSpecialDestroyed += SpecialManager_SectorSpecialDestroyed;
@@ -697,7 +697,7 @@ public abstract partial class WorldBase : IWorld
     public void NoiseAlert(Entity target, Entity source)
     {
         m_soundCount++;
-        RecursiveSound(WeakEntity.GetReference(target), source.Sector, 0);
+        RecursiveSound(new(target), source.Sector, 0);
     }
 
     private void RecursiveSound(WeakEntity target, Sector sector, int block)
@@ -741,20 +741,18 @@ public abstract partial class WorldBase : IWorld
 
     public void Link(Entity entity)
     {
-        Precondition(entity.SectorNodes.Empty() && entity.BlocksLength == 0, "Forgot to unlink entity before linking");
+        Precondition(entity.SectorNodes.Empty() && entity.BlockRange.StartX == Constants.ClearBlock, "Forgot to unlink entity before linking");
         PhysicsManager.LinkToWorld(entity, null, false);
     }
 
     public void LinkClamped(Entity entity)
     {
-        Precondition(entity.SectorNodes.Empty() && entity.BlocksLength == 0, "Forgot to unlink entity before linking");
+        Precondition(entity.SectorNodes.Empty() && entity.BlockRange.StartX == Constants.ClearBlock, "Forgot to unlink entity before linking");
         PhysicsManager.LinkToWorld(entity, null, true);
     }
 
     public virtual void Tick()
     {
-        DebugCheck();
-
         if (Paused)
         {
             TickPlayerStatusBars();
@@ -812,7 +810,11 @@ public abstract partial class WorldBase : IWorld
         Profiler.World.Total.Stop();
     }
 
-    public virtual bool PlayLevelMusic(string name, byte[]? data, MusicFlags flags = MusicFlags.Loop) => true;
+    public virtual bool PlayLevelMusic(string name, byte[]? data, MusicFlags flags = MusicFlags.Loop)
+    {
+        m_activeMusic = name;
+        return true;
+    }
 
     protected void InvokeMusicChange(Entry entry, MusicFlags flags) => OnMusicChanged?.Invoke(this, new(entry, flags));
 
@@ -834,13 +836,6 @@ public abstract partial class WorldBase : IWorld
     {
         foreach (Player player in EntityManager.Players)
             player.StatusBar.Tick();
-    }
-
-    [Conditional("DEBUG")]
-    private static void DebugCheck()
-    {
-        if (WeakEntity.Default.Entity != null)
-            Fail("Static WeakEntity default reference was changed.");
     }
 
     private void TickEntities()
@@ -870,10 +865,10 @@ public abstract partial class WorldBase : IWorld
                 if (entity.Respawn)
                     HandleRespawn(entity);
 
-                entity.SectorDamageSpecial?.Tick(entity);
-                                
+                entity.Sector.SectorDamageSpecial?.Tick(entity);
+
                 if (!WorldStatic.InfinitelyTallThings &&
-                    (entity.HadOnEntity || entity.OnEntity != WeakEntity.Default) &&
+                    (entity.HadOnEntity || entity.OnEntity() != null) &&
                     !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&                    
                     entity.Velocity.Z == 0 && entity.Position.Z > entity.HighestFloorSector.Floor.Z)
                 {
@@ -883,7 +878,7 @@ public abstract partial class WorldBase : IWorld
 
             entity = nextEntity;
         }
-        
+
         // Check entities that are subject to falling and may have been on top of another entity that is no longer valid.
         // This often happens with cacodemon clusters where a dead one is on top of many and needs to fall.
         PhysicsManager.EntityFallCheck(m_fallCheckEntities);
@@ -980,6 +975,7 @@ public abstract partial class WorldBase : IWorld
         SoundManager.Pause();
 
         Paused = true;
+        WorldPaused?.Invoke(this, EventArgs.Empty);
     }
 
     public void ResetInterpolation()
@@ -1585,7 +1581,7 @@ public abstract partial class WorldBase : IWorld
     public virtual bool DamageEntity(Entity target, Entity? source, int damage, DamageType damageType,
         Thrust thrust = Thrust.HorizontalAndVertical, Sector? sectorSource = null)
     {
-        if (source != null && source.Owner.Entity == target)
+        if (source != null && source.Owner() == target)
             damage = (int)(damage * source.Properties.SelfDamageFactor);
 
         if (!target.Flags.Shootable || damage == 0 || target.IsDead)
@@ -1596,7 +1592,7 @@ public abstract partial class WorldBase : IWorld
         {
             Vec3D savePos = source.Position;
             // Check if the source is owned by this target and the same position and move to get a valid thrust angle. (player shot missile against wall)
-            if (source.Owner.Entity == target && source.Position.XY == target.Position.XY)
+            if (source.Owner() == target && source.Position.XY == target.Position.XY)
             {
                 Vec3D move = (source.Position.XY + Vec2D.UnitCircle(target.AngleRadians) * 2).To3D(source.Position.Z);
                 source.Position = move;
@@ -1622,7 +1618,7 @@ public abstract partial class WorldBase : IWorld
             {
                 // Player rocket jumping check, back up the source Z to get a valid pitch
                 // Only done for players, otherwise blowing up enemies will launch them in the air
-                if (zEqual && target.IsPlayer && source.Owner.Entity == target)
+                if (zEqual && target.IsPlayer && source.Owner() == target)
                 {
                     Vec3D sourcePos = new Vec3D(source.Position.X, source.Position.Y, source.Position.Z - 1.0);
                     pitch = sourcePos.Pitch(target.Position, 0.0);
@@ -1773,8 +1769,9 @@ public abstract partial class WorldBase : IWorld
             player = findPlayer;
         }
 
-        item.PickupPlayer = player;
-        item.FrameState.SetState(Constants.FrameStates.Pickup, warn: false);
+        m_itemPickupIndexToPlayers[item.Index] = player; 
+        item.FrameState.SetState(item, item.Definition, Constants.FrameStates.Pickup, warn: false);
+        m_itemPickupIndexToPlayers.Remove(item.Index);
 
         if (item.Flags.CountItem)
         {
@@ -1860,7 +1857,7 @@ public abstract partial class WorldBase : IWorld
             if (!entity.OverlapsZ(intersectEntity) || entity == intersectEntity)
                 continue;
 
-            if (entity.Flags.Ripper && entity.Owner.Entity != intersectEntity)
+            if (entity.Flags.Ripper && entity.Owner() != intersectEntity)
                 RipDamage(entity, intersectEntity);
             if (intersectEntity.Flags.Touchy && ShouldDieFromTouch(entity, intersectEntity))
                 intersectEntity.Kill(null);
@@ -2077,18 +2074,18 @@ public abstract partial class WorldBase : IWorld
         {
             for (int i = 0; i < dropItemDef.Value.Amount; i++)
             {
-                bool spawnInit = true;
+                bool initSpawn = true;
                 Vec3D pos = deathEntity.Position;
                 pos.Z = deathEntity.Sector.Floor.Z;
                 double addVelocity = 0;
                 if (!WorldStatic.NoTossDrops)
                 {
-                    spawnInit = false;
+                    initSpawn = false;
                     pos.Z = deathEntity.Position.Z + deathEntity.Definition.Properties.Height / 2;
                     addVelocity = 4;
                 }
                 
-                Entity? dropItem = EntityManager.Create(dropItemDef.Value.ClassName, pos, init: spawnInit);
+                Entity? dropItem = EntityManager.Create(dropItemDef.Value.ClassName, pos, initSpawn: initSpawn);
                 if (dropItem == null)
                     continue;
                 
@@ -2105,7 +2102,7 @@ public abstract partial class WorldBase : IWorld
 
         // If the player killed themself then don't display the obituary message
         // There is probably a special string for this in multiplayer for later
-        Entity killer = deathSource.Owner.Entity ?? deathSource;
+        Entity killer = deathSource.Owner() ?? deathSource;
         if (player == killer)
             return;
 
@@ -2141,12 +2138,13 @@ public abstract partial class WorldBase : IWorld
     private void HandleRespawn(Entity entity)
     {
         entity.Respawn = false;
-        if (entity.Definition.Flags.Solid && IsPositionBlockedByEntity(entity, entity.SpawnPoint))
+        var spawnPoint = EntityManager.GetSpawnPoint(entity);
+        if (entity.Definition.Flags.Solid && IsPositionBlockedByEntity(entity, spawnPoint))
             return;
 
-        var newEntity = EntityManager.Create(entity.Definition, entity.SpawnPoint, 0, entity.AngleRadians, entity.ThingId, true);
+        var newEntity = EntityManager.Create(entity.Definition, spawnPoint, 0, entity.AngleRadians, entity.ThingId, true);
         CreateTeleportFog(entity.Position);
-        CreateTeleportFog(entity.SpawnPoint);
+        CreateTeleportFog(spawnPoint);
 
         newEntity.Flags.Friendly = entity.Flags.Friendly;
         newEntity.AngleRadians = entity.AngleRadians;
@@ -2303,7 +2301,7 @@ public abstract partial class WorldBase : IWorld
         if (applyDamage <= 0)
             return;
 
-        Entity? originalOwner = source.Owner.Entity;
+        Entity? originalOwner = source.Owner();
         source.SetOwner(attackSource);
         DamageEntity(entity, source, applyDamage, DamageType.AlwaysApply, thrust);
         source.SetOwner(originalOwner);
@@ -2404,7 +2402,7 @@ public abstract partial class WorldBase : IWorld
         if (offset == 0)
             blood.SetRandomizeTicks();
         else if (blood.Definition.SpawnState != null)
-            blood.FrameState.SetFrameIndex(blood.Definition.SpawnState.Value + offset);
+            blood.FrameState.SetFrameIndex(blood, blood.Definition.SpawnState.Value + offset);
     }
 
     private static void MoveIntersectCloser(in Vec3D start, ref Vec3D intersect, double angle, double distXY)
@@ -2759,11 +2757,11 @@ public abstract partial class WorldBase : IWorld
         entity.Flags.Solid = true;
         entity.Height = entity.Definition.Properties.Height;
 
-        Entity? saveTarget = healChaseEntity.Target?.Entity;
+        var saveTarget = healChaseEntity.Target();
         healChaseEntity.SetTarget(entity);
         EntityActionFunctions.A_FaceTarget(healChaseEntity);
         healChaseEntity.SetTarget(saveTarget);
-        healChaseEntity.FrameState.SetState(m_healChaseData.HealState);
+        healChaseEntity.FrameState.SetState(entity, m_healChaseData.HealState);
 
         if (m_healChaseData.HealSound.Length > 0)
             WorldStatic.SoundManager.CreateSoundOn(entity, m_healChaseData.HealSound, new SoundParams(entity));
@@ -2782,7 +2780,8 @@ public abstract partial class WorldBase : IWorld
 
     public void TracerSeek(Entity entity, double threshold, double maxTurnAngle, GetTracerVelocityZ velocityZ)
     {
-        if (entity.Tracer.Entity == null || entity.Tracer.Entity.IsDead)
+        var tracer = entity.Tracer();
+        if (tracer == null || tracer.IsDead)
             return;
 
         SetTracerAngle(entity, threshold, maxTurnAngle);
@@ -2791,13 +2790,13 @@ public abstract partial class WorldBase : IWorld
         entity.Velocity = Vec3D.UnitSphere(entity.AngleRadians, 0.0) * entity.Definition.Properties.MissileMovementSpeed;
         entity.Velocity.Z = z;
 
-        entity.Velocity.Z = velocityZ(entity, entity.Tracer.Entity);
+        entity.Velocity.Z = velocityZ(entity, tracer);
     }
 
     public void SetNewTracerTarget(Entity entity, double fieldOfViewRadians, double radius)
     {
         m_newTracerTargetData.Entity = entity;
-        m_newTracerTargetData.Owner = entity.Owner.Entity ?? entity;
+        m_newTracerTargetData.Owner = entity.Owner() ?? entity;
         m_newTracerTargetData.FieldOfViewRadians = fieldOfViewRadians;
         BlockmapTraverser.EntityTraverse(new Box2D(entity.Position.X, entity.Position.Y, radius), m_setNewTracerTargetAction);
     }
@@ -2814,7 +2813,16 @@ public abstract partial class WorldBase : IWorld
             return;
 
         var island = WorldStatic.World.Geometry.IslandGeometry.Islands[playerSubsector.IslandId];
-        if (!island.IsMonsterCloset)
+        bool wasMonsterCloset = island.IsMonsterCloset;
+        bool wasVooDooCloset = island.IsVooDooCloset;
+
+        if (wasMonsterCloset || wasVooDooCloset)
+            ClearSectorIslandClosetStatus(island, wasMonsterCloset, wasVooDooCloset);
+
+        island.IsMonsterCloset = false;
+        island.IsVooDooCloset = false;
+
+        if (!wasMonsterCloset)
             return;
 
         // Whoops. Player teleported into a monster closet.       
@@ -2823,10 +2831,10 @@ public abstract partial class WorldBase : IWorld
             if ((entity.ClosetFlags & ClosetFlags.MonsterCloset) != 0)
                 continue;
 
-            if (entity.Subsector.Id < 0 || entity.Subsector.Id >= Geometry.BspTree.Subsectors.Count)
+            if (entity.SubsectorId < 0 || entity.SubsectorId >= Geometry.BspTree.Subsectors.Count)
                 continue;
 
-            var subsector = Geometry.BspTree.Subsectors[entity.Subsector.Id];
+            var subsector = Geometry.BspTree.Subsectors[entity.SubsectorId];
             if (subsector.IslandId < 0 || subsector.IslandId >= Geometry.IslandGeometry.Islands.Count)
                 continue;
 
@@ -2834,6 +2842,25 @@ public abstract partial class WorldBase : IWorld
                 continue;
 
             entity.ClearMonsterCloset();
+        }
+    }
+
+    private static void ClearSectorIslandClosetStatus(Island island, bool wasMonsterCloset, bool wasVooDooCloset)
+    {
+        for (int i = 0; i < WorldStatic.World.Geometry.IslandGeometry.SectorIslands.Length; i++)
+        {
+            var sectorIslands = WorldStatic.World.Geometry.IslandGeometry.SectorIslands[i];
+            for (int j = 0; j < sectorIslands.Count; j++)
+            {
+                var sectorIsland = sectorIslands[j];
+                if (sectorIsland.ParentIsland != island)
+                    continue;
+
+                if (wasVooDooCloset)
+                    sectorIsland.IsVooDooCloset = false;
+                if (wasMonsterCloset)
+                    sectorIsland.IsMonsterCloset = false;
+            }
         }
     }
 
@@ -2866,11 +2893,12 @@ public abstract partial class WorldBase : IWorld
 
     private static void SetTracerAngle(Entity entity, double threshold, double maxTurnAngle)
     {
-        if (entity.Tracer.Entity == null)
+        var tracer = entity.Tracer();
+        if (tracer == null)
             return;
         // Doom's angles were always 0-360 and did not allow negatives (thank you arithmetic overflow)
         // To keep this code familiar GetPositiveAngle will keep angle between 0 and 2pi
-        double exact = MathHelper.GetPositiveAngle(entity.Position.Angle(entity.Tracer.Entity.Position));
+        double exact = MathHelper.GetPositiveAngle(entity.Position.Angle(tracer.Position));
         double currentAngle = MathHelper.GetPositiveAngle(entity.AngleRadians);
         double diff = MathHelper.GetPositiveAngle(exact - currentAngle);
 
@@ -3139,6 +3167,16 @@ public abstract partial class WorldBase : IWorld
         SectorLightChanged?.Invoke(this, sector);
     }
 
+    public void SetSectorEffect(Sector sector, SectorEffect effect)
+    {
+        sector.SetSectorEffect(effect);
+    }
+
+    public void SetSectorKillEffect(Sector sector, InstantKillEffect effect)
+    {
+        sector.SetKillEffect(effect);
+    }
+
     public void SetSectorColorMap(Sector sector, Colormap? colormap)
     {
         if (sector.Colormap == colormap)
@@ -3155,4 +3193,6 @@ public abstract partial class WorldBase : IWorld
     }
 
     public virtual Player GetCameraPlayer() => Player;
+
+    public bool GetPickupPlayer(Entity entity, [NotNullWhen(true)] out Player? player) => m_itemPickupIndexToPlayers.TryGetValue(entity.Index, out player);
 }

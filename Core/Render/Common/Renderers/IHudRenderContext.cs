@@ -21,6 +21,8 @@ public interface IHudRenderContext : IDisposable
     /// </summary>
     Dimension Dimension { get; }
 
+    Dimension WindowDimension { get; }
+
     /// <summary>
     /// The texture manager that this context uses.
     /// </summary>
@@ -202,4 +204,6 @@ public interface IHudRenderContext : IDisposable
     /// Draws queued images, text, shapes to screen.
     /// </summary>
     void DrawHud();
+
+    void BorderBox(HudBox box, Color color, int size);
 }

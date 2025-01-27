@@ -185,20 +185,32 @@ public partial class TextureManager
         return Math.Max((int)(fire.UpdateTime / seconds), 1);
     }
 
-    private void MapSkyFlat(Entry flat, int textureIndex)
+    private void MapSkyFlat(string flatName, int flatIndex)
     {
         var skyDefinition = m_archiveCollection.Definitions.Id24SkyDefinition;
-        if (!skyDefinition.FlatMapping.TryGetValue(flat.Path.Name, out var textureName))
+        if (!TryGetSkyTextureName(flatName, skyDefinition, out var textureName))
             return;
 
         var texture = MapSkyTexture(textureName, skyDefinition);
         if (texture != null)
-            m_flatIndexToSkyTextureIndex[textureIndex] = texture.Index;
+            m_flatIndexToSkyTextureIndex[flatIndex] = texture.Index;
+    }
+
+    private bool TryGetSkyTextureName(string flatName, Id24SkyDefinition skyDefinition, [NotNullWhen(true)] out string? textureName)
+    {
+        if (flatName.EqualsIgnoreCase(m_archiveCollection.GameInfo.SkyFlatName))
+        {
+            textureName = SkyTextureName;
+            return true;
+        }
+
+        return skyDefinition.FlatMapping.TryGetValue(flatName, out textureName);
     }
 
     private Texture? MapSkyTexture(string textureName, Id24SkyDefinition skyDefinition)
     {
-        if (!m_textureLookup.TryGetValue(textureName, out var texture))
+        var texture = GetTexture(textureName, ResourceNamespace.Textures);
+        if (texture.Index == Constants.NoTextureIndex)
         {
             Log.Error($"Could not find texture {textureName} for sky {textureName}");
             return null;

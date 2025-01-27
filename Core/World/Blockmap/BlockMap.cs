@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Grids;
 using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
+using Helion.Util;
 using Helion.Util.Assertion;
-using Helion.Util.Container;
 using Helion.World.Entities;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
@@ -76,31 +74,40 @@ public class BlockMap
         return m_blocks.Iterate(seg);
     }
 
-    /// <summary>
-    /// Links an entity to the grid.
-    /// </summary>
-    /// <param name="entity">The entity to link. Should be inside the map.
-    /// </param>
-    public void Link(Entity entity)
+    public void Link(Entity entity, bool checkLastBlock)
     {
-        Assert.Precondition(entity.BlocksLength == 0, "Forgot to unlink entity from blockmap");
+        Assert.Precondition((entity.BlockRange.StartX == Constants.ClearBlock) || checkLastBlock, "Forgot to unlink entity from blockmap");
 
-        var it = m_blocks.CreateBoxIteration(entity.Position.X, entity.Position.Y, entity.Radius);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        var boxMinX = entity.Position.X - entity.Radius;
+        var boxMaxX = entity.Position.X + entity.Radius;
+        var boxMinY = entity.Position.Y - entity.Radius;
+        var boxMaxY = entity.Position.Y + entity.Radius;
+        var blockStartX = (short)Math.Max(0, (int)((boxMinX - m_blocks.Bounds.Min.X) / m_blocks.Dimension));
+        var blockStartY = (short)Math.Max(0, (int)((boxMinY - m_blocks.Bounds.Min.Y) / m_blocks.Dimension));
+        var blockEndX = (short)Math.Min((int)((boxMaxX - m_blocks.Bounds.Min.X) / m_blocks.Dimension), m_blocks.Width - 1);
+        var blockEndY = (short)Math.Min((int)((boxMaxY - m_blocks.Bounds.Min.Y) / m_blocks.Dimension), m_blocks.Height - 1);
+
+        // If the block range matches then the entity will link to the same blocks.
+        // The block stores entities by id in an array so this saves the array copy to remove the index.
+        if (checkLastBlock && entity.BlockRange.StartX == blockStartX && entity.BlockRange.StartY == blockStartY && entity.BlockRange.EndX == blockEndX && entity.BlockRange.EndY == blockEndY)
+            return;
+
+        entity.UnlinkBlockMapBlocks();
+        entity.BlockRange.StartX = blockStartX;
+        entity.BlockRange.StartY = blockStartY;
+        entity.BlockRange.EndX = blockEndX;
+        entity.BlockRange.EndY =  blockEndY;
+
+        for (var by = blockStartY; by <= blockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (var bx = blockStartX; bx <= blockEndX; bx++)
             {
-                Block block = m_blocks[by * it.Width + bx];
-
+                var block = Blocks[by * m_blocks.Width + bx];
+                
                 if (block.EntityIndicesLength == block.EntityIndices.Length)                
                     Array.Resize(ref block.EntityIndices, block.EntityIndices.Length * 2);
 
                 block.EntityIndices[block.EntityIndicesLength++] = entity.Index;
-
-                if (entity.BlocksLength == entity.Blocks.Length)
-                    Array.Resize(ref entity.Blocks, entity.Blocks.Length * 2);
-
-                entity.Blocks[entity.BlocksLength++] = block;
             }
         }
     }

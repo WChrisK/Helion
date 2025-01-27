@@ -12,6 +12,17 @@
   - Add option for berserk intensity
   - Add option to disable crosshair shrinking on target
   - Add use command to allow for separate bindings for shotgun/super shotgun [bind x "use shotgun"] [bind y "use supershotgun"]
+  - Add custom weapon groups similar to the ones found in Woof!, with the added bonus of being assignable to any button.
+  - Add order independent transparency to fix issues with multiple transparent sprites causing transparent textures not to render
+  - Support texture filtering with sprites
+  - Refraction effect for spectres
+  - Added nearest to bilinear and nearest to trilinear texture filter options
+  - Updated save game management to read save files on startup to fix load time of the load/save menu when there are a large number of save files to read
+  - Improved quick save performance to reduce large stutters when saving
+  - Add Boom RNG method with option to toggle between Boom and Vanilla Doom RNG
+  - Add save game thumbnails and summary details (kills, secrets, elapsed time) to save/load menus
+  - Updated styling of save/load menus
+  - Add sky render modes dynamic and vanilla. Dynamic is the original version and similar to GZDoom. Vanilla to better match vanilla sky drawing
 
 ## Bug fixes:
   - Fix per ammo values for box ammo and backpack amount from dehacked patch
@@ -34,3 +45,29 @@
   - Fix minimum x/y velocity to match vanilla behavior
   - Added sprites and sounds for mbf helper dog
   - Fix label clear in UMAPINFO
+  - Fallback to status bar background texture (borderflat) defined in gameinfo
+  - Fix issue with two-sided middle walls and texture filtering causing edge pixels to render incorrectly
+  - Fix spawn ceiling being incorrectly applied after initial map start
+  - Fix ordering to set flags first when something dies before setting the death state to match original behavior
+  - Fix index check on setting death state to match original behavior. Fixes 0x0.wad spawn fall objects not being removed.
+  - Fix one-sided walls and flats with null texture rendering (fixes 0x0.wad)
+  - Fix ranodomization for new map starts starting with the same value
+  - Fix two-sided boom generic door specials not being trigger by monsters when blocked (fixes Going Down Turbo MAP10)
+  - Fix flood rendering where flood sides would have gaps
+  - Fix box segment intersection to check for epsilon. Fixes Going Down Turbo MAP12 red key not falling.
+  - Fix door compatibility to always allow clipping through floor regardless of vanilla movement physics setting (fixes Going Down Turbo MAP23 Invulnerability not spawning)
+  - Fix No Rest for the Living to be loaded as a PWAD with Doom 2 IWAD from the IWAD selections screen
+  - Fix weapon offset interpolation to reset when modifying offsets through dehacked (fixes Doom Zero pistol and shotgun jittering)
+  - Set SLIDE and INFLOAT flags correctly for MBF21 flag functions
+  - Fix path reporting of loaded files that were not added with a full path
+  - Fix not being able to search current working directory when launching Helion outside of it's executing directory
+  - Fix various id24 skydef rendering for midtexel and scaling. Sky render mode automatically changed to vanilla when skydefs is encountered
+  - Fix transfer sky specials 171 and 172 to apply Y offset from line 
+  - Fix map options not being set from default map (nojump nofreelook etc)
+  - Fix issue where moving sectors may not render when inside a misclassified voodoo doll closet
+  - Fix dehacked weapon ammo use amount
+  - Fix music changes not persisting through successive save games
+  - Fix scrolling floors/ceilings stopping when completes a move special
+  - Fix mouse focus issue when loading/reloading a map
+  - Fix default intermission background images and music for UMAPINFO
+  - Fix bex string parsing for mnemonics that have more than two strings

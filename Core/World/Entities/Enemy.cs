@@ -33,14 +33,13 @@ public partial class Entity
 
     private MoveDir m_direction = MoveDir.None;
 
-    public bool BlockFloating;
     public double MonsterMovementSpeed;
 
     public void SetEnemyDirection(MoveDir direction) =>
         m_direction = direction;
 
     public bool ValidEnemyTarget(Entity? entity) => entity != null &&
-        !entity.IsDead && (!IsFriend(entity) || Target.Entity == null);
+        !entity.IsDead && (!IsFriend(entity) || Target() == null);
 
     public void SetMoveDirection(MoveDir dir) => m_direction = dir;
 
@@ -50,17 +49,18 @@ public partial class Entity
             return false;
 
         Entity? newTarget = null;
-        if (Sector.SoundTarget.Entity != null && ValidEnemyTarget(Sector.SoundTarget.Entity))
+        var soundTarget = Sector.SoundTarget.Get();
+        if (soundTarget != null && ValidEnemyTarget(soundTarget))
         {
             if (Flags.Ambush)
             {
                 // Ambush enemies will set target based on SoundTarget reguardless of FOV.
-                if (WorldStatic.World.CheckLineOfSight(this, Sector.SoundTarget.Entity))
-                    newTarget = Sector.SoundTarget.Entity;
+                if (WorldStatic.World.CheckLineOfSight(this, soundTarget))
+                    newTarget = soundTarget;
             }
             else
             {
-                newTarget = Sector.SoundTarget.Entity;
+                newTarget = soundTarget;
             }
         }
         else
@@ -72,9 +72,9 @@ public partial class Entity
         {
             if (Flags.Friendly)
             {
-                var previousTarget = Target;
+                var previousTarget = Target();
                 SetTarget(newTarget);
-                if (newTarget != null && newTarget.IsPlayer && newTarget != previousTarget.Entity && Definition.MissileState.HasValue)
+                if (newTarget != null && newTarget.IsPlayer && newTarget != previousTarget && Definition.MissileState.HasValue)
                 {
                     SetSeeState();
                     PlaySeeSound();
@@ -101,7 +101,7 @@ public partial class Entity
 
     public void SetClosetLook()
     {
-        FrameState.SetFrameIndex(WorldStatic.World.ArchiveCollection.EntityFrameTable.ClosetLookFrameIndex);
+        FrameState.SetFrameIndex(this, WorldStatic.World.ArchiveCollection.EntityFrameTable.ClosetLookFrameIndex);
         AddFrameTicks(ClosetLookCount);
         ClosetLookCount++;
     }
@@ -114,7 +114,7 @@ public partial class Entity
     public void SetClosetChase()
     {
         ClosetFlags = ClosetFlags & ~ClosetFlags.ClosetLook;
-        FrameState.SetFrameIndex(WorldStatic.World.ArchiveCollection.EntityFrameTable.ClosetChaseFrameIndex);
+        FrameState.SetFrameIndex(this, WorldStatic.World.ArchiveCollection.EntityFrameTable.ClosetChaseFrameIndex);
         AddFrameTicks(ClosetChaseCount);
         ClosetChaseCount++;
     }
@@ -169,7 +169,7 @@ public partial class Entity
         // Dehacked can modify things into enemies that can move but this flag doesn't exist in the original game.
         // Set this flag for anything that tries to move, otherwise they can clip ito other things and get stuck, especialliy with float.
         Flags.CanPass = true;
-        Assert.Precondition(Target.Entity != null, "Target is null");
+        Assert.Precondition(Target() != null, "Target is null");
 
         MoveDir dir0;
         MoveDir dir1;
@@ -180,8 +180,9 @@ public partial class Entity
         if (oppositeDirection != MoveDir.None)
             oppositeDirection = (MoveDir)(((int)oppositeDirection) ^ 4);
 
-        double dx = Target.Entity!.Position.X - Position.X;
-        double dy = Target.Entity!.Position.Y - Position.Y;
+        var target = Target()!;
+        double dx = target.Position.X - Position.X;
+        double dy = target.Position.Y - Position.Y;
 
         if (dx > 10)
             dir0 = MoveDir.East;
@@ -318,7 +319,7 @@ public partial class Entity
             MoveCount = WorldStatic.Random.NextByte() & 15;
 
         if (WorldStatic.SlowTickEnabled)
-            ChaseFailureSkipCount = WorldStatic.SlowTickChaseFailureSkipCount + (ChaseFailureCount++ & 1);
+            ChaseFailureSkipCount = (short)(WorldStatic.SlowTickChaseFailureSkipCount + (ChaseFailureCount++ & 1));
 
         // Need to try to use the monster's normal movement speed if stuck. Otherwise they may never move or correctly cross teleport lines.
         ClosetChaseSpeed = MonsterMovementSpeed;
@@ -359,13 +360,13 @@ public partial class Entity
 
         if (!tryMove.Success && floatFlag && tryMove.CanFloat)
         {
-            BlockFloating = true;
+            Flags.InFloat = true;
             Position.Z += Position.Z < tryMove.HighestFloorZ ? FloatSpeed : -FloatSpeed;
             return true;
         }
         else
         {
-            BlockFloating = false;
+            Flags.InFloat = false;
         }
 
         if (tryMove.Success && !floatFlag && isMoving)
@@ -404,11 +405,15 @@ public partial class Entity
 
     public double GetEnemyFloatMove()
     {
-        if (IsPlayer || IsDead || Target.Entity == null || !Flags.Float || Flags.Skullfly || BlockFloating || OnGround)
+        if (IsPlayer || IsDead || !Flags.Float || Flags.Skullfly || Flags.InFloat || OnGround)
             return 0.0;
 
-        double distance = Position.ApproximateDistance2D(Target.Entity.Position);
-        double dz = (Target.Entity.Position.Z - Position.Z + (Height / 2)) * 3;
+        var target = Target();
+        if (target == null)
+            return 0.0;
+
+        double distance = Position.ApproximateDistance2D(target.Position);
+        double dz = (target.Position.Z - Position.Z + (Height / 2)) * 3;
 
         if (dz < 0 && distance < -dz)
             return -FloatSpeed;
@@ -441,7 +446,8 @@ public partial class Entity
 
     public bool CheckMissileRange()
     {
-        if (Target.Entity == null || IsFriend(Target.Entity) || !WorldStatic.World.CheckLineOfSight(this, Target.Entity))
+        var target = Target();
+        if (target == null || IsFriend(target) || !WorldStatic.World.CheckLineOfSight(this, target))
             return false;
 
         if (Flags.JustHit)
@@ -453,7 +459,7 @@ public partial class Entity
         if (ReactionTime > 0)
             return false;
 
-        double distance = Position.ApproximateDistance2D(Target.Entity.Position);
+        double distance = Position.ApproximateDistance2D(target.Position);
 
         if (Definition.MissileState == null)
             distance -= 128;
@@ -476,14 +482,17 @@ public partial class Entity
         return WorldStatic.Random.NextByte() >= distance;
     }
 
-    private bool TryWalk()
+    public bool TryWalk()
     {
         if (!MoveEnemy(out TryMoveData? tryMove))
         {
-            if (tryMove != null && tryMove.ImpactSpecialLines.Length > 0)
+            if (tryMove != null)
             {
                 for (int i = 0; i < tryMove.ImpactSpecialLines.Length; i++)
                     WorldStatic.World.ActivateSpecialLine(this, tryMove.ImpactSpecialLines[i], ActivationContext.UseLine, true);
+
+                for (int i = 0; i < tryMove.IntersectSpecialLines.Length; i++)
+                    WorldStatic.World.ActivateSpecialLine(this, tryMove.IntersectSpecialLines[i], ActivationContext.UseLine, true);
             }
 
             return false;

@@ -5,14 +5,17 @@ using Helion.Maps.Specials.ZDoom;
 using Helion.Models;
 using Helion.Render.Common.World;
 using Helion.Render.OpenGL.Shared;
+using Helion.Resources.Archives.Entries;
 using Helion.Resources.Definitions.MapInfo;
 using Helion.Resources.Definitions.SoundInfo;
 using Helion.Util;
+using Helion.Util.Config.Components;
 using Helion.World.Blockmap;
 using Helion.World.Cheats;
 using Helion.World.Entities.Definition;
 using Helion.World.Entities.Definition.Composer;
 using Helion.World.Entities.Definition.Flags;
+using Helion.World.Entities.Definition.Properties;
 using Helion.World.Entities.Definition.Properties.Components;
 using Helion.World.Entities.Definition.States;
 using Helion.World.Entities.Inventories;
@@ -61,12 +64,15 @@ public class Player : Entity
     public double PrevAngle;
     public int DamageCount;
     public int BonusCount;
+    public int Armor;
     public TickCommand TickCommand = new();
     public int ExtraLight;
     public int TurnTics;
     public int KillCount;
     public int ItemCount;
     public int SecretsFound;
+    public EntityProperties? ArmorProperties => ArmorDefinition?.Properties;
+    public EntityDefinition? ArmorDefinition;
 
     protected double m_prevPitch;
     protected double m_viewZ;
@@ -112,6 +118,7 @@ public class Player : Entity
     // Possible line with middle texture clipping player's view.
     public bool ViewLineClip;
     public bool ViewPlaneClip;
+
     public override Player? PlayerObj => this;
     public override bool IsPlayer => true;
     public override int ProjectileKickBack => Weapon == null ? WorldStatic.World.GameInfo.DefKickBack : Weapon.KickBack;
@@ -196,8 +203,12 @@ public class Player : Entity
         SecretsFound = playerModel.SecretsFound;
         AttackDown = playerModel.AttackDown;
         Refire = playerModel.Refire;
+        Armor = playerModel.Armor;
 
         Inventory = new Inventory(playerModel, this, world.EntityManager.DefinitionComposer);
+
+        if (playerModel.ArmorDefinition != null)
+            ArmorDefinition = WorldStatic.EntityManager.DefinitionComposer.GetByName(playerModel.ArmorDefinition);
 
         if (playerModel.Weapon != null)
             Weapon = Inventory.Weapons.GetWeapon(playerModel.Weapon);
@@ -209,7 +220,7 @@ public class Player : Entity
         if (playerModel.Attacker.HasValue && entities.TryGetValue(playerModel.Attacker.Value, out var attacker))
             SetAttacker(attacker.Entity);
         if (playerModel.Killer.HasValue && entities.TryGetValue(playerModel.Killer.Value, out var killer))
-            m_killer = WeakEntity.GetReference(killer.Entity);
+            m_killer = new WeakEntity(killer.Entity);
 
         PrevAngle = AngleRadians;
         m_prevPitch = PitchRadians;
@@ -261,10 +272,10 @@ public class Player : Entity
     }
 
     public void SetAttacker(Entity? entity) =>
-        Attacker = WeakEntity.GetReference(entity);
+        Attacker = new WeakEntity(entity);
 
     public void SetCrosshairTarget(Entity? entity) =>
-        CrosshairTarget = WeakEntity.GetReference(entity);
+        CrosshairTarget = new WeakEntity(entity);
 
     private void SetPlayerInfo()
     {
@@ -272,43 +283,47 @@ public class Player : Entity
         Info.Gender = WorldStatic.World.Config.Player.Gender;
     }
 
-    public PlayerModel ToPlayerModel()
+    public PlayerModel ToPlayerModel(PlayerModel playerModel)
     {
-        PlayerModel playerModel = new PlayerModel()
-        {
-            Number = PlayerNumber,
-            PitchRadians = PitchRadians,
-            DamageCount = DamageCount,
-            BonusCount = BonusCount,
-            ExtraLight = ExtraLight,
-            IsJumping = m_isJumping,
-            JumpTics = m_jumpTics,
-            DeathTics = m_deathTics,
-            ViewHeight = ViewHeight,
-            ViewZ = ViewZ,
-            DeltaViewHeight = DeltaViewHeight,
-            Bob = m_viewBob,
-            WeaponBobX = WeaponBobOffset.X,
-            WeaponBobY = WeaponBobOffset.Y,
-            Killer = m_killer.Entity?.Id,
-            Attacker = Attacker.Entity?.Id,
-            KillCount = KillCount,
-            ItemCount = ItemCount,
-            SecretsFound = SecretsFound,
-            Weapon = Weapon?.Definition.Name,
-            PendingWeapon = PendingWeapon?.Definition.Name,
-            AnimationWeapon = AnimationWeapon?.Definition.Name,
-            WeaponOffsetX = WeaponOffset.X,
-            WeaponOffsetY = WeaponOffset.Y,
-            WeaponSlot = WeaponSlot,
-            WeaponSubSlot = WeaponSubSlot,
-            Inventory = Inventory.ToInventoryModel(),
-            AnimationWeaponFrame = AnimationWeapon?.FrameState.ToFrameStateModel(),
-            WeaponFlashFrame = AnimationWeapon?.FlashState.ToFrameStateModel(),
-            Cheats = Cheats.GetActiveCheats().Cast<int>().ToList(),
-            AttackDown = AttackDown,
-            Refire = Refire
-        };
+        playerModel.Number = PlayerNumber;
+        playerModel.PitchRadians = PitchRadians;
+        playerModel.DamageCount = DamageCount;
+        playerModel.BonusCount = BonusCount;
+        playerModel.ExtraLight = ExtraLight;
+        playerModel.IsJumping = m_isJumping;
+        playerModel.JumpTics = m_jumpTics;
+        playerModel.DeathTics = m_deathTics;
+        playerModel.ViewHeight = ViewHeight;
+        playerModel.ViewZ = ViewZ;
+        playerModel.DeltaViewHeight = DeltaViewHeight;
+        playerModel.Bob = m_viewBob;
+        playerModel.WeaponBobX = WeaponBobOffset.X;
+        playerModel.WeaponBobY = WeaponBobOffset.Y;
+        playerModel.Killer = m_killer.Get()?.Id;
+        playerModel.Attacker = Attacker.Get()?.Id;
+        playerModel.KillCount = KillCount;
+        playerModel.ItemCount = ItemCount;
+        playerModel.SecretsFound = SecretsFound;
+        playerModel.Weapon = Weapon?.Definition.Name;
+        playerModel.PendingWeapon = PendingWeapon?.Definition.Name;
+        playerModel.AnimationWeapon = AnimationWeapon?.Definition.Name;
+        playerModel.WeaponOffsetX = WeaponOffset.X;
+        playerModel.WeaponOffsetY = WeaponOffset.Y;
+        playerModel.WeaponSlot = WeaponSlot;
+        playerModel.WeaponSubSlot = WeaponSubSlot;
+        playerModel.AnimationWeaponFrame = AnimationWeapon?.FrameState.ToFrameStateModel();
+        playerModel.WeaponFlashFrame = AnimationWeapon?.FlashState.ToFrameStateModel();
+        playerModel.AttackDown = AttackDown;
+        playerModel.Refire = Refire;
+        playerModel.ArmorDefinition = ArmorDefinition?.Name;
+        playerModel.Armor = Armor;
+
+        Inventory.ToInventoryModel(playerModel.Inventory);
+
+        playerModel.Cheats.Clear();
+        var cheats = Cheats.GetActiveCheats();
+        for (int i = 0; i < cheats.Count; i++)
+            playerModel.Cheats.Add((int)cheats[i]);
 
         ToEntityModel(playerModel);
         return playerModel;
@@ -316,10 +331,12 @@ public class Player : Entity
 
     public void VoodooSync(Player player)
     {
+        Armor = player.Armor;
+        ArmorDefinition = player.ArmorDefinition;
         base.CopyProperties(player);
-
         // NoClip did not apply to the player
         Flags.NoClip = false;
+
         var items = player.Inventory.GetInventoryItems();
         for (int i = 0; i < items.Count; i++)
         {
@@ -354,6 +371,9 @@ public class Player : Entity
 
             foreach (CheatType cheat in player.Cheats.GetActiveCheats())
                 Cheats.SetCheatActive(cheat);
+
+            ArmorDefinition = player.ArmorDefinition;
+            Armor = player.Armor;
         }
 
         base.CopyProperties(entity);
@@ -490,7 +510,7 @@ public class Player : Entity
         base.SetRaiseState();
         PendingWeapon = Weapon;
         BringupWeapon();
-        m_killer = WeakEntity.GetReference(null);
+        m_killer = new WeakEntity(null);
     }
 
     public override bool CanDamage(Entity source, DamageType damageType)
@@ -534,6 +554,8 @@ public class Player : Entity
         Vec3D position = prevPos.Interpolate(currentPos, t);
         CheckLineClip(currentPos);
         position = CheckPlaneClip(currentPos, prevPos, position);
+        if (!Flags.NoClip && position.Z <= HighestFloorZ)
+            position.Z = HighestFloorZ + 1;
 
         double playerAngle = AngleRadians;
         double playerPitch = PitchRadians;
@@ -737,14 +759,14 @@ public class Player : Entity
             FrameState.Frame.MasterFrameIndex == Definition.SpawnState.Value &&
             Definition.SeeState.HasValue)
         {
-            FrameState.SetFrameIndex(Definition.SeeState.Value);
+            FrameState.SetFrameIndex(this, Definition.SeeState.Value);
         }
         else if (!hasMoveSpeed && Velocity == Vec3D.Zero && Definition.SpawnState.HasValue &&
             FrameState.Frame.MasterFrameIndex != Definition.SpawnState.Value &&
             // Doom hard-coded this to check for any of the 4 running states S_PLAY_RUN1 - S_PLAY_RUN4
             FrameState.Frame.MasterFrameIndex - Definition.SeeState.Value < 4)
         {
-            FrameState.SetFrameIndex(Definition.SpawnState.Value);
+            FrameState.SetFrameIndex(this, Definition.SpawnState.Value);
         }
     }
 
@@ -846,6 +868,10 @@ public class Player : Entity
             if (weapon != null)
                 ChangeWeapon(weapon);
         }
+        else if (GetWeaponGroupCommand(TickCommand) != TickCommands.None)
+        {
+            ExecuteWeaponGroup(TickCommand);
+        }
 
         if (TickCommand.Has(TickCommands.CenterView))
             PitchRadians = 0;
@@ -912,6 +938,98 @@ public class Player : Entity
         }
     }
 
+    private static int GetWeaponGroupIndex(TickCommands tickCommand) =>
+        (int)tickCommand - (int)TickCommands.WeaponGroup1;
+    
+    private static readonly TickCommands[] WeaponGroupCommands = new TickCommands[]
+    {
+        TickCommands.WeaponGroup1,
+        TickCommands.WeaponGroup2,
+        TickCommands.WeaponGroup3,
+        TickCommands.WeaponGroup4
+    };
+
+    private static TickCommands GetWeaponGroupCommand(TickCommand tickCommand)
+    {
+        for (int i = 0; i < WeaponGroupCommands.Length; i++) {
+            if (tickCommand.Has(WeaponGroupCommands[i]))
+                return WeaponGroupCommands[i];
+        }
+        return TickCommands.None;
+    }
+
+    private ConfigWeaponSlots[,] m_WeaponGroups = new ConfigWeaponSlots[4,3];
+    private ConfigWeaponSlots[,] GetWeaponGroups()
+    {
+        m_WeaponGroups[0,0] = WorldStatic.World.Config.Player.Group1Weapon1;
+        m_WeaponGroups[0,1] = WorldStatic.World.Config.Player.Group1Weapon2;
+        m_WeaponGroups[0,2] = WorldStatic.World.Config.Player.Group1Weapon3;
+        m_WeaponGroups[1,0] = WorldStatic.World.Config.Player.Group2Weapon1;
+        m_WeaponGroups[1,1] = WorldStatic.World.Config.Player.Group2Weapon2;
+        m_WeaponGroups[1,2] = WorldStatic.World.Config.Player.Group2Weapon3;
+        m_WeaponGroups[2,0] = WorldStatic.World.Config.Player.Group3Weapon1;
+        m_WeaponGroups[2,1] = WorldStatic.World.Config.Player.Group3Weapon2;
+        m_WeaponGroups[2,2] = WorldStatic.World.Config.Player.Group3Weapon3;
+        m_WeaponGroups[3,0] = WorldStatic.World.Config.Player.Group4Weapon1;
+        m_WeaponGroups[3,1] = WorldStatic.World.Config.Player.Group4Weapon2;
+        m_WeaponGroups[3,2] = WorldStatic.World.Config.Player.Group4Weapon3;
+        return m_WeaponGroups;
+    }
+    private int m_CurrentGroup = -1;
+    private int m_CurrentGroupIndex = -1;
+
+    private void ExecuteWeaponGroup(TickCommand tickCommand)
+    {
+        var groupNumber = GetWeaponGroupIndex(GetWeaponGroupCommand(tickCommand));
+        var weaponGroups = GetWeaponGroups();
+        int currentIndex = -1;
+        if (groupNumber == m_CurrentGroup) 
+        {
+            currentIndex = m_CurrentGroupIndex;
+        }
+        int resultingIndex = 0;
+        Weapon? selectedWeapon = null;
+        for (int slotIndex = 0; slotIndex < weaponGroups.GetLength(1); slotIndex++) 
+        {
+            var slot = weaponGroups[groupNumber,slotIndex];
+            if (slot != ConfigWeaponSlots.None) 
+            {
+                Weapon? weapon = null;
+                if (WeaponSlot == (int)slot)
+                {
+                    var nextSlot = Inventory.Weapons.GetNextSubSlot(this);
+                    if (nextSlot.Slot != -1 && nextSlot.SubSlot != WeaponSubSlot)
+                        weapon = Inventory.Weapons.GetWeapon(nextSlot.Slot, nextSlot.SubSlot);
+                }
+                else
+                {
+                    weapon = Inventory.Weapons.GetWeapon((int)slot, Inventory.Weapons.GetBestSubSlot((int)slot));
+                }
+
+                if (weapon != null) 
+                {
+                    if (slotIndex > currentIndex) 
+                    {
+                        selectedWeapon = weapon;
+                        resultingIndex = slotIndex;
+                        break;
+                    } 
+                    else if (selectedWeapon == null && slotIndex != currentIndex) // Only grab the first result before the current index
+                    {
+                        selectedWeapon = weapon;
+                        resultingIndex = slotIndex;
+                    }
+                }
+            }
+        }
+        if (selectedWeapon != null)
+        {
+            ChangeWeapon(selectedWeapon);
+            m_CurrentGroup = groupNumber;
+            m_CurrentGroupIndex = resultingIndex;
+        }
+    }
+
     private void DeathTick()
     {
         if (PitchRadians > 0.0)
@@ -927,9 +1045,10 @@ public class Player : Entity
                 PitchRadians = 0.0;
         }
 
-        if (m_killer.Entity != null)
+        var killer = m_killer.Get();
+        if (killer != null)
         {
-            double angle = MathHelper.GetPositiveAngle(Position.Angle(m_killer.Entity.Position));
+            double angle = MathHelper.GetPositiveAngle(Position.Angle(killer.Position));
             double diff = angle - AngleRadians;
             double addAngle = 0.08726646; // 5 Degrees
 
@@ -1316,12 +1435,12 @@ public class Player : Entity
         if (Weapon.Definition.Flags.WeaponMeleeWeapon)
         {
             if (Definition.MissileState.HasValue)
-                FrameState.SetFrameIndex(Definition.MissileState.Value);
+                FrameState.SetFrameIndex(this, Definition.MissileState.Value);
             return;
         }
 
         if (Definition.MeleeState.HasValue)
-            FrameState.SetFrameIndex(Definition.MeleeState.Value);
+            FrameState.SetFrameIndex(this, Definition.MeleeState.Value);
     }
 
     /// <summary>
@@ -1377,14 +1496,14 @@ public class Player : Entity
 
     private void SetWeaponTop()
     {
-        WeaponOffset.X = PrevWeaponOffset.X = 0;
+        WeaponOffset.X = PrevWeaponOffset.X = 1;
         WeaponOffset.Y = PrevWeaponOffset.Y = Constants.WeaponTop;
         WeaponBobOffset = PrevWeaponBobOffset = Vec2D.Zero;
     }
 
     private void SetWeaponBottom()
     {
-        WeaponOffset.X = PrevWeaponOffset.X = 0;
+        WeaponOffset.X = PrevWeaponOffset.X = 1;
         WeaponOffset.Y = PrevWeaponOffset.Y = Constants.WeaponBottom;
         WeaponBobOffset = PrevWeaponBobOffset = Vec2D.Zero;
     }
@@ -1419,7 +1538,7 @@ public class Player : Entity
 
     private void SetWeaponFrameState(Weapon weapon, string label)
     {
-        weapon.FrameState.SetState(label);
+        weapon.FrameState.SetState(this, weapon.Definition, label);
     }
 
     public void SetWeaponUp()
@@ -1434,7 +1553,7 @@ public class Player : Entity
 
         // Doom hard coded the decrease amounts for each weapon fire. Have to check if ammo use was changed via dehacked.
         // Handles example case where weapon is rocket launcher but fire calls A_FireBFG.
-        if (amount <= 0 || (Weapon.AmmoDefinition != null && Weapon.AmmoDefinition.Properties.Weapons.AmmoUseSet))
+        if (amount <= 0 || Weapon.Definition.Properties.Weapons.AmmoUseSet)
             amount = Weapon.Definition.Properties.Weapons.AmmoUse;
 
         Inventory.Remove(Weapon.Definition.Properties.Weapons.AmmoType, amount);
@@ -1467,12 +1586,16 @@ public class Player : Entity
         if (Sector.SectorSpecialType == ZDoomSectorSpecialType.DamageEnd && damage >= Health)
             damage = Health - 1;
 
-        damage = WorldStatic.World.SkillDefinition.GetDamage(damage);
+        if (damage < KillDamage)
+        {
+            damage = WorldStatic.World.SkillDefinition.GetDamage(damage);
+            damage = ApplyArmorDamage(damage);
+        }
 
         bool damageApplied = base.Damage(source, damage, setPainState, damageType);
         if (damageApplied)
         {
-            SetAttacker(source?.Owner.Entity ?? source);
+            SetAttacker(source?.Owner() ?? source);
             PlayPainSound(damage);
             DamageCount += damage;
             DamageCount = Math.Min(DamageCount, Definition.Properties.Health);
@@ -1518,11 +1641,31 @@ public class Player : Entity
         m_deathTics = MathHelper.Clamp((int)(Definition.Properties.Player.ViewHeight - DeathHeight), 0, (int)Definition.Properties.Player.ViewHeight);
 
         if (source != null)
-            m_killer = WeakEntity.GetReference(source.Owner.Entity ?? source);
-        if (m_killer.Entity == this)
-            m_killer = WeakEntity.GetReference(null);
+            m_killer = new WeakEntity(source.Owner() ?? source);
+        if (m_killer.Get() == this)
+            m_killer = new WeakEntity(null);
 
         ForceLowerWeapon(true);
+    }
+
+    private int ApplyArmorDamage(int damage)
+    {
+        if (ArmorProperties == null || Armor == 0)
+            return damage;
+        if (ArmorProperties.Armor.SavePercent == 0)
+            return damage;
+
+        int armorDamage = (int)(damage * (ArmorProperties.Armor.SavePercent / 100.0));
+        if (Armor < armorDamage)
+            armorDamage = Armor;
+
+        Armor -= armorDamage;
+        damage = MathHelper.Clamp(damage - armorDamage, 0, damage);
+
+        if (Armor <= 0)
+            ArmorDefinition = null;
+
+        return damage;
     }
 
     public void Jump()
@@ -1584,7 +1727,7 @@ public class Player : Entity
             player.m_viewZ == m_viewZ &&
             player.DeltaViewHeight == DeltaViewHeight &&
             player.m_viewBob == m_viewBob &&
-            player.m_killer.Entity?.Id == m_killer.Entity?.Id;
+            player.m_killer.Get()?.Id == m_killer.Get()?.Id;
     }
 
     public override int GetHashCode()

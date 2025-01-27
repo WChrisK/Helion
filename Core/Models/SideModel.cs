@@ -1,6 +1,6 @@
 namespace Helion.Models;
 
-public class SideModel
+public struct SideModel
 {
     public int DataChanges { get; set; }
     // Integer texture handles are deprecated here. Keeping for backwards compatibiity.
@@ -10,8 +10,4 @@ public class SideModel
     public string? UpperTex { get; set; }
     public string? MiddelTex { get; set; }
     public string? LowerTex { get; set; }
-    public double[]? FrontOffsetX { get; set; }
-    public double[]? FrontOffsetY { get; set; }
-    public double[]? BackOffsetX { get; set; }
-    public double[]? BackOffsetY { get; set; }
 }

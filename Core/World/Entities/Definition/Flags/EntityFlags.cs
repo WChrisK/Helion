@@ -102,6 +102,8 @@ public struct EntityFlags
     public bool SpecialStaySingle { get => (Flags3 & FlagValue.Flag15) != 0; set { if (value) Flags3 |= FlagValue.Flag15; else Flags3 &= FlagValue.InvFlag15; } }
     public bool SpecialStayCooperative { get => (Flags3 & FlagValue.Flag16) != 0; set { if (value) Flags3 |= FlagValue.Flag16; else Flags3 &= FlagValue.InvFlag16; } }
     public bool SpecialStayDeathmatch { get => (Flags3 & FlagValue.Flag17) != 0; set { if (value) Flags3 |= FlagValue.Flag17; else Flags3 &= FlagValue.InvFlag17; } }
+    public bool Slide { get => (Flags3 & FlagValue.Flag18) != 0; set { if (value) Flags3 |= FlagValue.Flag18; else Flags3 &= FlagValue.InvFlag18; } }
+    public bool InFloat { get => (Flags3 & FlagValue.Flag19) != 0; set { if (value) Flags3 |= FlagValue.Flag19; else Flags3 &= FlagValue.InvFlag19; } }
 
     public EntityFlags(EntityFlagsModel model)
     {

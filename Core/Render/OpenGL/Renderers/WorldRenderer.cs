@@ -1,4 +1,5 @@
 using System;
+using Helion.Render.OpenGL.Framebuffer;
 using Helion.Render.OpenGL.Shared;
 using Helion.World;
 
@@ -17,9 +18,9 @@ public abstract class WorldRenderer : IDisposable
     /// </summary>
     /// <param name="world">The world to render.</param>
     /// <param name="renderInfo">The rendering metadata.</param>
-    public void Render(IWorld world, RenderInfo renderInfo)
+    public void Render(IWorld world, RenderInfo renderInfo, GLFramebuffer framebuffer)
     {
-        PerformRender(world, renderInfo);
+        PerformRender(world, renderInfo, framebuffer);
     }
 
     public abstract void ResetInterpolation(IWorld world);
@@ -38,5 +39,5 @@ public abstract class WorldRenderer : IDisposable
     /// </summary>
     /// <param name="world">The world.</param>
     /// <param name="renderInfo">The rendering metadata.</param>
-    protected abstract void PerformRender(IWorld world, RenderInfo renderInfo);
+    protected abstract void PerformRender(IWorld world, RenderInfo renderInfo, GLFramebuffer framebuffer);
 }

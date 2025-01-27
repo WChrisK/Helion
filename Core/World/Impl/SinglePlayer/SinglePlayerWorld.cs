@@ -111,7 +111,7 @@ public class SinglePlayerWorld : WorldBase
             for (var entity = EntityManager.Head; entity != null; entity = entity.Next)
                 EntityManager.FinalizeFromWorldLoad(result, entity);
 
-            SpecialManager.AddSpecialModels(worldModel.Specials);
+            SpecialManager.AddSpecialModels(worldModel);
         }
 
         if (config.Game.MonsterCloset.Value)
@@ -309,28 +309,30 @@ public class SinglePlayerWorld : WorldBase
 
     private void ApplyLineModels(WorldModel worldModel)
     {
+        var lines = worldModel.Lines;
         for (int i = 0; i < worldModel.Lines.Count; i++)
         {
-            LineModel lineModel = worldModel.Lines[i];
-            if (lineModel.Id < 0 || lineModel.Id >= Lines.Count)
+            var id = lines[i].Id;
+            if (id < 0 || id >= Lines.Count)
                 continue;
 
-            var line = Lines[lineModel.Id];
-            line.ApplyLineModel(this, lineModel);
-            ref StructLine structLine = ref StructLines.Data[lineModel.Id];
+            var line = Lines[id];
+            line.ApplyLineModel(this, lines[i]);
+            ref StructLine structLine = ref StructLines.Data[id];
             structLine.Update(line);
         }
     }
 
     private void ApplySectorModels(WorldModel worldModel, WorldModelPopulateResult result)
     {
+        var sectors = worldModel.Sectors;
         for (int i = 0; i < worldModel.Sectors.Count; i++)
         {
-            SectorModel sectorModel = worldModel.Sectors[i];
-            if (sectorModel.Id < 0 || sectorModel.Id >= Sectors.Count)
+            var id = sectors[i].Id;
+            if (id < 0 || id >= Sectors.Count)
                 continue;
 
-            Sectors[sectorModel.Id].ApplySectorModel(this, sectorModel, result);
+            Sectors[id].ApplySectorModel(this, sectors[i], result);
         }
     }
 
@@ -353,6 +355,7 @@ public class SinglePlayerWorld : WorldBase
 
     public override bool PlayLevelMusic(string name, byte[]? data, MusicFlags flags = MusicFlags.Loop)
     {
+        base.PlayLevelMusic(name, data, flags);
         GetMusicEntry(name, out var lookup, out var entry);
 
         if (data == null)

@@ -37,11 +37,6 @@ public class DefinitionEntries
 {
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    private static readonly Dictionary<IWadBaseType, HashSet<string>> IgnorePatchOffsets = new()
-    {
-        {IWadBaseType.Doom1, new HashSet<string>(["SKY1"], StringComparer.OrdinalIgnoreCase)}
-    };
-
     public readonly AnimatedDefinitions Animdefs = new();
     public readonly BoomAnimatedDefinition BoomAnimated = new();
     public readonly BoomSwitchDefinition BoomSwitches = new();
@@ -236,18 +231,25 @@ public class DefinitionEntries
         m_parseUniversalMapInfo = true;
         m_parseLegacyMapInfo = true;
 
+        bool skyDefs = archive.AnyEntryByName("SKYDEFS");
+        bool umapInfo = archive.AnyEntryByName("UMAPINFO");
+
         bool hasBoth = archive.AnyEntryByName("DEHACKED") && archive.AnyEntryByName("DECORATE");
         if (ConfigCompatibility.PreferDehacked && hasBoth)
             m_parseDecorate = false;
         else if (!ConfigCompatibility.PreferDehacked && hasBoth)
             m_parseDehacked = false;
 
-        var hasZmapinfo = archive.AnyEntryByName("ZMAPINFO");
-        if (hasZmapinfo)
-            m_parseLegacyMapInfo = false;
+        // Prioritize UMAPINFO when SKYDEFS is present since MAPINFO can conflict with SKYDEFS.
+        if (!(umapInfo && skyDefs))
+        {
+            var hasZmapinfo = archive.AnyEntryByName("ZMAPINFO");
+            if (hasZmapinfo)
+                m_parseLegacyMapInfo = false;
 
-        if (hasZmapinfo || archive.AnyEntryByName("MAPINFO"))
-            m_parseUniversalMapInfo = false;
+            if (hasZmapinfo || archive.AnyEntryByName("MAPINFO"))
+                m_parseUniversalMapInfo = false;
+        }
 
         m_pnamesTextureXCollection = new PnamesTextureXCollection();
 
@@ -501,20 +503,17 @@ public class DefinitionEntries
     {
         Precondition(!collection.Pnames.Empty(), "Expecting pnames to exist when reading TextureX definitions");
 
-        HashSet<string> ignoreNames;
-        if (IgnorePatchOffsets.TryGetValue(archive.IWadInfo.IWadBaseType, out var getIgnoreNames))
-            ignoreNames = getIgnoreNames;
-        else
-            ignoreNames = [];
-
         // Note: We don't handle multiple pnames. I am not sure how they're
         // handled, it might be 'one pnames to textureX' when more than one
         // pnames exist. If so, the logic will need to change here a bit.
         Pnames pnames = collection.Pnames.First();
         var processed = new HashSet<string>();
+
+        ClearNegativePatchOffsets(archive, collection);
+
         foreach (var textureX in collection.TextureX)
         {
-            var textureDefinitions = textureX.ToTextureDefinitions(pnames, ignoreNames);
+            var textureDefinitions = textureX.ToTextureDefinitions(pnames);
             foreach (var def in textureDefinitions)
             {
                 // Ignore duplicated textures from same archive
@@ -524,6 +523,34 @@ public class DefinitionEntries
 
                 processed.Add(def.Name);
                 Textures.Insert(def.Name, def.Namespace, def);
+            }
+        }
+    }
+
+    private static void ClearNegativePatchOffsets(Archive archive, PnamesTextureXCollection collection)
+    {
+        if (archive.IWadInfo.IWadBaseType != IWadBaseType.Doom1)
+            return;
+
+        foreach (var textures in collection.TextureX)
+            foreach (var texture in textures.Definitions)
+                ClearPatchOffsetsDoom1(texture);
+    }
+
+    private static void ClearPatchOffsetsDoom1(TextureXImage texture)
+    {
+        var patches = texture.Patches;
+        if (texture.Name.Equals("SKY1"))
+        {
+            if (patches.Count == 1 && patches[0].Offset.Y == -8)
+                patches[0].Offset.Y = 0;
+        }
+        else if (texture.Name.Equals("BIGDOOR7"))
+        {
+            if (patches.Count == 2 && patches[0].Offset.Y == -4 && patches[1].Offset.Y == -4)
+            {
+                patches[0].Offset.Y = 0;
+                patches[1].Offset.Y = 0;
             }
         }
     }

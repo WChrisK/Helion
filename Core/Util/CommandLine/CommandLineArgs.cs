@@ -84,7 +84,8 @@ public class CommandLineArgs
             if (argStart.Any(x => arg.StartsWith(x)))
                 break;
 
-            if (IWadInfo.GetIWadInfo(arg) == IWadInfo.DefaultIWadInfo)
+            var iwadInfo = IWadInfo.GetIWadInfo(arg);
+            if (iwadInfo == IWadInfo.DefaultIWadInfo || iwadInfo.IWadType == IWadType.NoRestForTheLiving)
                 commandLineArgs.Files.Add(arg);
             else
                 commandLineArgs.Iwad = arg;

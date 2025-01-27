@@ -30,7 +30,7 @@ public static class DemoArchive
         DemoModel demoModel = new()
         {
             AppVersion = GetAppVersionString(),
-            Version = DemoVersion.Alpha,
+            Version = DemoVersion.v0960,
             GameFiles = world.GetGameFilesModel(),
             Maps = demoMaps,
             Cheats = cheats,

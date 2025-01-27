@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Helion.Geometry.Vectors;
 using Helion.Maps.Specials.ZDoom;
@@ -18,6 +17,8 @@ using Helion.Geometry.Boxes;
 using Helion.World.Geometry.Islands;
 using static Helion.World.Entities.EntityManager;
 using Helion.Graphics.Palettes;
+using Helion.Resources.Definitions;
+using Vector2D = Helion.Models.Vector2D;
 
 namespace Helion.World.Geometry.Sectors;
 
@@ -50,7 +51,8 @@ public sealed class Sector
     public int DamageAmount;
     public int? FloorSkyTextureHandle;
     public int? CeilingSkyTextureHandle;
-    public bool FlipSkyTexture = true;
+    public SkyOptions SkyOptions = SkyOptions.Flip;
+    public Vec2I SkyOffset;
     public bool IsFloorStatic => Floor.Dynamic == SectorDynamic.None;
     public bool IsCeilingStatic => Ceiling.Dynamic == SectorDynamic.None;
     public bool AreFlatsStatic => IsFloorStatic && IsCeilingStatic;
@@ -179,13 +181,7 @@ public sealed class Sector
         return false;
     }
 
-    public enum RenderChangeOptions
-    {
-        None,
-        TransferHeightsOverride
-    }
-
-    public bool CheckRenderingChanged(int gametick, RenderChangeOptions options = RenderChangeOptions.TransferHeightsOverride)
+    public bool CheckRenderingChanged(int gametick, bool checkTransferHeights = true)
     {
         if (Floor.LastRenderChangeGametick >= gametick - 1 || Floor.PrevZ != Floor.Z)
             return true;
@@ -193,8 +189,8 @@ public sealed class Sector
         if (Ceiling.LastRenderChangeGametick >= gametick - 1 || Ceiling.PrevZ != Ceiling.Z)
             return true;
 
-        if (TransferHeights != null && (options & RenderChangeOptions.TransferHeightsOverride) != 0)
-            return (TransferHeights.ControlSector.DataChanges & SectorDataTypes.FloorZ) != 0 || (TransferHeights.ControlSector.DataChanges & SectorDataTypes.CeilingZ) != 0;
+        if (checkTransferHeights && TransferHeights != null)
+            return TransferHeights.ControlSector.CheckRenderingChanged(gametick, false);
 
         return false;
     }
@@ -280,11 +276,12 @@ public sealed class Sector
             DataChanges |= SectorDataTypes.CeilingTexture;
     }
 
-    public void SetSkyTexture(int texture, bool flipped, int gametick)
+    public void SetSkyTexture(int texture, SkyOptions options, Vec2I offset, int gametick)
     {
         FloorSkyTextureHandle = texture;
         CeilingSkyTextureHandle = texture;
-        FlipSkyTexture = flipped;
+        SkyOptions = options;
+        SkyOffset = offset;
         DataChanges |= SectorDataTypes.SkyTexture;
         ChangeGametick = gametick;
     }
@@ -302,7 +299,7 @@ public sealed class Sector
             Id = Id,
             SoundValidationCount = SoundValidationCount,
             SoundBlock = SoundBlock,
-            SoundTarget = SoundTarget.Entity?.Id,
+            SoundTarget = SoundTarget.Get()?.Id,
             SectorSpecialType = (int)SectorSpecialType,
             SectorDataChanges = (int)DataChanges,
             FloorSkyTexture = FloorSkyTextureHandle,
@@ -342,6 +339,13 @@ public sealed class Sector
             }
             if ((DataChanges & SectorDataTypes.ColorMap) != 0)
                 sectorModel.ColorMap = Colormap?.Entry?.Path.Name;
+            if ((DataChanges & SectorDataTypes.Offset) != 0)
+            {
+                if (Floor.RenderOffsets.Offset.X != 0 || Floor.RenderOffsets.Offset.Y != 0)
+                    sectorModel.FloorOffset = new Vector2D(Floor.RenderOffsets.Offset);
+                if (Ceiling.RenderOffsets.Offset.X != 0 || Ceiling.RenderOffsets.Offset.Y != 0)
+                    sectorModel.CeilingOffset = new Vector2D(Ceiling.RenderOffsets.Offset);
+            }
 
             sectorModel.Secret = Secret;
             sectorModel.DamageAmount = DamageAmount;
@@ -350,14 +354,14 @@ public sealed class Sector
         return sectorModel;
     }
 
-    public void ApplySectorModel(IWorld world, SectorModel sectorModel, WorldModelPopulateResult result)
+    public void ApplySectorModel(IWorld world, in SectorModel sectorModel, WorldModelPopulateResult result)
     {
         var textureManager = world.ArchiveCollection.TextureManager;
         IList<Sector> sectors = world.Sectors;
         SoundValidationCount = sectorModel.SoundValidationCount;
         SoundBlock = sectorModel.SoundBlock;
         if (sectorModel.SoundTarget.HasValue && result.Entities.TryGetValue(sectorModel.SoundTarget.Value, out var soundTarget))
-            SetSoundTarget(soundTarget.Entity);
+            SoundTarget = new(soundTarget.Entity);
 
         if (sectorModel.SectorDataChanges > 0)
         {
@@ -433,6 +437,20 @@ public sealed class Sector
 
             if ((DataChanges & SectorDataTypes.ColorMap) != 0 && sectorModel.ColorMap != null && textureManager.TryGetColormap(sectorModel.ColorMap, out var sectorColorMap))
                 Colormap = sectorColorMap;
+
+            if ((DataChanges & SectorDataTypes.Offset) != 0)
+            {
+                if (sectorModel.FloorOffset.HasValue)
+                {
+                    Floor.RenderOffsets.Offset = new Vec2D(sectorModel.FloorOffset.Value.X, sectorModel.FloorOffset.Value.Y);
+                    Floor.RenderOffsets.LastOffset = Floor.RenderOffsets.Offset;
+                }
+                if (sectorModel.CeilingOffset.HasValue)
+                {
+                    Ceiling.RenderOffsets.Offset = new Vec2D(sectorModel.CeilingOffset.Value.X, sectorModel.CeilingOffset.Value.Y);
+                    Ceiling.RenderOffsets.LastOffset = Ceiling.RenderOffsets.Offset;
+                }
+            }
         }
 
         if (sectorModel.TransferFloorLight.HasValue && IsSectorIdValid(sectors, sectorModel.TransferFloorLight.Value))
@@ -465,9 +483,6 @@ public sealed class Sector
         Entities.Add(node);
         return node;
     }
-
-    public void SetSoundTarget(Entity? entity) =>
-        SoundTarget = WeakEntity.GetReference(entity);
 
     public double ToFloorZ(in Vec2D position) => Floor.Plane.ToZ(position);
     public double ToFloorZ(in Vec3D position) => Floor.Plane.ToZ(position);
@@ -858,6 +873,7 @@ public sealed class Sector
     {
         if (changes.Texture.HasValue)
             world.SetPlaneTexture(GetSectorPlane(planeType), changes.Texture.Value);
+
         if (transferSpecial)
         {
             SectorDamageSpecial = changes.DamageSpecial?.Copy(this);

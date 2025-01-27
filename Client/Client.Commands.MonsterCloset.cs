@@ -78,7 +78,7 @@ public partial class Client
         int count = 0;
         for (var entity = world.EntityManager.Head; entity != null; entity = entity.Next)
         {
-            var subsector = world.Geometry.BspTree.Subsectors[entity.Subsector.Id];
+            var subsector = world.Geometry.BspTree.Subsectors[entity.SubsectorId];
             var findIsland = world.Geometry.IslandGeometry.Islands[subsector.IslandId];
             if (findIsland.Id == island.Id)
                 count++;

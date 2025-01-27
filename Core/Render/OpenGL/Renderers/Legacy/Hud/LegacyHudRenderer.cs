@@ -112,13 +112,14 @@ public class LegacyHudRenderer : HudRenderer
         return new(x, y, DrawDepth, u, v, glyph.Color, alpha, false, false, drawPalette, 0);
     }
 
-    public override void Render(Rectangle viewport, ShaderUniforms uniforms)
+    public override void Render(Rectangle viewport, Dimension framebufferDimension, ShaderUniforms uniforms)
     {
         m_program.Bind();
 
         GL.ActiveTexture(TextureUnit.Texture0);
         m_program.BoundTexture(TextureUnit.Texture0);
         m_program.ColormapTexture(TextureUnit.Texture2);
+        m_program.OpaqueTexture(TextureUnit.Texture7);
         m_program.Mvp(CreateMvp(viewport));
         m_program.FuzzFrac(Renderer.GetTimeFrac());
         m_program.FuzzDiv(Renderer.GetFuzzDiv(m_config.Render, viewport));
@@ -126,6 +127,7 @@ public class LegacyHudRenderer : HudRenderer
         m_program.ColorMapIndex(uniforms.ColorMapUniforms.SectorIndex == 0 ? uniforms.ColorMapUniforms.GlobalIndex : uniforms.ColorMapUniforms.SectorIndex);
         m_program.HasInvulnerability(uniforms.DrawInvulnerability);
         m_program.GammaCorrection(uniforms.GammaCorrection);
+        m_program.ScreenBounds((framebufferDimension.Width, framebufferDimension.Height));
 
         for (int i = 0; i < m_drawBuffer.DrawBuffer.Count; i++)
         {

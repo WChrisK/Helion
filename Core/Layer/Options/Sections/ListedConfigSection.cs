@@ -82,6 +82,8 @@ public class ListedConfigSection : IOptionSection
         m_config.Render.LightMode.OptionDisabled = paletteMode;
 
         m_config.Mouse.ForwardBackwardSpeed.OptionDisabled = m_config.Mouse.Look.Value == true;
+
+        m_config.Hud.Scale.OptionDisabled = m_config.Hud.AutoScale.Value == true;
     }
 
     public void ResetSelection() => m_currentRowIndex = 0;
@@ -148,7 +150,8 @@ public class ListedConfigSection : IOptionSection
             if (input.ConsumePressOrContinuousHold(Key.Down) || input.ConsumePressOrContinuousHold(Key.DPadDown))
                 AdvanceToValidRow(1);
 
-            if (input.ConsumeKeyPressed(Key.R) && m_currentRowIndex < m_configValues.Count)
+            if ((input.ConsumeKeyPressed(Key.R) || input.ConsumeKeyPressed(Key.Delete)) && 
+                m_currentRowIndex < m_configValues.Count)
             {
                 ResetSelectedRowDefaults();
                 return;
@@ -643,7 +646,7 @@ public class ListedConfigSection : IOptionSection
                 name = header.HeaderText;
             }
 
-            name = GetEllipsesText(hud, name, Font, fontSize, hud.Dimension.Width / 2 - offsetX);
+            name = hud.GetEllipsesText(name, Font, fontSize, hud.Dimension.Width / 2 - offsetX);
             hud.Text(name, Font, fontSize, (-offsetX, y), out Dimension attrArea, window: Align.TopMiddle,
                 anchor: Align.TopRight, color: attrColor);
 
@@ -750,26 +753,6 @@ public class ListedConfigSection : IOptionSection
             anchor: Align.TopLeft);
         hud.FillBox((x + 1, y + 1, x + boxSize - 1, y + boxSize - 1), boxColor, window: Align.TopMiddle,
             anchor: Align.TopLeft);
-    }
-
-    public static string GetEllipsesText(IHudRenderContext hud, string text, string font, int fontSize, int maxWidth)
-    {
-        int nameWidth = hud.MeasureText(text, Font, fontSize).Width;
-        if (nameWidth <= maxWidth)
-            return text;
-
-        var textSpan = text.AsSpan();
-        int sub = 1;
-        while (sub < textSpan.Length && hud.MeasureText(textSpan, Font, fontSize).Width > maxWidth)
-        {
-            textSpan = text.AsSpan(0, text.Length - sub);
-            sub++;
-        }
-
-        if (textSpan.Length <= 3)
-            return text;
-
-        return string.Concat(text.AsSpan(0, textSpan.Length - 3), "...");
     }
 
     private bool IsConfigDisabled(int rowIndex)

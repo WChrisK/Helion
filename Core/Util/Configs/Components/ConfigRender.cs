@@ -27,6 +27,12 @@ public enum RenderLightMode
     Smooth
 }
 
+public enum SkyRenderMode
+{
+    Vanilla,
+    Dynamic
+}
+
 public class ConfigRenderFilter : ConfigElement<ConfigRenderFilter>
 {
     [ConfigInfo("Filter applied to fonts.")]
@@ -124,6 +130,10 @@ public class ConfigRender: ConfigElement<ConfigRender>
     [ConfigInfo("Enable sprite transparency.")]
     [OptionMenu(OptionSectionType.Render, "Sprite Transparency")]
     public readonly ConfigValue<bool> SpriteTransparency = new(true);
+
+    [ConfigInfo("Sky render mode")]
+    [OptionMenu(OptionSectionType.Render, "Sky Render Mode", spacer: true)]
+    public readonly ConfigValue<SkyRenderMode> SkyMode = new(SkyRenderMode.Dynamic);
 
     // Settings below are believed to be less frequently used and thus are not on the menus.
 

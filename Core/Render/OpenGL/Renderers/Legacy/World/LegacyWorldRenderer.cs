@@ -3,6 +3,8 @@ using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
+using Helion.Render.OpenGL.Context;
+using Helion.Render.OpenGL.Framebuffer;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Data;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Entities;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry;
@@ -12,12 +14,10 @@ using Helion.Render.OpenGL.Texture.Legacy;
 using Helion.Resources.Archives.Collection;
 using Helion.Util;
 using Helion.Util.Configs;
-using Helion.Util.Container;
 using Helion.World;
 using Helion.World.Blockmap;
 using Helion.World.Entities;
 using Helion.World.Geometry.Sectors;
-using Helion.World.Geometry.Sides;
 using OpenTK.Graphics.OpenGL;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World;
@@ -29,10 +29,10 @@ public class LegacyWorldRenderer : WorldRenderer
     private readonly EntityRenderer m_entityRenderer;
     private readonly PrimitiveWorldRenderer m_primitiveRenderer;
     private readonly InterpolationShader m_interpolationProgram = new();
+    private readonly InterpolationTransparentShader m_interpolationTransparentProgram = new();
+    private readonly InterpolationCompositeShader m_interpolationCompositeProgram = new();
     private readonly StaticShader m_staticProgram = new();
     private readonly RenderWorldDataManager m_worldDataManager = new();
-    private readonly DynamicArray<IRenderObject> m_alphaEntities = new(256);
-    private readonly Comparison<IRenderObject> m_renderObjectComparer = new(RenderObjectCompare);
     private readonly ArchiveCollection m_archiveCollection;
     private readonly LegacyGLTextureManager m_textureManager;
     private Vec2D m_occludeViewPos;
@@ -45,6 +45,8 @@ public class LegacyWorldRenderer : WorldRenderer
     private IWorld? m_previousWorld;
     private RenderBlockMapData m_renderData;
 
+    private readonly OitFrameBuffer m_oitFrameBuffer = new();
+
     public LegacyWorldRenderer(IConfig config, ArchiveCollection archiveCollection, LegacyGLTextureManager textureManager)
     {
         m_config = config;
@@ -53,15 +55,6 @@ public class LegacyWorldRenderer : WorldRenderer
         m_geometryRenderer = new(config, archiveCollection, textureManager, m_interpolationProgram, m_staticProgram, m_worldDataManager);
         m_archiveCollection = archiveCollection;
         m_textureManager = textureManager;
-    }
-
-    static int RenderObjectCompare(IRenderObject? x, IRenderObject? y)
-    {
-        if (x == null || y == null)
-            return 1;
-
-        // Reverse distance order
-        return y.RenderDistanceSquared.CompareTo(x.RenderDistanceSquared);
     }
 
     ~LegacyWorldRenderer()
@@ -99,7 +92,6 @@ public class LegacyWorldRenderer : WorldRenderer
         world.OnResetInterpolation += World_OnResetInterpolation;
         m_previousWorld = world;
         m_lastTicker = -1;
-        m_alphaEntities.FlushReferences();
     }
 
     private void World_OnResetInterpolation(object? sender, EventArgs e)
@@ -121,7 +113,7 @@ public class LegacyWorldRenderer : WorldRenderer
         m_renderData.ViewPosInterpolated3D = renderInfo.Camera.PositionInterpolated.Double;
         m_renderData.ViewPos3D = renderInfo.Camera.Position.Double;
         m_renderData.ViewDirection = renderInfo.Camera.Direction.XY.Double;
-        m_renderData.ViewIsland = world.Geometry.IslandGeometry.Islands[world.Geometry.BspTree.Subsectors[renderInfo.ViewerEntity.Subsector.Id].IslandId];
+        m_renderData.ViewIsland = world.Geometry.IslandGeometry.Islands[world.Geometry.BspTree.Subsectors[renderInfo.ViewerEntity.SubsectorId].IslandId];
 
         m_viewerEntity = renderInfo.ViewerEntity;
         m_geometryRenderer.Clear(renderInfo.TickFraction, true);
@@ -157,9 +149,6 @@ public class LegacyWorldRenderer : WorldRenderer
         }
 
         m_lastTicker = world.GameTicker;
-
-        RenderAlphaObjects(m_alphaEntities);
-        m_alphaEntities.Clear();
     }
 
     private void RenderSectors(IWorld world, Block block)
@@ -227,22 +216,18 @@ public class LegacyWorldRenderer : WorldRenderer
             return;
 
         entity.LastRenderGametick = world.Gametick;
-        if ((m_spriteTransparency && entity.Alpha < 1) || entity.Definition.Flags.Shadow)
-        {
-            m_alphaEntities.Add(entity);
-            return;
-        }
-
         m_entityRenderer.RenderEntity(entity, m_renderData.ViewPosInterpolated);     
     }
 
-    protected override void PerformRender(IWorld world, RenderInfo renderInfo)
+    protected override void PerformRender(IWorld world, RenderInfo renderInfo, GLFramebuffer framebuffer)
     {   
         // If the transfer height view is not the middle then the cached static geometry cannot be used.
         // Render all sectors dynamically instead.
         m_renderStatic = renderInfo.TransferHeightView == TransferHeightView.Middle;
         m_spriteTransparency = m_config.Render.SpriteTransparency;
-        Clear(world, renderInfo);        
+        Clear(world, renderInfo);
+
+        m_oitFrameBuffer.CreateOrUpdate((renderInfo.Viewport.Width, renderInfo.Viewport.Height));
 
         if (m_lastTicker != world.GameTicker)
             m_entityRenderer.Start(renderInfo);
@@ -262,7 +247,7 @@ public class LegacyWorldRenderer : WorldRenderer
         {
             m_interpolationProgram.Bind();
             GL.ActiveTexture(TextureUnit.Texture0);
-            SetInterpolationUniforms(renderInfo);
+            SetInterpolationUniforms(m_interpolationProgram, renderInfo);
             m_worldDataManager.RenderWalls();
             m_worldDataManager.RenderFlats();
 
@@ -276,21 +261,15 @@ public class LegacyWorldRenderer : WorldRenderer
             }
 
             RenderTwoSidedMiddleWalls(renderInfo);
-
-            m_entityRenderer.RenderNonAlpha(renderInfo);
-            m_entityRenderer.RenderAlpha(renderInfo);
-
-            m_interpolationProgram.Bind();
-            GL.ActiveTexture(TextureUnit.Texture0);
-            m_worldDataManager.RenderAlphaWalls();
-
+            m_entityRenderer.RenderOpaque(renderInfo);
+            RenderTransparent(renderInfo, framebuffer, false);
             m_primitiveRenderer.Render(renderInfo);
             return;
         }
 
         m_interpolationProgram.Bind();
         GL.ActiveTexture(TextureUnit.Texture0);
-        SetInterpolationUniforms(renderInfo);
+        SetInterpolationUniforms(m_interpolationProgram, renderInfo);
         m_worldDataManager.RenderWalls();
         m_worldDataManager.RenderFlats();
 
@@ -332,27 +311,80 @@ public class LegacyWorldRenderer : WorldRenderer
         RenderTwoSidedMiddleWalls(renderInfo);
         GL.ColorMask(true, true, true, true);
 
-        m_entityRenderer.RenderNonAlpha(renderInfo);
-        m_entityRenderer.RenderAlpha(renderInfo);
-
-        if (m_worldDataManager.HasAlphaWalls())
-        {   
-            // Draw flats to depth buffer so two-sided middle walls won't bleed through flats
-            GL.ColorMask(false, false, false, false);
-            RenderFlats(renderInfo);
-            GL.ColorMask(true, true, true, true);
-
-            m_interpolationProgram.Bind();
-            GL.ActiveTexture(TextureUnit.Texture0);
-            m_worldDataManager.RenderAlphaWalls();
-            m_interpolationProgram.Unbind();
-        }
-
+        m_entityRenderer.RenderOpaque(renderInfo);
+        RenderTransparent(renderInfo, framebuffer, true);
         m_primitiveRenderer.Render(renderInfo);
     }
 
-    private void RenderFlats(RenderInfo renderInfo)
+    private unsafe void RenderTransparent(RenderInfo renderInfo, GLFramebuffer framebuffer, bool vanillaRender)
     {
+        bool fuzzData = m_entityRenderer.HasFuzz();
+        GL.DepthMask(false);
+
+        m_oitFrameBuffer.StartRender(framebuffer);
+        m_entityRenderer.RenderOitTransparentPass(renderInfo);
+
+        m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5, TextureUnit.Texture6, TextureUnit.Texture7, framebuffer);
+
+        if (fuzzData)
+        {
+            if (GLInfo.MemoryBarrierSupported)
+                GL.MemoryBarrier(MemoryBarrierFlags.FramebufferBarrierBit);
+
+            ResetBlendEquations();
+            framebuffer.Bind();
+            // Refract pixels in the opaque framebuffer
+            m_entityRenderer.RenderOitFuzzRefractionPass(renderInfo, false);
+
+            m_oitFrameBuffer.SetBlendEquations();
+            m_oitFrameBuffer.BindFrameBuffer();
+
+            m_entityRenderer.RenderOitTransparentFuzzPass(renderInfo);
+        }
+
+        if (vanillaRender && m_worldDataManager.HasAlphaWalls())
+            RenderFlatsToDepth(renderInfo);
+
+        m_interpolationTransparentProgram.Bind();
+        SetInterpolationUniforms(m_interpolationTransparentProgram, renderInfo);
+        GL.ActiveTexture(TextureUnit.Texture0);
+        m_worldDataManager.RenderAlphaWalls();
+
+        ResetBlendEquations();
+        framebuffer.Bind();
+
+        m_entityRenderer.RenderOitCompositePass(renderInfo);
+
+        if (m_worldDataManager.HasAlphaWalls())
+        {
+            if (vanillaRender)
+                RenderFlatsToDepth(renderInfo);
+
+            m_interpolationCompositeProgram.Bind();
+            SetInterpolationUniforms(m_interpolationCompositeProgram, renderInfo);
+            GL.ActiveTexture(TextureUnit.Texture0);
+            m_worldDataManager.RenderAlphaWalls();
+        }
+
+        if (fuzzData)
+            m_entityRenderer.RenderOitFuzzRefractionPass(renderInfo, true);
+
+        GL.DepthMask(true);
+    }
+
+    private static void ResetBlendEquations()
+    {
+        GL.BlendEquation(BlendEquationMode.FuncAdd);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+    }
+
+    private void RenderFlatsToDepth(RenderInfo renderInfo)
+    {
+        // Render flats so two-sided middle alpha walls are clipped to flats
+        GL.DepthMask(true);
+        GL.ColorMask(false, false, false, false);
+
         m_staticProgram.Bind();
         GL.ActiveTexture(TextureUnit.Texture0);
         SetStaticUniforms(renderInfo);
@@ -360,8 +392,11 @@ public class LegacyWorldRenderer : WorldRenderer
 
         m_interpolationProgram.Bind();
         GL.ActiveTexture(TextureUnit.Texture0);
-        SetInterpolationUniforms(renderInfo);
+        SetInterpolationUniforms(m_interpolationProgram, renderInfo);
         m_worldDataManager.RenderFlats();
+
+        GL.DepthMask(false);
+        GL.ColorMask(true, true, true, true);
     }
 
     private void RenderTwoSidedMiddleWalls(RenderInfo renderInfo)
@@ -412,34 +447,6 @@ public class LegacyWorldRenderer : WorldRenderer
         }
     }
 
-    private void RenderAlphaObjects(DynamicArray<IRenderObject> alphaEntities)
-    {
-        // This will just render based on distance from their center point.
-        // Not really correct, but mostly correct enough for now.
-        DynamicArray<IRenderObject> alphaObjects = alphaEntities;
-        alphaObjects.AddRange(m_geometryRenderer.AlphaSides);
-        alphaObjects.Sort(m_renderObjectComparer);
-
-        Vec2D prevPos = m_renderData.ViewPosInterpolated;
-
-        for (int i = 0; i < alphaObjects.Length; i++)
-        {
-            IRenderObject renderObject = alphaObjects[i];
-            if (renderObject.Type == RenderObjectType.Entity)
-            {
-                Entity entity = (Entity)renderObject;
-                m_entityRenderer.RenderEntity(entity, m_renderData.ViewPosInterpolated);
-            }
-            else if (renderObject.Type == RenderObjectType.Side)
-            {
-                Side side = (Side)renderObject;
-                bool onFront = side.Line.Segment.OnRight(prevPos);
-                if (side.IsFront == onFront)
-                    m_geometryRenderer.RenderAlphaSide(side, onFront);
-            }
-        }
-    }
-
     private void PopulatePrimitives(IWorld world)
     {
         var node = world.Player.Tracers.Tracers.First;
@@ -472,24 +479,30 @@ public class LegacyWorldRenderer : WorldRenderer
         m_primitiveRenderer.AddSegment(seg, color, alpha, type);
     }
 
-    private void SetInterpolationUniforms(RenderInfo renderInfo)
+    private void SetInterpolationUniforms(InterpolationShader program, RenderInfo renderInfo)
     {
-        m_interpolationProgram.BoundTexture(TextureUnit.Texture0);
-        m_interpolationProgram.SectorLightTexture(TextureUnit.Texture1);
-        m_interpolationProgram.ColormapTexture(TextureUnit.Texture2);
-        m_interpolationProgram.SectorColormapTexture(TextureUnit.Texture3);
-        m_interpolationProgram.HasInvulnerability(renderInfo.Uniforms.DrawInvulnerability);
-        m_interpolationProgram.Mvp(renderInfo.Uniforms.Mvp);
-        m_interpolationProgram.MvpNoPitch(renderInfo.Uniforms.MvpNoPitch);
-        m_interpolationProgram.TimeFrac(renderInfo.TickFraction);
-        m_interpolationProgram.LightLevelMix(renderInfo.Uniforms.Mix);
-        m_interpolationProgram.ExtraLight(renderInfo.Uniforms.ExtraLight);
-        m_interpolationProgram.DistanceOffset(renderInfo.Uniforms.DistanceOffset);
-        m_interpolationProgram.ColorMix(renderInfo.Uniforms.ColorMix.Global);
-        m_interpolationProgram.PaletteIndex((int)renderInfo.Uniforms.PaletteIndex);
-        m_interpolationProgram.ColorMapIndex(renderInfo.Uniforms.ColorMapUniforms.GlobalIndex);
-        m_interpolationProgram.LightMode(renderInfo.Uniforms.LightMode);
-        m_interpolationProgram.GammaCorrection(renderInfo.Uniforms.GammaCorrection);
+        program.BoundTexture(TextureUnit.Texture0);
+        program.SectorLightTexture(TextureUnit.Texture1);
+        program.ColormapTexture(TextureUnit.Texture2);
+        program.SectorColormapTexture(TextureUnit.Texture3);
+        program.HasInvulnerability(renderInfo.Uniforms.DrawInvulnerability);
+        program.Mvp(renderInfo.Uniforms.Mvp);
+        program.MvpNoPitch(renderInfo.Uniforms.MvpNoPitch);
+        program.TimeFrac(renderInfo.TickFraction);
+        program.LightLevelMix(renderInfo.Uniforms.Mix);
+        program.ExtraLight(renderInfo.Uniforms.ExtraLight);
+        program.DistanceOffset(renderInfo.Uniforms.DistanceOffset);
+        program.ColorMix(renderInfo.Uniforms.ColorMix.Global);
+        program.PaletteIndex((int)renderInfo.Uniforms.PaletteIndex);
+        program.ColorMapIndex(renderInfo.Uniforms.ColorMapUniforms.GlobalIndex);
+        program.LightMode(renderInfo.Uniforms.LightMode);
+        program.GammaCorrection(renderInfo.Uniforms.GammaCorrection);
+
+        if (program is InterpolationCompositeShader)
+        {
+            program.AccumTexture(TextureUnit.Texture4);
+            program.AccumCountTextre(TextureUnit.Texture5);
+        }
     }
 
     private void SetStaticUniforms(RenderInfo renderInfo)

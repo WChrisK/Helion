@@ -67,7 +67,6 @@ internal static class WorldAllocator
         {
             ArchiveType = ArchiveType.IWAD,
             IWadInfo = IWadInfo.GetIWadInfo(iwadType),
-            OriginalFilePath = iwadFileName
         };
 
         ArchiveCollection archiveCollection = new(new FilesystemArchiveLocator(), config, new DataCache());

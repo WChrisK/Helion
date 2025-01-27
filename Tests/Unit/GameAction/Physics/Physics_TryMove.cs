@@ -18,7 +18,7 @@ public partial class Physics
     [Fact(DisplayName = "Moving enemy to the same position doesn't change z")]
     public void EnemyMoveSamePosition()
     {
-        var monster = GameActions.CreateEntity(World, "BaronOfHell", new Vec3D(-1492, 216, int.MinValue), frozen: false, init: true);
+        var monster = GameActions.CreateEntity(World, "BaronOfHell", new Vec3D(-1492, 216, int.MinValue), frozen: false, initSpawn: true);
         monster.MonsterMovementSpeed = 0;
         monster.Position.Z.Should().Be(0);
         monster.SetEnemyDirection(Entity.MoveDir.North);
@@ -29,7 +29,7 @@ public partial class Physics
     [Fact(DisplayName = "Moving to a position where the bounding box lands exactly on a blocking line is successful")]
     public void TryMoveBoundingBoxOnLine()
     {
-        var monster = GameActions.CreateEntity(World, "ChaingunGuy", new Vec3D(560, 1648, int.MinValue), frozen: false, init: true);
+        var monster = GameActions.CreateEntity(World, "ChaingunGuy", new Vec3D(560, 1648, int.MinValue), frozen: false, initSpawn: true);
         // Places the box corner exactly on lines 377 and 379
         World.IsPositionValid(monster, new Vec2D(560, 1648)).Should().BeTrue();
         World.IsPositionValid(monster, new Vec2D(560, 1664)).Should().BeTrue();

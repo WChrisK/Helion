@@ -58,7 +58,7 @@ public sealed class Inventory
     /// </summary>
     public Weapons Weapons;
 
-    public List<IPowerup> Powerups = new();
+    public List<IPowerup> Powerups = [];
 
     public IPowerup? PowerupEffectColor;
     public IPowerup? PowerupEffectColorMap;
@@ -114,29 +114,30 @@ public sealed class Inventory
         SetPriorityPowerupEffects();
     }
 
-    public InventoryModel ToInventoryModel()
+    public void ToInventoryModel(InventoryModel model)
     {
-        List<InventoryItemModel> inventoryItems = new();
+        model.Items.Clear();
+        model.Weapons.Clear();
+        model.Powerups.Clear();
+
+        model.Items.EnsureCapacity(ItemList.Count);
         for (int i = 0; i < ItemList.Count; i++)
         {
             var item = ItemList[i];
-            inventoryItems.Add(new InventoryItemModel()
+            model.Items.Add(new InventoryItemModel()
             {
-                Name = item.Definition.Name.ToString(),
+                Name = item.Definition.Name,
                 Amount = item.Amount
             });
         }
 
-        List<PowerupModel> powerupModels = new();
-        for (int i = 0; i < Powerups.Count; i++)
-            powerupModels.Add(Powerups[i].ToPowerupModel());
+        var weapons = Weapons.GetOwnedWeapons();
+        model.Weapons.EnsureCapacity(weapons.Count);
+        for (int i = 0; i < weapons.Count; i++)
+            model.Weapons.Add(weapons[i].Definition.Name);
 
-        return new InventoryModel()
-        {
-            Items = inventoryItems,
-            Weapons = Weapons.GetOwnedWeaponNames(),
-            Powerups = powerupModels,
-        };
+        for (int i = 0; i < Powerups.Count; i++)
+            model.Powerups.Add(Powerups[i].ToPowerupModel());
     }
 
     public static string GetBaseInventoryName(EntityDefinition definition)

@@ -125,6 +125,11 @@ map e4m1
 	endgame = true
 }
 
+map e4m8
+{
+	levelname = "e4m8"
+}
+
 // ANOMALY ASYLUM
 map e5m1
 {
@@ -235,4 +240,34 @@ map map02
 map map03
 {
 	intertextsecret = "secret exit"
+}
+
+map map06
+{
+	levelname = "The MAP06"
+}
+
+map map11
+{
+	levelname = "The MAP11"
+}
+
+map map20
+{
+	levelname = "The MAP20"
+}
+
+map map30
+{
+	levelname = "The MAP30"
+}
+
+map map31
+{
+	levelname = "The MAP31"
+}
+
+map map32
+{
+	levelname = "The MAP32"
 }

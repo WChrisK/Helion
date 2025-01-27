@@ -10,12 +10,14 @@ public class RenderDataManager<[DynamicallyAccessedMembers(DynamicallyAccessedMe
 {
     private readonly RenderDataCollection<TVertex> m_nonAlphaData;
     private readonly RenderDataCollection<TVertex> m_alphaData;
+    private readonly RenderDataCollection<TVertex> m_fuzzData;
     private bool m_disposed;
 
     public RenderDataManager(RenderProgram program)
     {
         m_nonAlphaData = new(program);
         m_alphaData = new(program);
+        m_fuzzData = new(program);
     }
 
     ~RenderDataManager()
@@ -23,10 +25,13 @@ public class RenderDataManager<[DynamicallyAccessedMembers(DynamicallyAccessedMe
         Dispose(false);
     }
 
+    public bool HasFuzz() => m_fuzzData.HasDataToRender();
+
     public void Clear()
     {
         m_nonAlphaData.Clear();
         m_alphaData.Clear();
+        m_fuzzData.Clear();
     }
 
     public RenderData<TVertex> GetNonAlpha(GLLegacyTexture texture)
@@ -39,6 +44,11 @@ public class RenderDataManager<[DynamicallyAccessedMembers(DynamicallyAccessedMe
         return m_alphaData.Get(texture);
     }
 
+    public RenderData<TVertex> GetFuzz(GLLegacyTexture texture)
+    {
+        return m_fuzzData.Get(texture);
+    }
+
     public void RenderNonAlpha(PrimitiveType primitive)
     {
         m_nonAlphaData.Render(primitive);
@@ -49,6 +59,11 @@ public class RenderDataManager<[DynamicallyAccessedMembers(DynamicallyAccessedMe
         m_alphaData.Render(primitive);
     }
 
+    public void RenderFuzz(PrimitiveType primitive)
+    {
+        m_fuzzData.Render(primitive);
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (m_disposed)
@@ -56,6 +71,7 @@ public class RenderDataManager<[DynamicallyAccessedMembers(DynamicallyAccessedMe
         
         m_nonAlphaData.Dispose();
         m_alphaData.Dispose();
+        m_fuzzData.Dispose();
 
         m_disposed = true;
     }

@@ -1,14 +1,20 @@
-using System;
 using Helion.Geometry;
+using Helion.Geometry.Boxes;
 using Helion.Geometry.Vectors;
 using Helion.Graphics;
 using Helion.Menus;
 using Helion.Menus.Base;
 using Helion.Menus.Base.Text;
+using Helion.Menus.Impl;
 using Helion.Render.Common;
 using Helion.Render.Common.Enums;
 using Helion.Render.Common.Renderers;
+using Helion.Render.Common.Textures;
 using Helion.Util;
+using Helion.Util.Extensions;
+using System;
+using System.Collections.Generic;
+using System.Text;
 using static Helion.Render.Common.RenderDimensions;
 
 namespace Helion.Layer.Menus;
@@ -18,6 +24,13 @@ public partial class MenuLayer
     private const int ActiveMillis = 500;
     private const int SelectedOffsetX = -32;
     private const int SelectedOffsetY = 5;
+
+    private readonly List<string> m_mapNameLines = [];
+    private readonly StringBuilder m_mapNameStringBuilder = new();
+
+    private IMenuComponent? m_previousSelectedComponent;
+    private IRenderableTextureHandle? m_saveGameTexture;
+    private SaveGameSummary? m_saveGameSummary;
 
     private bool ShouldDrawActive => (m_stopwatch.ElapsedMilliseconds % ActiveMillis) <= ActiveMillis / 2;
 
@@ -33,11 +46,19 @@ public partial class MenuLayer
         if (!m_menus.TryPeek(out Menu? menu))
             return;
 
-        int offsetY = menu.TopPixelPadding;
+        var saveMenu = menu.CurrentComponent is MenuSaveRowComponent;
+        var offsetY = menu.TopPixelPadding;
+        var detailsEnabled = m_config.Game.ExtendedSaveGameInfo;
+        var firstRow = true;
+
+        if (saveMenu)
+            DrawSaveMenuBox(hud, detailsEnabled);
+
         for (int i = 0; i < menu.Components.Count; i++)
         {
-            IMenuComponent component = menu.Components[i];
+            var component = menu.Components[i];
             bool isSelected = ReferenceEquals(menu.CurrentComponent, component);
+            bool wasSelected = ReferenceEquals(menu.CurrentComponent, m_previousSelectedComponent);
 
             switch (component)
             {
@@ -54,18 +75,36 @@ public partial class MenuLayer
                     DrawText(hud, largeTextComponent, ref offsetY);
                     break;
                 case MenuSaveRowComponent saveRowComponent:
-                    DrawSaveRow(hud, saveRowComponent, isSelected, ref offsetY);
+                    if (firstRow)
+                    {
+                        offsetY++;
+                        firstRow = false;
+                    }
+                    hud.PushOffset(GetSaveMenuOffset(hud));
+                    DrawSaveRow(hud, (SaveMenu)menu, saveRowComponent, isSelected, wasSelected, ref offsetY, detailsEnabled);
                     break;
                 default:
                     throw new Exception($"Unexpected menu component type for drawing: {component.GetType().FullName}");
             }
+
+            if (isSelected)
+                m_previousSelectedComponent = menu.CurrentComponent;
         }
+
+        if (saveMenu && m_saveGameSummary != null)
+            RenderSaveGameDetails(hud);
     }
 
-    private void DrawText(IHudRenderContext hud, MenuTextComponent text, ref int offsetY)
+    private static void DrawText(IHudRenderContext hud, MenuTextComponent text, ref int offsetY)
     {
-        hud.Text(text.Text, text.FontName, text.Size, (0, offsetY), out Dimension area, both: Align.TopMiddle);
-        offsetY += area.Height;
+        var align = text.Align ?? Align.TopMiddle;
+        if (align != Align.TopMiddle)
+            offsetY = 0;
+
+        hud.Text(text.Text, text.FontName, text.Size, (0, offsetY), out Dimension area, both: align);
+
+        if (align == Align.TopMiddle)
+            offsetY += area.Height;
     }
 
     private void DrawImage(IHudRenderContext hud, MenuImageComponent image, bool isSelected, ref int offsetY, int upscalingFactor)
@@ -117,68 +156,145 @@ public partial class MenuLayer
         hud.Image(selectedName, drawPosition, both: image.ImageAlign);
     }
 
-    private void DrawSaveRow(IHudRenderContext hud, MenuSaveRowComponent saveRowComponent, bool isSelected,
-        ref int offsetY)
+    private static int GetSaveRowWidth(bool detailsEnabled) => detailsEnabled ? 218 : 301;
+
+    private void DrawSaveRow(IHudRenderContext hud, SaveMenu saveMenu, MenuSaveRowComponent saveRowComponent, bool isSelected,
+        bool wasPreviouslySelected, ref int offsetY, bool detailsEnabled)
     {
-        const int LeftOffset = 32;
-        const int DesiredRowVerticalPadding = 4;
-        const int SelectionOffsetX = 6;
         const string FontName = Constants.Fonts.Small;
-        int fontSize = hud.GetFontMaxHeight(FontName);
-        const string LeftBarName = "M_LSLEFT";
-        const string MiddleBarName = "M_LSCNTR";
-        const string RightBarName = "M_LSRGHT";
+        int fontSize = hud.GetFontMaxHeight(FontName) - 2;
+        int menuRowWidth = GetSaveRowWidth(detailsEnabled);
 
-        // draw row background
-        if (!hud.Textures.TryGet(LeftBarName, out var leftHandle) ||
-            !hud.Textures.TryGet(MiddleBarName, out var midHandle) ||
-            !hud.Textures.TryGet(RightBarName, out var rightHandle))
+        var textDimension = hud.MeasureText("_", FontName, fontSize);
+        var textHeight = textDimension.Height; 
+
+        string saveText;
+        if (isSelected && saveMenu.IsTypingName)
         {
-            return;
+            var rowWidth = menuRowWidth - 10;
+            //Account for cursor flashing
+            if (!saveRowComponent.Text.EndsWith('_'))
+                rowWidth -= textDimension.Width;
+            saveText = hud.GetTypedText(saveRowComponent.Text, FontName, fontSize, rowWidth - 4);
         }
-
-        int offsetX = LeftOffset;
-        Dimension leftDim = leftHandle.Dimension;
-        Dimension midDim = midHandle.Dimension;
-        Dimension rightDim = rightHandle.Dimension;
-
-        hud.Image(LeftBarName, (offsetX, offsetY));
-        offsetX += leftDim.Width;
-
-        const int MenuRowWidth = 248;
-
-        int blocks = (int)Math.Ceiling((MenuRowWidth - leftDim.Width - rightDim.Width) / (double)midDim.Width) + 1;
-        for (int i = 0; i < blocks; i++)
+        else
         {
-            hud.Image(MiddleBarName, (offsetX, offsetY));
-            offsetX += midDim.Width;
+            saveText = hud.GetEllipsesText(saveRowComponent.Text, FontName, fontSize, menuRowWidth - 4);
         }
+        
+        var rowHeight = textHeight + 3;
+        hud.AddOffset((17, 0));
 
-        hud.Image(RightBarName, (offsetX, offsetY));
-
-        int rowBgHeight = MathHelper.Max(leftDim.Height, midDim.Height, rightDim.Width);
-
-        // draw text
-        string saveText = saveRowComponent.Text.Length > blocks ? saveRowComponent.Text.Substring(0, blocks) : saveRowComponent.Text;
-        int textVerticalPadding = (rowBgHeight - fontSize) / 2;
-        Vec2I origin = (LeftOffset + leftDim.Width + 4, offsetY + textVerticalPadding);
-        hud.Text(saveText, FontName, fontSize, origin, out Dimension textArea);
-
-        // draw row selector
         if (isSelected)
         {
-            string selectedName = ShouldDrawActive ? Constants.MenuSelectIconActive : Constants.MenuSelectIconInactive;
-            if (hud.Textures.TryGet(selectedName, out var handle))
-            {
-                Vec2I selectedOffset = TranslateDoomOffset(handle.Offset);
-                selectedOffset += (LeftOffset - handle.Dimension.Width - SelectionOffsetX, offsetY - 2);
-                hud.Image(selectedName, selectedOffset);
-            }
+            hud.PushAlpha(0.5f);
+            HudBox box = new((0, offsetY), (menuRowWidth - 8, offsetY + rowHeight));
+            hud.FillBox(box, Color.Blue);
+            hud.PopAlpha();
         }
 
-        // Vanilla graphics are 14px high, some PWADs are higher. Target a 4px gap and eat into it if needed.
-        int rowTotalHeight = Math.Max(rowBgHeight, textArea.Height);
-        int rowVerticalPadding = Math.Max(0, (14 + DesiredRowVerticalPadding) - rowTotalHeight);
-        offsetY += rowTotalHeight + rowVerticalPadding;
+        hud.Text(saveText, FontName, fontSize, (1, offsetY + 2));
+        offsetY += rowHeight;
+
+        if (isSelected && detailsEnabled && !wasPreviouslySelected)
+        {
+            m_saveGameSummary = saveRowComponent.SaveGame == null
+                ? null
+                : new SaveGameSummary(saveRowComponent.SaveGame);
+
+            var saveFilter = m_config.Render.Filter.Texture.Value;
+            m_config.Render.Filter.Texture.Set(FilterType.Bilinear, false);
+            m_saveGameTexture = m_saveGameSummary?.UpdateSaveGameTexture(hud);
+            m_config.Render.Filter.Texture.Set(saveFilter, false);
+        }
+
+        hud.PopOffset();
+    }
+
+    private static void DrawSaveMenuBox(IHudRenderContext hud, bool detailsEnabled)
+    {
+        int height = 167;
+        hud.PushOffset((16, 20));
+        hud.AddOffset(GetSaveMenuOffset(hud));
+        int saveRowWidth = GetSaveRowWidth(detailsEnabled);
+        var box = new HudBox((0, 0), (saveRowWidth - 6, height));
+        hud.PushAlpha(0.65f);
+        hud.BorderBox(box, Color.DarkGray, 1);
+        box = new HudBox((1, 1), (saveRowWidth - 7, height - 1));
+        hud.FillBox(box, Color.Black);
+        hud.PopAlpha();
+        hud.PopOffset();
+    }
+
+    private static bool SaveMenuWide(IHudRenderContext hud) =>
+        hud.WindowDimension.Width > 320 && hud.WindowDimension.AspectRatio > 1.45f;
+
+    private static Vec2I GetSaveMenuOffset(IHudRenderContext hud)
+    {
+        if (SaveMenuWide(hud))
+            return (-28, 0);
+        return Vec2I.Zero;
+    }
+
+    private void RenderSaveGameDetails(IHudRenderContext hud)
+    {
+        if (m_saveGameSummary == null)
+            return;
+
+        const string Font = Constants.Fonts.Small;
+        const float ImageAspect = 4 / 3f;
+
+        bool wideScreen = SaveMenuWide(hud);
+        int textSize = wideScreen ? 6 : 4;
+        int boxWidth = wideScreen ? 128 : 80;
+        int thumbnailHeight = (int)(boxWidth / ImageAspect * 0.8f);
+        int boxHeight = thumbnailHeight + 5 * textSize + 3;
+
+        var centerOffset = GetSaveMenuOffset(hud);
+        hud.LineWrap(m_saveGameSummary.MapName, Font, textSize, boxWidth - 4, m_mapNameLines, m_mapNameStringBuilder, 
+            out var requiredHeight);
+        boxHeight += requiredHeight;
+
+        Vec2I boxUpperLeftBorder = (229, 20) + centerOffset;
+        Vec2I boxLowerRightBorder = boxUpperLeftBorder + (boxWidth + 2, boxHeight + 2);
+
+        Vec2I boxUpperLeft = (230, 21) + centerOffset;
+        Vec2I boxLowerRight = boxUpperLeft + (boxWidth, boxHeight);
+
+        hud.PushAlpha(0.65f);
+        hud.BorderBox(new HudBox(boxUpperLeftBorder, boxLowerRightBorder), Color.DarkGray, 1);
+        hud.FillBox((boxUpperLeft, boxLowerRight), Color.Black);
+        hud.PopAlpha();
+
+        if (m_saveGameTexture == null)
+        {
+            hud.PushOffset(boxUpperLeft);
+            var size = hud.MeasureText("No Image", Font, textSize);
+            hud.Text("No Image", Font, textSize, (boxWidth / 2 - size.Width / 2, thumbnailHeight / 2 - size.Height / 2), textAlign: TextAlign.Center);
+            hud.PopOffset();
+        }
+        else
+        {
+            var imageBox = new HudBox(boxUpperLeft, boxUpperLeft + (boxWidth, thumbnailHeight));
+            hud.Image(SaveGameSummary.TEXTURENAME, imageBox);
+        }
+
+        Vec2I offset = boxUpperLeft + (2, thumbnailHeight + 2);
+
+        for (int i = 0; i < m_mapNameLines.Count; i++)
+        {
+            hud.Text(m_mapNameLines[i], Font, textSize, offset, out var drawArea);
+            offset += (0, drawArea.Height);
+        }
+
+        hud.Text(m_saveGameSummary.Date, Font, textSize, offset, out var area);
+        offset += (0, area.Height);
+        offset += (0, area.Height);
+
+        foreach (string str in m_saveGameSummary?.Stats ?? [])
+        {
+            hud.Text(str, Constants.Fonts.Small, textSize, offset, out area);
+            offset += (0, area.Height);
+        }
     }
 }

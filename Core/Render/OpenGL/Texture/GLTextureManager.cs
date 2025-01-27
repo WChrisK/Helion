@@ -6,7 +6,9 @@ using Helion.Geometry.Boxes;
 using Helion.Graphics;
 using Helion.Graphics.Fonts;
 using Helion.Render.Common.Textures;
+using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Shared;
+using Helion.Render.OpenGL.Texture.Legacy;
 using Helion.Resources;
 using Helion.Resources.Archives.Collection;
 using Helion.Util;
@@ -50,6 +52,8 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
     /// </summary>
     public GLTextureType WhiteTexture { get; }
 
+    public GLTextureType BlackTexture { get; }
+
     /// <summary>
     /// The null sprite rotation for when a sprite cannot be found.
     /// </summary>
@@ -66,6 +70,7 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
         ArchiveCollection = archiveCollection;
         NullTexture = config.Render.NullTexture ? CreateNullTexture() : CreateTransparentNullTexture();
         WhiteTexture = CreateWhiteTexture();
+        BlackTexture = GenerateTexture(Image.CreateBlackImage(), "NULLBLACK", ResourceNamespace.Global);
         NullSpriteRotation = CreateNullSpriteRotation();
         NullFont = CreateNullFont();
     }
@@ -305,12 +310,20 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
         return NullFont;
     }
 
-    public IRenderableTextureHandle CreateAndTrackTexture(string name, ResourceNamespace resourceNamespace, Image image, out Action removeAction, bool repeatY = true)
+    public IRenderableTextureHandle CreateOrReplaceTexture(string name, ResourceNamespace resourceNamespace, Image image, bool repeatY = true)
     {
-        GLTextureType texture = CreateTexture(image, repeatY);
-        TextureTracker.Insert(name, resourceNamespace, texture);
-        removeAction = () => RemoveTexture(name, resourceNamespace);
-        return texture;
+        GLTextureType? existingTexture = TextureTracker.GetOnly(name, resourceNamespace);
+        if (existingTexture == null)
+        {
+            GLTextureType newTexture = CreateTexture(image, repeatY);
+            TextureTracker.Insert(name, resourceNamespace, newTexture);
+            return newTexture;
+        }
+        else
+        {
+            ReUpload(existingTexture, image, image.m_pixels);
+            return existingTexture;
+        }
     }
 
     public void RemoveTexture(string name, ResourceNamespace resourceNamespace)
@@ -386,6 +399,8 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
     }
 
     protected abstract GLTextureType GenerateTexture(Image image, string name, ResourceNamespace resourceNamespace, TextureFlags flags = TextureFlags.Default);
+
+    public abstract void ReUpload(GLTextureType texture, Image image, uint[] imagePixels);
 
     protected abstract GLFontTexture<GLTextureType> GenerateFont(Font font, string name);
 

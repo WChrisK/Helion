@@ -35,6 +35,7 @@ public partial class TextureManager : ITickable
     private readonly HashSet<int> m_processedEntityDefinitions = [];
     private readonly Dictionary<int, Entry[]> m_spriteIndexEntries = [];
     private int m_skyIndex;
+    private int m_blackTextureIndex;
     private Texture? m_defaultSkyTexture;
     private readonly bool m_unitTest;
     private readonly bool m_cacheAllSprites;
@@ -52,9 +53,9 @@ public partial class TextureManager : ITickable
         SkyTextureName = Constants.DefaultSkyTextureName;
     }
 
-    public TextureManager(ArchiveCollection archiveCollection, bool cacheAllSprites, bool unitTest = false)
+    public TextureManager(ArchiveCollection archiveCollection, bool cacheAllSprites, string skyTexture, bool unitTest = false)
     {
-        SkyTextureName = Constants.DefaultSkyTextureName;
+        SkyTextureName = skyTexture;
         m_archiveCollection = archiveCollection;
         m_cacheAllSprites = cacheAllSprites;
         m_unitTest = unitTest;
@@ -70,13 +71,16 @@ public partial class TextureManager : ITickable
             .Distinct()
             .ToList();
 
-        InitTextureArrays(m_archiveCollection.Definitions.Textures.GetValues(), flatEntries);
+        InitTextureArrays(m_archiveCollection.Definitions.Textures.GetValues(), flatEntries, out var flatIndexStart);
 
         SetSkyFireTextures();
 
         m_translations = new List<int>(m_textures.Count);
         for (int i = 0; i < m_textures.Count; i++)
             m_translations.Add(i);
+
+        foreach (var flat in flatEntries)
+            MapSkyFlat(flat.Path.Name, flatIndexStart++);
 
         InitAnimations();
         InitSwitches();
@@ -90,6 +94,8 @@ public partial class TextureManager : ITickable
     {
         foreach (var skyFire in m_skyFireTextures)
             skyFire.RenderUpdate = true;
+
+        MapSkyFlat(m_archiveCollection.GameInfo.SkyFlatName, m_skyIndex);
     }
 
     private void MapSpriteIndexToEntries(List<Entry> spriteEntries, List<string> spriteNames)
@@ -262,7 +268,12 @@ public partial class TextureManager : ITickable
     public Texture GetTexture(string name, ResourceNamespace resourceNamespace, ResourceNamespace? priority = null)
     {
         if (name.Equals(Constants.NoTexture, StringComparison.OrdinalIgnoreCase))
+        {
+            if (priority == ResourceNamespace.Flats)
+                return m_textures[m_blackTextureIndex];
+
             return m_textures[Constants.NoTextureIndex];
+        }
 
         if (m_unitTest)
             HandleUnitTestAdd(name, resourceNamespace, priority);
@@ -587,7 +598,7 @@ public partial class TextureManager : ITickable
     private bool HasAnimation(int translationIndex) =>
         m_animations.Any(x => x.TranslationIndex == translationIndex);
 
-    private void InitTextureArrays(List<TextureDefinition> textures, List<Entry> flatEntries)
+    private void InitTextureArrays(List<TextureDefinition> textures, List<Entry> flatEntries, out int flatIndexStart)
     {
         m_textures.Add(new Texture(Constants.NoTexture, ResourceNamespace.Textures, Constants.NoTextureIndex));
         m_textureLookup[Constants.NoTexture] = m_textures[Constants.NoTextureIndex];
@@ -606,6 +617,12 @@ public partial class TextureManager : ITickable
             index++;
         }
 
+        var blackTexture = CreateBlackTexture(index);
+        m_textures.Add(blackTexture);
+        m_textureLookup[blackTexture.Name] = blackTexture;
+        index++;
+
+        flatIndexStart = index;
         string skyFlatName = m_archiveCollection.GameInfo.SkyFlatName;
         foreach (Entry flat in flatEntries)
         {
@@ -615,9 +632,17 @@ public partial class TextureManager : ITickable
             if (flat.Path.Name.Equals(skyFlatName, StringComparison.OrdinalIgnoreCase))
                 m_skyIndex = index;
 
-            MapSkyFlat(flat, index);
             index++;
         }
+    }
+
+    private Texture CreateBlackTexture(int index)
+    {
+        m_blackTextureIndex = index;
+        return new Texture(Constants.BlackTextureName, ResourceNamespace.Textures, index)
+        {
+            Image = Image.CreateBlackImage()
+        };
     }
 
     private Texture GetShittyTexture(List<TextureDefinition> textures)
@@ -625,9 +650,10 @@ public partial class TextureManager : ITickable
         // Load AASHITTY for information purposes - FloorRaiseByTexture needs it to emulate vanilla bug
         var texture = textures.FirstOrDefault(x => x.Name.EqualsIgnoreCase(ShittyTextureName));
         var ns = ResourceNamespace.Textures;
-        var shittyTexture = new Texture(ShittyTextureName, ns, Constants.NullCompatibilityTextureIndex);
-        shittyTexture.Image = texture == null ? Image.NullImage : m_archiveCollection.ImageRetriever.GetOnly(ShittyTextureName, ns);
-        return shittyTexture;
+        return new Texture(ShittyTextureName, ns, Constants.NullCompatibilityTextureIndex)
+        {
+            Image = texture == null ? Image.NullImage : m_archiveCollection.ImageRetriever.GetOnly(ShittyTextureName, ns)
+        };
     }
 
     private void LoadTextureImage(int textureIndex, GetImageOptions options = GetImageOptions.Default)

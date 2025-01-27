@@ -19,4 +19,8 @@ public enum DemoTickCommands
     WeaponSlot6,
     WeaponSlot7,
     CenterView,
+    WeaponGroup1,
+    WeaponGroup2,
+    WeaponGroup3,
+    WeaponGroup4,
 }

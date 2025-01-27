@@ -33,7 +33,7 @@ public class TransitionRenderer : IDisposable
         Dispose(false);
     }
 
-    private GLFramebuffer GetNewFramebuffer() => new("Transition", m_window.Dimension, 1, RenderbufferStorage.Depth32fStencil8);
+    private GLFramebuffer GetNewFramebuffer() => new("Transition", m_window.Dimension, 1);
 
     public void UpdateFramebufferDimensionsIfNeeded()
     {

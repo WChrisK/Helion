@@ -1,4 +1,5 @@
 using GlmSharp;
+using Helion.Geometry.Vectors;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Shader;
 using OpenTK.Graphics.OpenGL;
@@ -16,6 +17,8 @@ public class LegacyHudShader : RenderProgram
     private readonly int m_colorMapIndexLocation;
     private readonly int m_hasInvulnerabilityLocation;
     private readonly int m_gammaCorrectionLocation;
+    private readonly int m_opaqueTextureLocation;
+    private readonly int m_screenBoundsLocation;
 
     public LegacyHudShader() : base("Hud")
     {
@@ -28,10 +31,13 @@ public class LegacyHudShader : RenderProgram
         m_colorMapIndexLocation = Uniforms.GetLocation("colormapIndex");
         m_hasInvulnerabilityLocation = Uniforms.GetLocation("hasInvulnerability");
         m_gammaCorrectionLocation = Uniforms.GetLocation("gammaCorrection");
+        m_opaqueTextureLocation = Uniforms.GetLocation("opaqueTexture");
+        m_screenBoundsLocation = Uniforms.GetLocation("screenBounds");
     }
 
     public void BoundTexture(TextureUnit unit) => Uniforms.Set(unit, m_boundTextureLocation);
     public void ColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_colormapTextureLocation);
+    public void OpaqueTexture(TextureUnit unit) => Uniforms.Set(unit, m_opaqueTextureLocation);
     public void Mvp(mat4 mat) => Uniforms.Set(mat, m_mvpLocation);
     public void FuzzFrac(float frac) => Uniforms.Set(frac, m_fuzzFracLocation);
     public void FuzzDiv(float div) => Uniforms.Set(div, m_fuzzDivLocation);
@@ -39,6 +45,7 @@ public class LegacyHudShader : RenderProgram
     public void HasInvulnerability(bool invul) => Uniforms.Set(invul, m_hasInvulnerabilityLocation);
     public void ColorMapIndex(int index) => Uniforms.Set(index, m_colorMapIndexLocation);
     public void GammaCorrection(float value) => Uniforms.Set(value, m_gammaCorrectionLocation);
+    public void ScreenBounds(Vec2I value) => Uniforms.Set(value, m_screenBoundsLocation);
 
     protected override string VertexShader() => @"
         #version 330
@@ -95,6 +102,7 @@ public class LegacyHudShader : RenderProgram
         out vec4 fragColor;
 
         uniform sampler2D boundTexture;
+        uniform sampler2D opaqueTexture;
         uniform samplerBuffer colormapTexture;
         uniform float fuzzFrac;
         uniform float fuzzDiv;
@@ -102,8 +110,7 @@ public class LegacyHudShader : RenderProgram
         uniform int colormapIndex;
         uniform int hasInvulnerability;
         uniform float gammaCorrection;
-        // Make the hud weapon fuzz a little more detailed.
-        float fuzzDist = " + (FragFunction.FuzzDistanceStep * 1.5) + @";
+        uniform ivec2 screenBounds;
 
         ${FuzzFunction}
 
@@ -115,7 +122,12 @@ public class LegacyHudShader : RenderProgram
             fragColor.xyz *= mix(vec3(1.0, 1.0, 1.0), rgbMultiplierFrag.xyz, rgbMultiplierFrag.w);
             
             ${TrueColorInvul}
-            ${FuzzFragFunction}
+            if (fuzzFrag > 0) {
+                if (fragColor.a <= 0)
+                    discard;
+
+                ${FuzzRefraction}
+            }
             ${GammaCorrection}
         }
     ";
@@ -123,9 +135,9 @@ public class LegacyHudShader : RenderProgram
     protected override string FragmentShader() => ShaderFrag
     .Replace("${DrawPaletteFrag}", ShaderVars.PaletteColorMode ? "flat in float drawPaletteFrag; flat in float hudColorMapIndexFrag;" : "")
     .Replace("${FuzzFunction}", FragFunction.FuzzFunction)
-    .Replace("${FuzzFragFunction}", FragFunction.FuzzFragFunction)
     .Replace("${ColorMapFetch}", FragFunction.ColorMapFetch(false, ColorMapFetchContext.Hud))
     .Replace("${AlphaFlag}", FragFunction.AlphaFlag(false))
     .Replace("${TrueColorInvul}", ShaderVars.PaletteColorMode ? "" : TrueColorInvul)
-    .Replace("${GammaCorrection}", FragFunction.GammaCorrection());
+    .Replace("${GammaCorrection}", FragFunction.GammaCorrection())
+    .Replace("${FuzzRefraction}", FragFunction.FuzzRefractionFunction(FuzzRefractionOptions.Hud));
 }

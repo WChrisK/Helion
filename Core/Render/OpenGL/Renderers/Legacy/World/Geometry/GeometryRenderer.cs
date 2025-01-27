@@ -8,6 +8,7 @@ using Helion.Render.Common.Shared.World;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Data;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Portals;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Geometry.Static;
+using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Sky;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Sky.Sphere;
 using Helion.Render.OpenGL.Shader;
@@ -31,12 +32,13 @@ using static Helion.World.Geometry.Sectors.Sector;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World.Geometry;
 
+public enum PushDir { Back, Forward }
+
 public class GeometryRenderer : IDisposable
 {
     private const double MaxSky = 16384;
     private static readonly Sector DefaultSector = CreateDefault();
 
-    public readonly List<IRenderObject> AlphaSides = [];
     public readonly PortalRenderer Portals;
     private readonly IConfig m_config;
     private readonly RenderProgram m_program;
@@ -50,6 +52,8 @@ public class GeometryRenderer : IDisposable
     private readonly LegacySkyRenderer m_skyRenderer;
     private readonly ArchiveCollection m_archiveCollection;
     private readonly MidTextureHack m_midTextureHack = new();
+    private readonly SectorPlane m_fakeFloor = new(SectorPlaneFace.Floor, 0, 0, 0);
+    private readonly SectorPlane m_fakeCeiling = new(SectorPlaneFace.Ceiling, 0, 0, 0);
     private double m_tickFraction;
     private bool m_floorChanged;
     private bool m_ceilingChanged;
@@ -104,6 +108,19 @@ public class GeometryRenderer : IDisposable
     ~GeometryRenderer()
     {
         ReleaseUnmanagedResources();
+    }
+
+    public static void PushSeg(Line line, Side facingSide, PushDir dir)
+    {
+        // Push it out to prevent potential z-fighting. Default pushes out from the sector.
+        var angle = facingSide == line.Front ? line.Segment.Start.Angle(line.Segment.End) : line.Segment.End.Angle(line.Segment.Start);
+        if (dir == PushDir.Forward)
+            angle += MathHelper.Pi;
+
+        // ReversedZ allows for a much smaller push amount
+        var pushUnit = Vec2D.UnitCircle(angle + MathHelper.HalfPi) * (ShaderVars.ReversedZ ? 0.005 : 0.05);
+        line.Segment.Start += pushUnit;
+        line.Segment.End += pushUnit;
     }
 
     public void UpdateTo(IWorld world)
@@ -308,7 +325,6 @@ public class GeometryRenderer : IDisposable
         if (newTick)
             m_skyRenderer.Clear();
         m_lineDrawnTracker.ClearDrawnLines();
-        AlphaSides.Clear();
     }
 
     public void RenderStaticGeometryWalls() =>
@@ -362,9 +378,9 @@ public class GeometryRenderer : IDisposable
         m_viewPosition = viewPosition;
         m_prevViewPosition = prevViewPosition;
         SetSectorRendering(sector);
-        RenderSectorSideWall(sector, line.Front, viewPosition.XY, true);
+        RenderSectorSideWall(sector, line.Front, true);
         if (line.Back != null)
-            RenderSectorSideWall(sector, line.Back, viewPosition.XY, false);
+            RenderSectorSideWall(sector, line.Back, false);
     }
 
     private void SetSectorRendering(Sector sector)
@@ -374,10 +390,12 @@ public class GeometryRenderer : IDisposable
 
         if (sector.TransferHeights != null)
         {
+            bool transferFloorChanged = sector.TransferHeights.ControlSector.Floor.CheckRenderingChanged();
+            bool transferCeilingChanged = sector.TransferHeights.ControlSector.Ceiling.CheckRenderingChanged();
             // Transfer heights can swap the rendering from floor to ceiling.
             // If either the floor or ceiling has changed recalculate both to ensure it's correct.
-            m_floorChanged = m_floorChanged || m_ceilingChanged;
-            m_ceilingChanged = m_floorChanged || m_ceilingChanged;
+            m_floorChanged = m_floorChanged || m_ceilingChanged || transferFloorChanged || transferCeilingChanged;
+            m_ceilingChanged = m_floorChanged || m_ceilingChanged || transferFloorChanged || transferCeilingChanged;
         }
     }
 
@@ -470,23 +488,23 @@ public class GeometryRenderer : IDisposable
             // Need to force render for alternative flood fill from the front side.
             if (onFront || onBothSides || line.Front.LowerFloodKeys.Key2 > 0 || line.Front.UpperFloodKeys.Key2 > 0)
             {
-                RenderSectorSideWall(sector, line.Front, pos2D, true);
+                RenderSectorSideWall(sector, line.Front, true);
             }
             else if (m_vanillaRender && line.Back != null)
             {
                 m_renderCoverOnly = true;
-                RenderSectorSideWall(sector, line.Front, pos2D, true);
+                RenderSectorSideWall(sector, line.Front, true);
                 m_renderCoverOnly = false;
             }
             // Need to force render for alternative flood fill from the back side.
             if (line.Back != null && (!onFront || onBothSides || line.Back.LowerFloodKeys.Key2 > 0 || line.Back.UpperFloodKeys.Key2 > 0))
             {
-                RenderSectorSideWall(sector, line.Back, pos2D, false);
+                RenderSectorSideWall(sector, line.Back, false);
             }
             else if (m_vanillaRender && line.Back != null)
             {
                 m_renderCoverOnly = true;
-                RenderSectorSideWall(sector, line.Back, pos2D, false);
+                RenderSectorSideWall(sector, line.Back, false);
                 m_renderCoverOnly = false;
             }
         }
@@ -497,39 +515,32 @@ public class GeometryRenderer : IDisposable
         if (m_renderMode == GeometryRenderMode.All)
             return;
 
-        const RenderChangeOptions Options = RenderChangeOptions.None;
         if (front.IsDynamic && m_drawnSides[front.Id] != WorldStatic.CheckCounter &&
-            (back.Sector.CheckRenderingChanged(m_world.Gametick, Options) ||
-            front.Sector.CheckRenderingChanged(m_world.Gametick, Options)))
+            (back.Sector.CheckRenderingChanged(m_world.Gametick) ||
+            front.Sector.CheckRenderingChanged(m_world.Gametick)))
             m_staticCacheGeometryRenderer.CheckForFloodFill(front, back,
                 front.Sector.GetRenderSector(m_transferHeightsView), back.Sector.GetRenderSector(m_transferHeightsView), isFront: true);
 
         if (back.IsDynamic && m_drawnSides[back.Id] != WorldStatic.CheckCounter &&
-            (front.Sector.CheckRenderingChanged(m_world.Gametick, Options) ||
-            back.Sector.CheckRenderingChanged(m_world.Gametick, Options)))
+            (front.Sector.CheckRenderingChanged(m_world.Gametick) ||
+            back.Sector.CheckRenderingChanged(m_world.Gametick)))
             m_staticCacheGeometryRenderer.CheckForFloodFill(back, front,
                 back.Sector.GetRenderSector(m_transferHeightsView), front.Sector.GetRenderSector(m_transferHeightsView), isFront: false);
     }
 
-    private void RenderSectorSideWall(Sector sector, Side side, Vec2D pos2D, bool onFrontSide)
+    private void RenderSectorSideWall(Sector sector, Side side, bool onFrontSide)
     {
         if (m_drawnSides[side.Id] == WorldStatic.CheckCounter)
             return;
 
         m_drawnSides[side.Id] = WorldStatic.CheckCounter;
         if (m_config.Render.TextureTransparency && side.Line.Alpha < 1)
-        {
-            var lineCenter = side.Line.Segment.FromTime(0.5);
-            double dx = Math.Max(lineCenter.X - pos2D.X, Math.Max(0, pos2D.X - lineCenter.X));
-            double dy = Math.Max(lineCenter.Y - pos2D.Y, Math.Max(0, pos2D.Y - lineCenter.Y));
-            side.RenderDistanceSquared = dx * dx + dy * dy;
-            AlphaSides.Add(side);
-        }
+            RenderAlphaSide(side, onFrontSide);
 
         bool transferHeights = false;
         // Transfer heights has to be drawn by the transfer heights sector
         if (side.Sector.TransferHeights != null &&
-            (sector.TransferHeights == null || !ReferenceEquals(sector.TransferHeights.ControlSector, side.Sector.TransferHeights.ControlSector)))
+            (sector.TransferHeights == null || sector.TransferHeights.ControlSector != side.Sector.TransferHeights.ControlSector))
         {
             SetSectorRendering(side.Sector);
             transferHeights = true;
@@ -574,10 +585,10 @@ public class GeometryRenderer : IDisposable
         if (side.Line.Flags.TwoSided && side.Line.Back != null)
             RenderTwoSided(side, isFrontSide);
         else if (m_renderMode == GeometryRenderMode.All || side.IsDynamic)
-            RenderOneSided(side, isFrontSide, out _, out _);
+            RenderOneSided(side, isFrontSide, out _, out _, out _);
     }
 
-    public void RenderOneSided(Side side, bool isFront, out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices)
+    public void RenderOneSided(Side side, bool isFront, out DynamicVertex[]? vertices, out SkyGeometryVertex[]? skyVertices, out GLLegacyTexture texture)
     {
         m_sectorChangedLine = side.Sector.CheckRenderingChanged(side.LastRenderGametick);
         side.LastRenderGametick = m_world.Gametick;
@@ -590,7 +601,7 @@ public class GeometryRenderer : IDisposable
         }
 
         WallVertices wall = default;
-        GLLegacyTexture texture = m_glTextureManager.GetTexture(side.Middle.TextureHandle);
+        texture = m_glTextureManager.GetTexture(side.Middle.TextureHandle);
         DynamicVertex[]? data = m_vertexLookup[side.Id];
 
         var renderSector = side.Sector.GetRenderSector(m_transferHeightsView);
@@ -599,10 +610,14 @@ public class GeometryRenderer : IDisposable
         SectorPlane ceiling = renderSector.Ceiling;
         RenderSkySide(side, renderSector, null, texture, out skyVertices);
 
-        if (side.Middle.TextureHandle <= Constants.NullCompatibilityTextureIndex)
+        // One-sided walls without a texture would HOM and stop BSP traversal. Draw a black texture to block rendering.
+        if (skyVertices == null && side.Middle.TextureHandle <= Constants.NullCompatibilityTextureIndex)
         {
-            vertices = null;
-            return;
+            m_fakeFloor.Z = floor.Z - Constants.MaxTextureHeight;
+            m_fakeCeiling.Z = ceiling.Z + Constants.MaxTextureHeight;
+            floor = m_fakeFloor;
+            ceiling = m_fakeCeiling;
+            texture = m_glTextureManager.BlackTexture;
         }
 
         if (side.OffsetChanged || m_sectorChangedLine || data == null)
@@ -815,7 +830,8 @@ public class GeometryRenderer : IDisposable
                 m_skyWallVertexLowerLookup[facingSide.Id] = data;
             }
 
-            m_skyRenderer.Add(data, data.Length, otherSide.Sector.FloorSkyTextureHandle, otherSide.Sector.FlipSkyTexture);
+            var sector = otherSide.Sector;
+            m_skyRenderer.Add(data, data.Length, sector.FloorSkyTextureHandle, sector.SkyOptions, sector.SkyOffset);
             vertices = null;
             skyVertices = data;
         }
@@ -922,7 +938,8 @@ public class GeometryRenderer : IDisposable
                 m_skyWallVertexUpperLookup[facingSide.Id] = data;
             }
 
-            m_skyRenderer.Add(data, data.Length, plane.Sector.CeilingSkyTextureHandle, plane.Sector.FlipSkyTexture);
+            var sector = plane.Sector;
+            m_skyRenderer.Add(data, data.Length, sector.CeilingSkyTextureHandle, sector.SkyOptions, sector.SkyOffset);
             vertices = null;
             skyVertices = data;
         }
@@ -1035,7 +1052,8 @@ public class GeometryRenderer : IDisposable
         }
 
         SetSkyWallVertices(m_skyWallVertices, wall);
-        m_skyRenderer.Add(m_skyWallVertices, m_skyWallVertices.Length, facingSide.Sector.CeilingSkyTextureHandle, facingSide.Sector.FlipSkyTexture);
+        var sector = facingSide.Sector;
+        m_skyRenderer.Add(m_skyWallVertices, m_skyWallVertices.Length, sector.CeilingSkyTextureHandle, sector.SkyOptions, sector.SkyOffset);
         skyVertices = m_skyWallVertices;
     }
 
@@ -1078,10 +1096,17 @@ public class GeometryRenderer : IDisposable
         float alpha = m_config.Render.TextureTransparency ? facingSide.Line.Alpha : 1.0f;
         DynamicVertex[]? data = m_vertexLookup[facingSide.Id];
         var geometryType = alpha < 1 ? GeometryType.AlphaWall : GeometryType.TwoSidedMiddleWall;
-        RenderWorldData renderData = m_worldDataManager.GetRenderData(texture, m_program, geometryType);
+
+        var renderData = m_worldDataManager.GetRenderData(texture, m_program, geometryType);
 
         if (facingSide.OffsetChanged || m_sectorChangedLine || data == null)
         {
+            // Push forward to cover flood fill side and prevent z-fighting (ex Doom2 MAP25 bloodfall)
+            var segSave = facingSide.Line.Segment;
+            // Don't push with flood plane. This is different from flood fill side and are already pushed.
+            if (!facingSector.Flood)
+                PushSeg(facingSide.Line, facingSide, PushDir.Forward);
+
             var opening = GetMidTexOpening(TextureManager, facingSide, facingSector, otherSector, false);
             var prevOpening = GetMidTexOpening(TextureManager, facingSide, facingSector, otherSector, true);
             double offset = GetTransferHeightHackOffset(facingSide, otherSide, opening.BottomZ, opening.TopZ, previous: false);
@@ -1103,6 +1128,7 @@ public class GeometryRenderer : IDisposable
                 SetWallVertices(data, wall, GetLightLevelAdd(facingSide), lightIndex, colorMapIndex, alpha, addAlpha: 0);
 
             m_vertexLookup[facingSide.Id] = data;
+            facingSide.Line.Segment = segSave;
         }
 
         // See RenderOneSided() for an ASCII image of why we do this.
@@ -1268,8 +1294,8 @@ public class GeometryRenderer : IDisposable
 
             vertices = null;
             skyVertices = lookupData;
-            var skyHandle = floor ? subsectors[0].Sector.FloorSkyTextureHandle : subsectors[0].Sector.CeilingSkyTextureHandle;
-            m_skyRenderer.Add(lookupData, lookupData.Length, skyHandle, subsectors[0].Sector.FlipSkyTexture);
+            var skyHandle = floor ? sector.FloorSkyTextureHandle : sector.CeilingSkyTextureHandle;
+            m_skyRenderer.Add(lookupData, lookupData.Length, skyHandle, sector.SkyOptions, sector.SkyOffset);
         }
         else
         {

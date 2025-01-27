@@ -280,7 +280,7 @@ public partial class MapInfoDefinition
                 mapDef.ParTime = existing.ParTime;
             if (mapDef.SuckTime == 0)
                 mapDef.SuckTime = existing.SuckTime;
-            if (mapDef.HasOptions())
+            if (!mapDef.HasOptions())
                 mapDef.SetOptions(existing);
         }
         else

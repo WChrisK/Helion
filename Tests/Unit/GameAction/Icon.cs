@@ -78,7 +78,7 @@ namespace Helion.Tests.Unit.GameAction
             GameActions.AssertSound(World, bossEye, "dsbospit");
 
             var cube = FindEntity("SpawnShot", monsters);
-            cube.Target.Entity.Should().Be(target);
+            cube.Target().Should().Be(target);
             TickUntilDisposed(cube);
             var fire = FindEntity("ArchvileFire", Array.Empty<Entity>());
             var monster = FindEntity(monsterName, monsters);

@@ -65,9 +65,9 @@ public class SwitchChangeSpecial : ISpecial
         m_switchDelayTics = 0;
     }
 
-    public ISpecialModel ToSpecialModel()
+    public SwitchChangeSpecialModel ToSpecialModel()
     {
-        return new SwitchChangeSpecialModel()
+        return new()
         {
             LineId = Line.Id,
             Repeat = m_repeat,

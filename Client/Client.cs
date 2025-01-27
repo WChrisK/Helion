@@ -42,8 +42,8 @@ namespace Helion.Client;
 public partial class Client : IDisposable, IInputManagement
 {
     private record class OnLoadMapComplete(Action<object?> OnComplete, object? CompleteParam);
-    private record class LoadMapResult(WorldLayer? WorldLayer, WorldModel? WorldModel, LevelChangeEvent? EventContext, IList<Player> Players, IRandom Random);
-    private record class QueueLoadMapParams(MapInfoDef MapInfoDef, WorldModel? WorldModel, IWorld? PreviousWorld, LevelChangeEvent? EventContext, bool Transition);
+    private record class LoadMapResult(WorldLayer? WorldLayer, WorldModel? WorldModel, LevelChangeEvent? EventContext, IList<Player> Players, IRandom Random, int StartRandomIndex, Exception? Exception = null);
+    private record class QueueLoadMapParams(MapInfoDef MapInfoDef, WorldModel? WorldModel, IWorld? PreviousWorld, LevelChangeEvent EventContext, bool Transition);
 
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
     private static readonly AppInfo AppInfo = new();
@@ -61,10 +61,12 @@ public partial class Client : IDisposable, IInputManagement
     private readonly ConsoleCommands m_consoleCommands = new();
     private readonly Profiler m_profiler = new();
     private readonly Ticker m_ticker = new(Constants.TicksPerSecond);
+    private readonly SaveGameScreenshotGenerator m_screenshotGenerator;
     private bool m_disposed;
     private bool m_takeScreenshot;
     private bool m_loadComplete;
     private bool m_filesLoaded;
+    private bool m_invalidateRng;
     private OnLoadMapComplete? m_onLoadMapComplete;
     private LoadMapResult? m_loadMapResult;
     private QueueLoadMapParams? m_queueMapLoad;
@@ -88,6 +90,8 @@ public partial class Client : IDisposable, IInputManagement
         m_saveGameManager = new SaveGameManager(config, m_archiveCollection, commandLineArgs.SaveDir);
         m_soundManager = new SoundManager(audioSystem, archiveCollection);
 
+        m_config.Game.Rng.OnChanged += Rng_OnChanged;
+
         if (commandLineArgs.GlVersion.HasValue)
         {
             GlVersion.Major = commandLineArgs.GlVersion.Value / 10;
@@ -99,11 +103,12 @@ public partial class Client : IDisposable, IInputManagement
         }
 
         m_window = new Window(AppInfo.ApplicationName, config, archiveCollection, m_fpsTracker, this, GlVersion.Major, GlVersion.Minor, GlVersion.Flags, CheckOpenGLSupport);
+        m_screenshotGenerator = new(m_window.Renderer);
         m_soundManager.SoundCreated += m_window.JoystickAdapter.RumbleForSoundCreated;
         SetIcon(m_window);
 
         m_layerManager = new GameLayerManager(config, m_window, console, m_consoleCommands, archiveCollection,
-            m_soundManager, m_saveGameManager, m_profiler);
+            m_soundManager, m_saveGameManager, m_profiler, m_screenshotGenerator);
 
         m_layerManager.GameLayerAdded += GameLayerManager_GameLayerAdded;
         m_saveGameManager.GameSaved += SaveGameManager_GameSaved;
@@ -117,6 +122,8 @@ public partial class Client : IDisposable, IInputManagement
         UpdateVolume();
         m_ticker.Start();
     }
+
+    private void Rng_OnChanged(object? sender, RngMethod e) =>  m_invalidateRng = true;
 
     private static void SetOpenGLVersion(IConfig config)
     {
@@ -154,7 +161,8 @@ public partial class Client : IDisposable, IInputManagement
     private static void CheckOpenGLSupport()
     {
         GLInfo.ClipControlSupported = GlVersion.IsVersionSupported(4, 5) || GLExtensions.Supports("GL_ARB_clip_control");
-        GLInfo.MapPersistentBitSupported = GlVersion.IsVersionSupported(4, 4);
+        GLInfo.MapPersistentBitSupported = GlVersion.IsVersionSupported(4, 4) || GLExtensions.Supports("GL_ARB_buffer_storage");
+        GLInfo.MemoryBarrierSupported = GlVersion.IsVersionSupported(4, 2) || GLExtensions.Supports("GL_ARB_shader_image_load_store");
     }
 
     private static void SetIcon(Window window)
@@ -267,12 +275,15 @@ public partial class Client : IDisposable, IInputManagement
 
         m_filesLoaded = false;
         m_window.Renderer.UploadColorMap();
+        m_saveGameManager.LoadCurrentSaveFiles();
     }
 
     private void CheckMapLoad()
     {
         if (m_queueMapLoad == null)
             return;
+
+        GCUtil.SetDefaultLatencyMode();
 
         var load = m_queueMapLoad;
         m_queueMapLoad = null;
@@ -334,8 +345,6 @@ public partial class Client : IDisposable, IInputManagement
         // Note: StaticDataApplier happens through this start and needs to happen before UpdateToNewWorld
         worldLayer.World.Start(m_loadMapResult.WorldModel);
 
-        WriteAutoSave(m_loadMapResult);
-
         m_window.Renderer.UpdateToNewWorld(worldLayer.World);
         m_layerManager.LockInput = false;
 
@@ -345,15 +354,26 @@ public partial class Client : IDisposable, IInputManagement
         worldLayer.ShouldRender = true;
         m_layerManager.Remove(m_layerManager.LoadingLayer);
 
+        var changeEvent = m_loadMapResult.EventContext;
+        if (changeEvent != null && (changeEvent.ChangeType == LevelChangeType.Next || changeEvent.ChangeType == LevelChangeType.SecretNext))
+        {
+            Render();
+            _ = WriteAutoSave(m_loadMapResult);
+        }
+
         m_loadMapResult = null;
+        m_levelChangeEvent = LevelChangeEvent.Default;
         PlayTransition();
         UpdateVolume();
 
         m_onLoadMapComplete?.OnComplete(m_onLoadMapComplete.CompleteParam);
         m_onLoadMapComplete = null;
+
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false);
+        GCUtil.SetGameplayLatencyMode();
     }
 
-    private void WriteAutoSave(LoadMapResult result)
+    private async Task WriteAutoSave(LoadMapResult result)
     {
         if (result.WorldLayer == null || result.Players.Count == 0 || !m_config.Game.AutoSave)
             return;
@@ -362,7 +382,7 @@ public partial class Client : IDisposable, IInputManagement
         var mapInfoDef = worldLayer.CurrentMap;
 
         string title = $"Auto: {mapInfoDef.GetMapNameWithPrefix(worldLayer.World.ArchiveCollection.Language)}";
-        var saveGameEvent = m_saveGameManager.WriteNewSaveGame(worldLayer.World, title, autoSave: true);
+        var saveGameEvent = await m_saveGameManager.WriteNewSaveGameAsync(worldLayer.World, title, m_screenshotGenerator, SaveGameType.Auto);
         if (saveGameEvent.Success)
             m_console.AddMessage($"Saved {saveGameEvent.FileName}");
 
@@ -377,6 +397,8 @@ public partial class Client : IDisposable, IInputManagement
     private void SetMapLoadFailure()
     {
         Log.Error("Failed to load map");
+        if (m_loadMapResult?.Exception != null)
+            Log.Error(m_loadMapResult.Exception);
         m_layerManager.ClearAllExcept();
         ShowConsole();
         m_layerManager.LockInput = false;
@@ -414,8 +436,7 @@ public partial class Client : IDisposable, IInputManagement
 
         PackageDemo();
 
-        if (m_demoPlayer != null)
-            m_demoPlayer.Dispose();
+        m_demoPlayer?.Dispose();
 
         m_window.SetGrabCursor(false);
         m_window.WindowState = WindowState.Minimized;
@@ -478,15 +499,16 @@ public partial class Client : IDisposable, IInputManagement
 
     public static void Main(string[] args)
     {
+        var workingDirectory = Directory.GetCurrentDirectory();
         SetToExecutingDirectory();
         CommandLineArgs commandLineArgs = CommandLineArgs.Parse(args);
         HelionLoggers.Initialize(commandLineArgs);
         LogAnyCommandLineErrors(commandLineArgs);
 
 #if DEBUG
-        Run(commandLineArgs);
+        Run(commandLineArgs, workingDirectory);
 #else
-        RunRelease(commandLineArgs);
+        RunRelease(commandLineArgs, workingDirectory);
 #endif
 
         ForceFinalizersIfDebugMode();
@@ -506,11 +528,11 @@ public partial class Client : IDisposable, IInputManagement
         Directory.SetCurrentDirectory(dir);
     }
 
-    private static void RunRelease(CommandLineArgs commandLineArgs)
+    private static void RunRelease(CommandLineArgs commandLineArgs, string workingDirectory)
     {
         try
         {
-            Run(commandLineArgs);
+            Run(commandLineArgs, workingDirectory);
         }
         catch (Exception e)
         {
@@ -553,14 +575,14 @@ public partial class Client : IDisposable, IInputManagement
         }
     }
 
-    private static void Run(CommandLineArgs commandLineArgs)
+    private static void Run(CommandLineArgs commandLineArgs, string workingDirectory)
     {
         var configPath = string.IsNullOrWhiteSpace(commandLineArgs.ConfigFileName) ? FileConfig.GetDefaultConfigPath() : commandLineArgs.ConfigFileName.Trim();
         FileConfig config = ReadConfigFileOrTerminate(configPath);
 
         try
         {
-            ArchiveCollection archiveCollection = new(new FilesystemArchiveLocator(config), config, ArchiveCollection.StaticDataCache);
+            ArchiveCollection archiveCollection = new(new FilesystemArchiveLocator(config, GetSearchPaths(workingDirectory)), config, ArchiveCollection.StaticDataCache);
             using HelionConsole console = new(archiveCollection.DataCache, config, commandLineArgs);
             LogClientInfo();
             using IMusicPlayer musicPlayer = commandLineArgs.NoMusic ?
@@ -582,6 +604,13 @@ public partial class Client : IDisposable, IInputManagement
 
             TempFileManager.DeleteAllFiles();
         }
+    }
+
+    private static IList<string> GetSearchPaths(string workingDirectory)
+    {
+        if (workingDirectory == Directory.GetCurrentDirectory())
+            return [];
+        return [workingDirectory];
     }
 
     private void SaveGameManager_GameSaved(object? sender, SaveGameEvent e)

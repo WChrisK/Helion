@@ -22,6 +22,10 @@ public static class CommandExtensions
             TickCommands.WeaponSlot5 => DemoTickCommands.WeaponSlot5,
             TickCommands.WeaponSlot6 => DemoTickCommands.WeaponSlot6,
             TickCommands.WeaponSlot7 => DemoTickCommands.WeaponSlot7,
+            TickCommands.WeaponGroup1 => DemoTickCommands.WeaponGroup1,
+            TickCommands.WeaponGroup2 => DemoTickCommands.WeaponGroup2,
+            TickCommands.WeaponGroup3 => DemoTickCommands.WeaponGroup3,
+            TickCommands.WeaponGroup4 => DemoTickCommands.WeaponGroup4,
             TickCommands.CenterView => DemoTickCommands.CenterView,
             _ => DemoTickCommands.None,
         };
@@ -45,6 +49,10 @@ public static class CommandExtensions
             DemoTickCommands.WeaponSlot5 => TickCommands.WeaponSlot5,
             DemoTickCommands.WeaponSlot6 => TickCommands.WeaponSlot6,
             DemoTickCommands.WeaponSlot7 => TickCommands.WeaponSlot7,
+            DemoTickCommands.WeaponGroup1 => TickCommands.WeaponGroup1,
+            DemoTickCommands.WeaponGroup2 => TickCommands.WeaponGroup2,
+            DemoTickCommands.WeaponGroup3 => TickCommands.WeaponGroup3,
+            DemoTickCommands.WeaponGroup4 => TickCommands.WeaponGroup4,
             DemoTickCommands.CenterView => TickCommands.CenterView,
             _ => TickCommands.None,
         };

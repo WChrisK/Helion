@@ -8,34 +8,37 @@ using System.Diagnostics;
 
 namespace Helion.Render.OpenGL.Framebuffer;
 
+public enum GLFrameBufferOptions
+{
+    None,
+    DepthStencilAttachment
+}
+
 public class GLFramebuffer : IDisposable
 {
     public readonly string Label;
     public readonly Dimension Dimension;
-    private readonly List<GLTexture2D> m_textures = new();
-    private readonly GLRenderbuffer? m_renderBuffer;
+    private readonly List<GLTexture2D> m_textures = [];
     private readonly int m_name;
     private bool m_disposed;
 
     public IReadOnlyList<GLTexture2D> Textures => m_textures;
 
-    public GLFramebuffer(string label, Dimension dimension, int numColorAttachments, RenderbufferStorage? storage = null)
+    public GLFramebuffer(string label, Dimension dimension, int numColorAttachments, GLFrameBufferOptions options = GLFrameBufferOptions.None)
     {
         Debug.Assert(numColorAttachments >= 0, $"Cannot have a negative amount of color attachments for framebuffer {label}");
         Debug.Assert(dimension.HasPositiveArea, $"Must have a positive dimension for framebuffer {label}");
-        Debug.Assert(numColorAttachments > 0 || storage != null, "Cannot have no color attachments and no depth/stencil renderbuffer");
+        Debug.Assert(numColorAttachments > 0 || options != GLFrameBufferOptions.None, "Cannot have no color attachments and no depth/stencil renderbuffer");
 
         Label = label;
         Dimension = dimension;
         m_name = GL.GenFramebuffer();
-        if (storage != null)
-            m_renderBuffer = new(label, dimension, storage.Value);
 
         Bind();
         GLHelper.ObjectLabel(ObjectLabelIdentifier.Framebuffer, m_name, $"Framebuffer: {Label}");
         CreateColorAttachments(numColorAttachments, dimension, label);
-        if (m_renderBuffer != null)
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, m_renderBuffer.Name);
+        if (options.HasFlag(GLFrameBufferOptions.DepthStencilAttachment))
+            CreateDepthStencilAttachment(dimension, label);
         CheckFramebufferOrThrow();
         Unbind();
     }
@@ -66,6 +69,17 @@ public class GLFramebuffer : IDisposable
         }
     }
 
+    private void CreateDepthStencilAttachment(Dimension dimension, string label)
+    {
+        GLTexture2D depthTexture = new($"(Framebuffer {label}) Depth Stencil Attachment", dimension);
+        depthTexture.Bind();
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Depth32fStencil8, dimension.Width, Dimension.Height, 0, PixelFormat.DepthStencil, PixelType.Float32UnsignedInt248Rev, IntPtr.Zero);
+        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, depthTexture.Name, 0);
+        depthTexture.Unbind();
+
+        m_textures.Add(depthTexture);
+    }
+
     ~GLFramebuffer()
     {
         Dispose(false);
@@ -84,8 +98,6 @@ public class GLFramebuffer : IDisposable
         foreach (GLTexture2D texture in m_textures)
             texture.Dispose();
         m_textures.Clear();
-        
-        m_renderBuffer?.Dispose();
         
         GL.DeleteFramebuffer(m_name);
 

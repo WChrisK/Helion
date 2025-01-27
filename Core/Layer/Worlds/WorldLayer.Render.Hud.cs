@@ -541,7 +541,7 @@ public partial class WorldLayer
         int Length = (int)(5 * m_scale * m_config.Hud.CrosshairScale.Value);
 
         Color color;
-        bool target = Player.CrosshairTarget.Entity != null;
+        bool target = Player.CrosshairTarget.Get() != null;
         bool shouldShrink = m_config.Hud.CrosshairTargetShrink.Value && target;
         int crosshairLength = shouldShrink ? (int)(Length * 0.8f) : Length;
 
@@ -816,14 +816,23 @@ public partial class WorldLayer
         hud.Image(image, pos, both: both, alpha: m_hudAlpha);
     }
 
-    private readonly record struct HudStatusBarbackground(IHudRenderContext Hud, IRenderableTextureHandle BarHandle, IRenderableTextureHandle BackgroundHandle);
+    private readonly record struct HudStatusBarbackground(IHudRenderContext Hud, string BackgroundTextureName, IRenderableTextureHandle BarHandle, IRenderableTextureHandle BackgroundHandle);
 
     private void DrawStatusBarBackground(IHudRenderContext hud, IRenderableTextureHandle barHandle)
     {
-        if (!hud.Textures.TryGet(m_config.Hud.BackgroundTexture, out var backgroundHandle))
+        var textureName = m_config.Hud.BackgroundTexture.Value;
+        bool hasBackground = hud.Textures.TryGet(textureName, out var backgroundHandle);
+
+        if (string.IsNullOrEmpty(textureName) || !hasBackground)
+        {
+            textureName = World.GameInfo.BorderFlat;
+            hud.Textures.TryGet(World.GameInfo.BorderFlat, out backgroundHandle);
+        }
+
+        if (backgroundHandle == null)
             return;
 
-        hud.DoomVirtualResolution(m_virtualStatusBarBackgroundAction, new HudStatusBarbackground(hud, barHandle, backgroundHandle),
+        hud.DoomVirtualResolution(m_virtualStatusBarBackgroundAction, new HudStatusBarbackground(hud, textureName, barHandle, backgroundHandle),
             ResolutionScale.None);
     }
 
@@ -838,7 +847,7 @@ public partial class WorldLayer
         int xOffset = 0;
         for (int i = 0; i < iterations; i++)
         {
-            hud.Hud.Image(m_config.Hud.BackgroundTexture, (xOffset, yOffset), Align.BottomLeft);
+            hud.Hud.Image(hud.BackgroundTextureName, (xOffset, yOffset), Align.BottomLeft);
             xOffset += backgroundHandleWidth;
         }
     }

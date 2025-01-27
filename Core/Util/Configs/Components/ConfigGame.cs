@@ -3,11 +3,12 @@ using Helion.Resources.Definitions.MapInfo;
 using Helion.Util.Configs.Impl;
 using Helion.Util.Configs.Options;
 using Helion.Util.Configs.Values;
+using Helion.Util.RandomGenerators;
 using static Helion.Util.Configs.Values.ConfigFilters;
 
 namespace Helion.Util.Configs.Components;
 
-public class ConfigGame: ConfigElement<ConfigGame>
+public class ConfigGame : ConfigElement<ConfigGame>
 {
     // Controls/input
 
@@ -71,6 +72,10 @@ public class ConfigGame: ConfigElement<ConfigGame>
     [OptionMenu(OptionSectionType.General, "Quicksave Seconds")]
     public readonly ConfigValue<int> QuickSaveSeconds = new(0, GreaterOrEqual(0));
 
+    [ConfigInfo("Display screenshot and extended information in Save/Load menu.")]
+    [OptionMenu(OptionSectionType.General, "Display Savegame Details")]
+    public readonly ConfigValue<bool> ExtendedSaveGameInfo = new(true);
+
     // Cheats
 
     [ConfigInfo("Mark lines and sectors that are activated by a special in the automap.")]
@@ -96,6 +101,9 @@ public class ConfigGame: ConfigElement<ConfigGame>
     [OptionMenu(OptionSectionType.General, "Fast Monsters")]
     public readonly ConfigValue<bool> FastMonsters = new(false);
 
+    [ConfigInfo("Random number generator method.", save: false, demo: true, serialize: true, mapRestartRequired: true)]
+    [OptionMenu(OptionSectionType.General, "RNG Method", spacer: true)]
+    public readonly ConfigValue<RngMethod> Rng = new(RngMethod.Boom);
 
     // Non-menu items
     [ConfigInfo("Write stats to levelstat.txt.", save: false)]

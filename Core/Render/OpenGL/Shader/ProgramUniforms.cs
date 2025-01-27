@@ -45,6 +45,8 @@ public class ProgramUniforms
     public void Set(mat4 value, string name) => Set(value, GetLocation(name));
     public void Set(TextureUnit value, int location) => GL.Uniform1(location, (int)value - (int)TextureUnit.Texture0);
     public void Set(TextureUnit value, string name) => Set(value, GetLocation(name));
+    public void Set(Vec2I value, int location) => GL.Uniform2(location, value.X, value.Y);
+
 
     public int GetLocation(string name)
     {

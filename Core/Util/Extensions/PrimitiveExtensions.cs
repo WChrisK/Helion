@@ -169,12 +169,12 @@ namespace Helion.Util.Extensions
             return Math.Abs(self);
         }
 
-        public static bool ApproxEquals(this double value, double target, double epsilon = 0.00001)
+        public static bool ApproxEquals(this double value, double target, double epsilon = Constants.Epsilon)
         {
             return value >= target - epsilon && value <= target + epsilon;
         }
 
-        public static bool ApproxZero(this double value, double epsilon = 0.00001)
+        public static bool ApproxZero(this double value, double epsilon = Constants.Epsilon)
         {
             return value.ApproxEquals(0, epsilon);
         }

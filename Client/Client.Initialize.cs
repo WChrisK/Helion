@@ -12,7 +12,9 @@ using Helion.Resources.Definitions.MapInfo;
 using Helion.Resources.IWad;
 using Helion.Util;
 using Helion.Util.CommandLine;
+using Helion.Util.Configs.Components;
 using Helion.Util.Consoles;
+using Helion.World;
 using Helion.World.Util;
 
 namespace Helion.Client;
@@ -49,7 +51,7 @@ public partial class Client
 
             if (m_iwad == null)
             {
-                IwadSelectionLayer selectionlayer = new(m_archiveCollection, m_config, m_installedIwads);
+                IwadSelectionLayer selectionlayer = new(m_config, m_installedIwads);
                 selectionlayer.OnIwadSelected += IwadSelection_OnIwadSelected;
                 m_layerManager.Add(selectionlayer);
                 m_layerManager.Remove(m_layerManager.LoadingLayer);
@@ -104,9 +106,11 @@ public partial class Client
         m_installedIwads.AddRange(iwadLocator.Locate());
     }
 
-    private async void IwadSelection_OnIwadSelected(object? sender, string iwad)
+    private async void IwadSelection_OnIwadSelected(object? sender, IwadSelection selection)
     {
-        m_iwad = iwad;
+        m_iwad = selection.IWad;
+        if (!string.IsNullOrEmpty(selection.PWad))
+            m_pwads.Add(selection.PWad);
         m_layerManager.Remove(m_layerManager.IwadSelectionLayer);
         await Initialize();
     }
@@ -140,12 +144,12 @@ public partial class Client
 
     private void ArchiveCollection_ArchiveRead(object? sender, Archive archive)
     {
-        Log.Info($"Reading {archive.OriginalFilePath}");
+        Log.Info($"Reading {archive.FullPath}");
     }
 
     private void ArchiveCollection_ArchiveLoaded(object? sender, Archive archive)
     {
-        Log.Info($"Loaded {archive.OriginalFilePath}");
+        Log.Info($"Loaded {archive.FullPath}");
     }
 
     private bool CheckLoadMap()
@@ -232,6 +236,13 @@ public partial class Client
             compat.Stairs.Set(true, writeToConfig: false);
         if (options.OptionEnabled(OptionsConstants.Comp.Vile, compLevelDef.CompLevel))
             compat.VileGhosts.Set(true, writeToConfig: false);
+
+        var id24skies = m_archiveCollection.Definitions.Id24SkyDefinition.Data.Skies;
+        if (id24skies != null && id24skies.Count > 0 && m_config.Render.SkyMode != SkyRenderMode.Vanilla)
+        {
+            m_config.Render.SkyMode.Set(SkyRenderMode.Vanilla, writeToConfig: false);
+            Log.Info("SKYDEFS: Sky render mode set to vanilla");
+        }
     }
 
     private MapInfoDef? GetDefaultMap()
@@ -257,7 +268,7 @@ public partial class Client
 
     private void LoadMap(string mapName, CommandLineArgs? args = null)
     {
-        QueueLoadMap(GetMapInfo(mapName), null, null, OnLoadMapCommandComplete, args);
+        QueueLoadMap(GetMapInfo(mapName), null, null, OnLoadMapCommandComplete, args, LevelChangeEvent.Default);
     }
 
     private void OnLoadMapCommandComplete(object? value)

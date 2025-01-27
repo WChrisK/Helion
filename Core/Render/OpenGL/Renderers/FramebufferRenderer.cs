@@ -102,7 +102,7 @@ public class FramebufferRenderer : IDisposable
     }
 
     private static GLFramebuffer CreateFramebuffer(in Dimension dimension) =>
-        new("Virtual", dimension, 1, RenderbufferStorage.Depth32fStencil8);
+        new("Virtual", dimension, 1, GLFrameBufferOptions.DepthStencilAttachment);
 
     private void UploadVertices()
     {

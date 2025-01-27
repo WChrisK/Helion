@@ -1,5 +1,4 @@
 using Helion.Geometry;
-using Helion.Geometry.Grids;
 using Helion.Geometry.Vectors;
 using Helion.Maps;
 using Helion.Maps.Components;
@@ -8,7 +7,6 @@ using Helion.Models;
 using Helion.Util;
 using Helion.Util.Container;
 using Helion.Util.Extensions;
-using Helion.World.Blockmap;
 using Helion.World.Entities.Definition;
 using Helion.World.Entities.Definition.Composer;
 using Helion.World.Entities.Inventories;
@@ -20,7 +18,6 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace Helion.World.Entities;
 
@@ -43,25 +40,25 @@ public class EntityManager : IDisposable
     public const int NoTid = 0;
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
+    public int EntityCount;
     public Entity? Head;
     public LinkedList<Entity> TeleportSpots = new();
     public SpawnLocations SpawnLocations;
     public IWorld World;    
 
     public EntityDefinitionComposer DefinitionComposer;
-    public List<Player> Players = new();
-    public List<Player> VoodooDolls = new();
-    public List<Entity> MusicChangers = new();
-    private LookupArray<Player?> RealPlayersByNumber = new();
-    private readonly Dictionary<int, ISet<Entity>> TidToEntity = new();
-    private readonly UniformGrid<Block> m_blocks;
+    public List<Player> Players = [];
+    public List<Player> VoodooDolls = [];
+    public List<Entity> MusicChangers = [];
+    private readonly LookupArray<Player?> RealPlayersByNumber = new();
+    private readonly Dictionary<int, ISet<Entity>> TidToEntity = [];
+    private readonly Dictionary<int, Vec3D> m_spawnPoints = [];
 
     public EntityManager(IWorld world)
     {
         World = world;
         SpawnLocations = new SpawnLocations(world);
         DefinitionComposer = world.ArchiveCollection.EntityDefinitionComposer;
-        m_blocks = world.Blockmap.Blocks;
     }
 
     private static bool ZHeightSet(double z)
@@ -86,14 +83,15 @@ public class EntityManager : IDisposable
         return null;
     }
 
-    public Entity? Create(string className, in Vec3D pos, bool init = false)
+    public Entity? Create(string className, in Vec3D pos, bool initSpawn = false)
     {
         var def = DefinitionComposer.GetByName(className);
-        return def != null ? Create(def, pos, 0.0, 0.0, 0, init: init) : null;
+        return def != null ? Create(def, pos, 0.0, 0.0, 0, initSpawn: initSpawn) : null;
     }
 
-    public Entity Create(EntityDefinition definition, Vec3D position, double zHeight, double angle, int tid, bool init = false)
+    public Entity Create(EntityDefinition definition, Vec3D position, double zHeight, double angle, int tid, bool initSpawn = false)
     {
+        EntityCount++;
         var sector = World.ToSubsector(position.X, position.Y).Sector;
 
         position.Z = GetPositionZ(sector, in position, zHeight);
@@ -103,13 +101,13 @@ public class EntityManager : IDisposable
             entity.Properties.MonsterMovementSpeed = entity.Definition.Properties.FastSpeed;
 
         // This only needs to happen on map population
-        if (init && !ZHeightSet(zHeight))
+        if (initSpawn && !ZHeightSet(zHeight))
         {
             entity.Position.Z = entity.Sector.ToFloorZ(position);
             entity.PrevPosition = entity.Position;
         }
 
-        FinishCreatingEntity(entity, zHeight, false, true);
+        FinishCreatingEntity(entity, zHeight, false, true, initSpawn);
         return entity;
     }
 
@@ -118,13 +116,8 @@ public class EntityManager : IDisposable
         if (entity.IsDisposed)
             return;
 
-        // TODO: Remove from spawns if it is a spawn.
+        EntityCount--;
 
-        // To avoid more object allocation and deallocation, I'm going to
-        // leave empty sets in the map in case they get populated again.
-        // Most maps wouldn't even approach a number that high for us to
-        // worry about. If it ever becomes an issue, then we can add a line
-        // of code that removes empty sets here as well.
         if (TidToEntity.TryGetValue(entity.ThingId, out ISet<Entity>? entities))
             entities.Remove(entity);
 
@@ -220,7 +213,7 @@ public class EntityManager : IDisposable
             double angleRadians = MathHelper.ToRadians(mapThing.Angle);
             Vec3D position = mapThing.Position.Double;
             // position.Z is the potential zHeight variable, not the actual z position. We need to pass it to Create to ensure the zHeight is set
-            Entity entity = Create(definition, position, position.Z, angleRadians, mapThing.ThingId, init: true);
+            Entity entity = Create(definition, position, position.Z, angleRadians, mapThing.ThingId, initSpawn: true);
             if (mapThing.Flags.Ambush)
                 entity.Flags.Ambush = mapThing.Flags.Ambush;
             if (mapThing.Flags.Friendly)
@@ -277,15 +270,16 @@ public class EntityManager : IDisposable
 
         for (int i = 0; i < worldModel.Players.Count; i++)
         {
-            bool isVoodooDoll = players.Any(x => x.PlayerNumber == worldModel.Players[i].Number);
-            Player? player = CreatePlayerFromModel(worldModel.Players[i], entities, isVoodooDoll);
+            var playerModel = worldModel.Players[i];
+            bool isVoodooDoll = players.Any(x => x.PlayerNumber == playerModel.Number);
+            Player? player = CreatePlayerFromModel(playerModel, entities, isVoodooDoll);
             if (player == null)
             {
-                Log.Error($"Failed to create player {worldModel.Players[i].Name}.");
+                Log.Error($"Failed to create player {playerModel.Name}.");
                 continue;
             }
-
             players.Add(player);
+            m_spawnPoints[player.Index] = new Vec3D(playerModel.SpawnPointX, playerModel.SpawnPointY, playerModel.SpawnPointZ);
         }
 
         for (int i = 0; i < worldModel.Entities.Count; i++)
@@ -314,8 +308,11 @@ public class EntityManager : IDisposable
                 if (tracerTarget != null)
                     entity.Entity.SetTracer(tracerTarget.Entity);
             }
+
+            m_spawnPoints[entity.Entity.Index] = new Vec3D(entity.Model.SpawnPointX, entity.Model.SpawnPointY, entity.Model.SpawnPointZ);
         }
 
+        EntityCount = worldModel.Entities.Count;
         World.DataCache.EntityId = Math.Max(maxEntityId, maxPlayerId) + 1;
         return new WorldModelPopulateResult(players, entities);
     }
@@ -352,7 +349,7 @@ public class EntityManager : IDisposable
         }
 
         PostProcessEntity(entity);
-        FinalizeEntity(entity, false);
+        FinalizeEntity(entity, false, initSpawn: false);
         if (setOnGround != null)
             entity.OnGround = setOnGround.Value;
 
@@ -364,6 +361,13 @@ public class EntityManager : IDisposable
     {
         RealPlayersByNumber.TryGetValue(playerNumber, out var player);
         return player;
+    }
+
+    public Vec3D GetSpawnPoint(Entity entity)
+    {
+        if (m_spawnPoints.TryGetValue(entity.Index, out var spawnPoint))
+            return spawnPoint;
+        return default;
     }
 
     private static object GetBoundingObject(WorldModelPopulateResult result, Sector sector, int? entityId)
@@ -439,9 +443,9 @@ public class EntityManager : IDisposable
         return position.Z;
     }
 
-    private static void FinalizeEntity(Entity entity, bool checkOnGround, double zHeight = 0)
+    private static void FinalizeEntity(Entity entity, bool checkOnGround, double zHeight = 0, bool initSpawn = true)
     {
-        if (entity.Flags.SpawnCeiling)
+        if (initSpawn && entity.Flags.SpawnCeiling)
         {
             // Need to always use Doom's old height here.
             double height = entity.GetClampHeight();
@@ -454,7 +458,7 @@ public class EntityManager : IDisposable
         entity.ResetInterpolation();
     }
 
-    private void FinishCreatingEntity(Entity entity, double zHeight, bool clamp, bool checkOnGround)
+    private void FinishCreatingEntity(Entity entity, double zHeight, bool clamp, bool checkOnGround, bool initSpawn)
     {
         AddEntityToList(entity);
 
@@ -463,13 +467,13 @@ public class EntityManager : IDisposable
         else
             World.Link(entity);
 
-        FinalizeEntity(entity, checkOnGround, zHeight);
-
-        entity.SpawnPoint = entity.Position;
+        FinalizeEntity(entity, checkOnGround, zHeight, initSpawn);
+                
+        m_spawnPoints[entity.Index] = entity.Position;
         // Vanilla did not execute action functions on creation, it just set the state
         // Action functions will not execute until Tick() is called
         if (entity.Definition.SpawnState != null)
-            entity.FrameState.SetFrameIndexNoAction(entity.Definition.SpawnState.Value);
+            entity.FrameState.SetFrameIndexNoAction(entity, entity.Definition.SpawnState.Value);
 
         if (entity.Definition.Flags.CountKill || entity.Definition.Flags.IsMonster)
             entity.Health = Math.Max((int)(entity.Health * World.SkillDefinition.MonsterHealthFactor), 1);
@@ -504,7 +508,7 @@ public class EntityManager : IDisposable
         if (armor != null)
             player.Inventory.Add(armor, 0);
 
-        FinishCreatingEntity(player, zHeight, false, true);
+        FinishCreatingEntity(player, zHeight, false, true, true);
         return player;
     }
 
@@ -525,6 +529,7 @@ public class EntityManager : IDisposable
         MusicChangers.Clear();
         RealPlayersByNumber.SetAll(null);
         TeleportSpots.Clear();
+        m_spawnPoints.Clear();
     }
 
     private void ClearEntities()

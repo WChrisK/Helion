@@ -31,6 +31,13 @@ public class EntityProgram : RenderProgram
     private readonly int m_maxDistanceLocation;
     private readonly int m_fadeDistanceLocation;
     private readonly int m_viewPosLocation;
+    private readonly int m_accumTextureLocation;
+    private readonly int m_accumCountTextureLocation;
+    private readonly int m_fuzzTextureLocation;
+    private readonly int m_opaqueTextureLocation;
+    private readonly int m_renderFuzzLocation;
+    private readonly int m_renderFuzzRefractionColorLocation;
+    private readonly int m_screenBoundsLocation;
 
     public EntityProgram() : base("Entity")
     {
@@ -56,11 +63,22 @@ public class EntityProgram : RenderProgram
         m_maxDistanceLocation = Uniforms.GetLocation("maxDistanceSquared");
         m_fadeDistanceLocation = Uniforms.GetLocation("fadeDistance");
         m_viewPosLocation = Uniforms.GetLocation("viewPos");
+        m_accumTextureLocation = Uniforms.GetLocation("accum");
+        m_accumCountTextureLocation = Uniforms.GetLocation("accumCount");
+        m_fuzzTextureLocation = Uniforms.GetLocation("fuzzTexture");
+        m_opaqueTextureLocation = Uniforms.GetLocation("opaqueTexture");
+        m_renderFuzzLocation = Uniforms.GetLocation("renderFuzz");
+        m_renderFuzzRefractionColorLocation = Uniforms.GetLocation("renderFuzzRefractionColor");
+        m_screenBoundsLocation = Uniforms.GetLocation("screenBounds");
     }
     
     public void BoundTexture(TextureUnit unit) => Uniforms.Set(unit, m_boundTextureLocation);
     public void ColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_colormapTextureLocation);
     public void SectorColormapTexture(TextureUnit unit) => Uniforms.Set(unit, m_sectorColormapTextureLocation);
+    public void AccumTexture(TextureUnit unit) => Uniforms.Set(unit, m_accumTextureLocation);
+    public void AccumCountTextre(TextureUnit unit) => Uniforms.Set(unit, m_accumCountTextureLocation);
+    public void FuzzTexture(TextureUnit unit) => Uniforms.Set(unit, m_fuzzTextureLocation);
+    public void OpaqueTexture(TextureUnit unit) => Uniforms.Set(unit, m_opaqueTextureLocation);
     public void ExtraLight(int extraLight) => Uniforms.Set(extraLight, m_extraLightLocation);
     public void HasInvulnerability(bool invul) => Uniforms.Set(invul, m_hasInvulnerabilityLocation);
     public void LightLevelMix(float lightLevelMix) => Uniforms.Set(lightLevelMix, m_lightLevelMixLocation);
@@ -80,6 +98,9 @@ public class EntityProgram : RenderProgram
     public void MaxDistanceSquared(float value) => Uniforms.Set(value, m_maxDistanceLocation);
     public void FadeDistance(float value) => Uniforms.Set(value, m_fadeDistanceLocation);
     public void ViewPos(Vec3F pos) => Uniforms.Set(pos, m_viewPosLocation);
+    public void RenderFuzz(bool value) => Uniforms.Set(value, m_renderFuzzLocation);
+    public void RenderFuzzRefractionColor(bool value) => Uniforms.Set(value, m_renderFuzzRefractionColorLocation);
+    public void ScreenBounds(Vec2I value) => Uniforms.Set(value, m_screenBoundsLocation);
 
     protected override string VertexShader() => @"
         #version 330
@@ -120,7 +141,7 @@ public class EntityProgram : RenderProgram
         }
     "
     .Replace("${SectorColorMapVar}", ShaderVars.PaletteColorMode ? "out int sectorColorMapIndexOut;" : "out vec3 sectorColorMapIndexOut;")
-    .Replace("${SectorColorMap}", ShaderVars.PaletteColorMode ? 
+    .Replace("${SectorColorMap}", ShaderVars.PaletteColorMode ?
         "sectorColorMapIndexOut = int(texelFetch(sectorColormapTexture, int(sectorIndex)).r);" :
         "sectorColorMapIndexOut = texelFetch(sectorColormapTexture, int(sectorIndex)).rgb;");
 
@@ -244,7 +265,7 @@ public class EntityProgram : RenderProgram
 
         ${SectorColorMapFragVariables}
 
-        out vec4 fragColor;
+        ${OutFragColor}
 
         uniform int hasInvulnerability;
         uniform float fuzzFrac;
@@ -261,7 +282,11 @@ public class EntityProgram : RenderProgram
         uniform float gammaCorrection;
         uniform float maxDistanceSquared;
         uniform float fadeDistance;
+        uniform float renderFuzz;
+        uniform int renderFuzzRefractionColor;
+        uniform ivec2 screenBounds;
 
+        ${OitVariables}
         ${FuzzFunction}
 
         void main()
@@ -269,16 +294,49 @@ public class EntityProgram : RenderProgram
             ${LightLevelFragFunction}
             ${SectorColorMapFragFunction}
             ${FragColorFunction}
-
-            if (renderDistSquared > maxDistanceSquared - fadeDistance) {
-                float fade = (maxDistanceSquared - renderDistSquared) / fadeDistance;
-                fragColor.a *= fade;
-            }
         }
     "
     .Replace("${LightLevelFragFunction}", LightLevel.FragFunction)
     .Replace("${FuzzFunction}", FragFunction.FuzzFunction)
-    .Replace("${FragColorFunction}", FragFunction.FragColorFunction(FragColorFunctionOptions.Fuzz | FragColorFunctionOptions.Alpha | FragColorFunctionOptions.Colormap, ColorMapFetchContext.Entity))
+    .Replace("${FragColorFunction}", FragFunction.FragColorFunction(FragColorFunctionOptions.Fuzz | FragColorFunctionOptions.Alpha | FragColorFunctionOptions.Colormap, ColorMapFetchContext.Entity, GetOitOptions(), GetPostProcess()))
     .Replace("${SectorColorMapFragVariables}", SectorColorMap.FragVariables)
-    .Replace("${SectorColorMapFragFunction}", SectorColorMap.FragFunction);
+    .Replace("${SectorColorMapFragFunction}", SectorColorMap.FragFunction)
+    .Replace("${OitVariables}", FragFunction.OitFragVariables(GetOitOptions()))
+    .Replace("${OutFragColor}", GetOutFragColor());
+
+    private string GetPostProcess() 
+    {
+        string clearAlpha = @"        
+        fragColor.a = fragColor.a > 0.5 ? 1.0 : 0.0;
+        if (fragColor.a <= 0)
+            discard;";
+
+        if (GetOitOptions() != OitOptions.None)
+            clearAlpha = string.Empty;
+
+        return clearAlpha + @"
+        if (renderDistSquared > maxDistanceSquared - fadeDistance) {
+            float fade = (maxDistanceSquared - renderDistSquared) / fadeDistance;
+            fragColor.a *= fade;
+        }";
+    }
+
+    private OitOptions GetOitOptions()
+    {
+        if (this is EntityTransparentProgram)
+            return OitOptions.OitTransparentPass;
+        if (this is EntityCompositeProgram)
+            return OitOptions.OitCompositePass;
+        if (this is EntityFuzzRefractionProgram)
+            return OitOptions.OitFuzzRefractionPass;
+        return OitOptions.None;
+    }
+
+    private string GetOutFragColor()
+    {
+        var options = GetOitOptions();
+        if (options == OitOptions.OitTransparentPass)
+            return "";
+        return "out vec4 fragColor;";
+    }
 }

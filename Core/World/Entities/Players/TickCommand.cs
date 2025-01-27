@@ -18,6 +18,10 @@ public class TickCommand
         TickCommands.WeaponSlot5,
         TickCommands.WeaponSlot6,
         TickCommands.WeaponSlot7,
+        TickCommands.WeaponGroup1,
+        TickCommands.WeaponGroup2,
+        TickCommands.WeaponGroup3,
+        TickCommands.WeaponGroup4,
         TickCommands.CenterView
     };
 

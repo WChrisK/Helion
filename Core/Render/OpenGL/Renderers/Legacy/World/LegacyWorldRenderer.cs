@@ -321,11 +321,14 @@ public class LegacyWorldRenderer : WorldRenderer
 
     private unsafe void RenderTransparent(RenderInfo renderInfo, GLFramebuffer framebuffer, bool vanillaRender)
     {
-        m_oitFrameBuffer.StartRender();
-
         bool fuzzData = m_entityRenderer.HasFuzz();
-        GL.DepthMask(false);
+        bool alphaData = m_entityRenderer.HasAlpha();
+        bool alphaWalls = m_worldDataManager.HasAlphaWalls();
+        if (!fuzzData && !alphaData && !alphaWalls)
+            return;
 
+        m_oitFrameBuffer.StartRender();
+        GL.DepthMask(false);
         m_entityRenderer.RenderOitTransparentPass(renderInfo);
 
         m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5, TextureUnit.Texture6, TextureUnit.Texture7, framebuffer);
@@ -346,7 +349,7 @@ public class LegacyWorldRenderer : WorldRenderer
             m_entityRenderer.RenderOitTransparentFuzzPass(renderInfo);
         }
 
-        if (vanillaRender && m_worldDataManager.HasAlphaWalls())
+        if (vanillaRender && alphaWalls)
             RenderFlatsToDepth(renderInfo);
 
         m_interpolationTransparentProgram.Bind();
@@ -359,7 +362,7 @@ public class LegacyWorldRenderer : WorldRenderer
 
         m_entityRenderer.RenderOitCompositePass(renderInfo);
 
-        if (m_worldDataManager.HasAlphaWalls())
+        if (alphaWalls)
         {
             if (vanillaRender)
                 RenderFlatsToDepth(renderInfo);

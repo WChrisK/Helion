@@ -26,6 +26,7 @@ public class RenderDataManager<[DynamicallyAccessedMembers(DynamicallyAccessedMe
     }
 
     public bool HasFuzz() => m_fuzzData.HasDataToRender();
+    public bool HasAlpha() => m_alphaData.HasDataToRender();
 
     public void Clear()
     {

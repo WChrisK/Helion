@@ -105,6 +105,6 @@ public class OitFrameBuffer
         GL.ActiveTexture(fuzzTexture);
         GL.BindTexture(TextureTarget.Texture2D, m_fuzzTexture);
         GL.ActiveTexture(opaqueTexture);
-        GL.BindTexture(TextureTarget.Texture2D, framebuffer.Textures[0].Name);
+        GL.BindTexture(TextureTarget.Texture2D, framebuffer.ColorAttachment0.Name);
     }
 }

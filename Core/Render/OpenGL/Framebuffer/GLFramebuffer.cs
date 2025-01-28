@@ -24,6 +24,7 @@ public class GLFramebuffer : IDisposable
 
     public IReadOnlyList<GLTexture2D> Textures => m_textures;
 
+    public GLTexture2D ColorAttachment0 = null!;
     public GLTexture2D? DepthTexture;
 
     public GLFramebuffer(string label, Dimension dimension, int numColorAttachments, GLFrameBufferOptions options = GLFrameBufferOptions.None)
@@ -69,6 +70,9 @@ public class GLFramebuffer : IDisposable
 
             m_textures.Add(colorAttachmentTexture);
         }
+
+        if (numColorAttachments > 0)
+            ColorAttachment0 = m_textures[0];
     }
 
     private void CreateDepthStencilAttachment(Dimension dimension, string label)

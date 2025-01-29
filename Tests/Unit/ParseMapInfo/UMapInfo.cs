@@ -40,6 +40,30 @@ public class UMapInfo
             Cluster = 1
         });
 
+        mapInfoDef.MapInfo.AddOrReplaceMap(new MapInfoDef()
+        {
+            MapName = "MAP06",
+            Next = "MAP07"
+        });
+
+        mapInfoDef.MapInfo.AddOrReplaceMap(new MapInfoDef()
+        {
+            MapName = "MAP11",
+            Next = "MAP12"
+        });
+
+        mapInfoDef.MapInfo.AddOrReplaceMap(new MapInfoDef()
+        {
+            MapName = "MAP20",
+            Next = "MAP21"
+        });
+
+        mapInfoDef.MapInfo.AddOrReplaceMap(new MapInfoDef()
+        {
+            MapName = "MAP31",
+            Next = "MAP32"
+        });
+
         var bossActions = new List<BossAction>()
         {
             new("BaronOfHell", VanillaLineSpecialType.S1_LowerLiftRaise, 69)
@@ -275,7 +299,6 @@ public class UMapInfo
         getMap.Should().NotBeNull();
         var map02 = getMap!;
         map02.ClusterDef.Should().BeNull();
-        cluster = map02.ClusterDef;
 
         getMap = mapInfoDef.MapInfo.GetMap("MAP03").MapInfo;
         getMap.Should().NotBeNull();
@@ -289,6 +312,7 @@ public class UMapInfo
         getMap.Should().NotBeNull();
         var map06 = getMap!;
         map06.ClusterDef.Should().NotBeNull();
+        map06.Next.Should().Be("MAP07");
         cluster = map06.ClusterDef;
         cluster!.Flat.Should().Be("$BGFLAT06");
         cluster.ExitText.Count.Should().Be(1);
@@ -297,6 +321,7 @@ public class UMapInfo
         getMap = mapInfoDef.MapInfo.GetMap("MAP11").MapInfo;
         getMap.Should().NotBeNull();
         var map11 = getMap!;
+        map11.Next.Should().Be("MAP12");
         map11.ClusterDef.Should().NotBeNull();
         cluster = map11.ClusterDef;
         cluster!.Flat.Should().Be("$BGFLAT11");
@@ -306,6 +331,7 @@ public class UMapInfo
         getMap = mapInfoDef.MapInfo.GetMap("MAP20").MapInfo;
         getMap.Should().NotBeNull();
         var map20 = getMap!;
+        map20.Next.Should().Be("MAP21");
         map20.ClusterDef.Should().NotBeNull();
         cluster = map20.ClusterDef;
         cluster!.Flat.Should().Be("$BGFLAT20");
@@ -324,6 +350,7 @@ public class UMapInfo
         getMap = mapInfoDef.MapInfo.GetMap("MAP31").MapInfo;
         getMap.Should().NotBeNull();
         var map31 = getMap!;
+        map31.Next.Should().Be("MAP32");
         map31.ClusterDef.Should().NotBeNull();
         cluster = map31.ClusterDef;
         cluster!.Flat.Should().Be("$BGFLAT15");

@@ -106,7 +106,8 @@ public partial class MapInfoDefinition
             if (mapDef.ClusterDef == null && IsDefaultClusterMap(iwadType, mapDef))
             {
                 mapDef.ClusterDef = GetOrCreateClusterDef(mapDef, iwadType);
-                mapDef.Next = mapDef.ClusterDef.EndGameNext;
+                if (!string.IsNullOrEmpty(mapDef.ClusterDef.EndGameNext))
+                    mapDef.Next = mapDef.ClusterDef.EndGameNext;
             }
 
             ConsumeBrace(parser, false);

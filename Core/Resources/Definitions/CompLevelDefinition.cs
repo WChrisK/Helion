@@ -38,6 +38,12 @@ public class CompLevelDefinition
             return;
 
         m_setting = true;
+        ApplyInternal(config, reset);
+        m_setting = false;
+    }
+
+    private void ApplyInternal(IConfig config, bool reset)
+    {
         if ((CompLevel)config.Compatibility.SessionCompatLevel.ObjectValue != CompLevel)
             config.Compatibility.SessionCompatLevel.Set(CompLevel, writeToConfig: false);
 
@@ -45,9 +51,7 @@ public class CompLevelDefinition
             config.Compatibility.ResetToUserValues();
 
         if (CompLevel == CompLevel.Undefined)
-        {
             return;
-        }
 
         var compat = config.Compatibility;
         switch (CompLevel)
@@ -86,7 +90,6 @@ public class CompLevelDefinition
                 break;
         }
 
-        m_setting = false;
         HelionLog.Info($"Comp level set to {CompLevel}");
     }
 }

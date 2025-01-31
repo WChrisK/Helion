@@ -1281,11 +1281,11 @@ public partial class DehackedDefinition
         { ThingState.HEAD_RAISE5,   new("Cacodemon::raise",             4) },
         { ThingState.HEAD_RAISE6,   new("Cacodemon::raise",             5) },
 
-        { ThingState.BRBALL1,       new("CacodemonBall::spawn",         0) },
-        { ThingState.BRBALL2,       new("CacodemonBall::spawn",         1) },
-        { ThingState.BRBALLX1,      new("CacodemonBall::death",         0) },
-        { ThingState.BRBALLX2,      new("CacodemonBall::death",         1) },
-        { ThingState.BRBALLX3,      new("CacodemonBall::death",         2) },
+        { ThingState.BRBALL1,       new("BaronBall::spawn",         0) },
+        { ThingState.BRBALL2,       new("BaronBall::spawn",         1) },
+        { ThingState.BRBALLX1,      new("BaronBall::death",         0) },
+        { ThingState.BRBALLX2,      new("BaronBall::death",         1) },
+        { ThingState.BRBALLX3,      new("BaronBall::death",         2) },
 
         { ThingState.BOSS_STND,     new("BaronOfHell::spawn",           0) },
         { ThingState.BOSS_STND2,    new("BaronOfHell::spawn",           1) },

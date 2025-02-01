@@ -104,7 +104,7 @@ public class ViewClipper
     {
         unchecked
         {
-            return (uint)(radians * RadiansToDiamondAngleFactor);
+            return (uint)(Math.Abs(radians) * RadiansToDiamondAngleFactor);
         }
     }
 

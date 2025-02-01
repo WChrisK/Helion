@@ -66,15 +66,15 @@ public static class AudioHelper
 
         try
         {
-            using MemoryStream ms = new MemoryStream(data);
-            using WaveFileReader reader = new WaveFileReader(ms);
+            using MemoryStream ms = new(data);
+            using WaveFileReader reader = new(ms);
 
             format.Channels = reader.WaveFormat.Channels;
             format.SampleRate = reader.WaveFormat.SampleRate;
             format.BitsPerSample = reader.WaveFormat.BitsPerSample;
 
             var buffer = new byte[reader.Length];
-            reader.Read(buffer);
+            reader.ReadExactly(buffer);
             sampleData = buffer;
             return true;
         }

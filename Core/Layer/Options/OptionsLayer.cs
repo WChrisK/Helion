@@ -135,8 +135,8 @@ public class OptionsLayer : IGameLayer, IAnimationLayer
             return optionSection as ListedConfigSection ?? throw new($"Expected a listed config for {optionSection.GetType().FullName}");
 
         ListedConfigSection listedConfigSection = (section == OptionSectionType.Compatibility)
-            ? new CompatibilitySection(m_config, section, m_soundManager)
-            : new ListedConfigSection(m_config, section, m_soundManager);
+            ? new CompatibilitySection(m_config, section, m_soundManager, m_window.InputManager)
+            : new ListedConfigSection(m_config, section, m_soundManager, m_window.InputManager);
 
         listedConfigSection.OnAttributeChanged += ListedConfigSection_OnAttributeChanged;
         sectionMap[section] = listedConfigSection;
@@ -312,7 +312,7 @@ public class OptionsLayer : IGameLayer, IAnimationLayer
                 m_sections[m_currentSectionIndex].OnShow();
             }
 
-            if (input.ConsumePressOrContinuousHold(Key.Right) || input.ConsumePressOrContinuousHold(Key.MouseCustom5) 
+            if (input.ConsumePressOrContinuousHold(Key.Right) || input.ConsumePressOrContinuousHold(Key.MouseCustom5)
                 || input.ConsumePressOrContinuousHold(Key.DPadRight) || buttonIndex == ForwardIndex)
             {
                 m_soundManager.PlayStaticSound(MenuSounds.Change);

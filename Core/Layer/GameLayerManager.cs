@@ -152,12 +152,11 @@ public class GameLayerManager : IGameLayerManager
         if (ConsoleLock || MenuLock)
             return false;
 
+        if (LoadingLayer != null || TransitionLayer != null)
+            return true;
+
         if (WorldLayer != null)
-        {
-            if (LoadingLayer != null)
-                return true;
             return WorldLayer.ShouldFocus;
-        }
 
         return true;
     }

@@ -40,6 +40,7 @@ public class ListedConfigSection : IOptionSection
     private readonly BoxList m_menuPositionList = new();
     private readonly IConfig m_config;
     private readonly SoundManager m_soundManager;
+    private readonly IInputManager m_inputManager;
     private readonly Stopwatch m_stopwatch = new();
     private readonly StringBuilder m_rowEditText = new();
     private Vec2I m_mousePos;
@@ -54,11 +55,12 @@ public class ListedConfigSection : IOptionSection
     private IConfigValue? m_currentEditValue;
     private IDialog? m_dialog;
 
-    public ListedConfigSection(IConfig config, OptionSectionType optionType, SoundManager soundManager)
+    public ListedConfigSection(IConfig config, OptionSectionType optionType, SoundManager soundManager, IInputManager inputManager)
     {
         m_config = config;
         OptionType = optionType;
         m_soundManager = soundManager;
+        m_inputManager = inputManager;
 
         SetDisableStates();
         m_config.Window.State.OnChanged += WindowState_OnChanged;
@@ -200,6 +202,9 @@ public class ListedConfigSection : IOptionSection
                                 : ".SF2";
                             m_dialog = new FileListDialog(m_config.Window, configData.CfgValue, configData.Attr, fileFilter);
                             break;
+                        case DialogType.GyroCalibrationDialog:
+                            m_dialog = new GyroCalibrationDialog(m_config.Window, m_config.Controller, m_inputManager);
+                            break;
                         default:
                             throw new NotImplementedException($"Unimplemented dialog type: {configData.Attr.DialogType}");
                     }
@@ -278,6 +283,11 @@ public class ListedConfigSection : IOptionSection
         }
         else
         {
+            if (sender is GyroCalibrationDialog gyroDialog)
+            {
+                // If the user canceled out of gyro calibration, treat that as "clear all gyro calibration".
+                gyroDialog.ClearCalibration();
+            }
             ReleaseEditRow();
         }
 

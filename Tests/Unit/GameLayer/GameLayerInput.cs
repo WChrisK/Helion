@@ -44,6 +44,8 @@ public class GameLayerInput
 
         public bool GyroEnabled { get; set; }
 
+        public bool HasGyro => true; 
+
         public bool KeyIsAnalogAxis(Key key)
         {
             return key.ToString().StartsWith("Axis");
@@ -77,6 +79,11 @@ public class GameLayerInput
 
         public void RumbleForSoundCreated(object sender, SoundCreatedEventArgs evt)
         {
+        }
+
+        public bool CalibrateGyro(int durationMilliseconds, Action<Vec3F, Vec3F> callback)
+        {
+            throw new NotImplementedException();
         }
     }
 

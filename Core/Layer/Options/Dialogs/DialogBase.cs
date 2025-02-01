@@ -30,6 +30,7 @@ internal abstract class DialogBase(ConfigWindow config, string? acceptButton, st
     protected readonly ConfigWindow m_config = config;
 
     protected Dimension m_selectorSize;
+    protected bool m_dialogIsLocked;
     protected int m_rowHeight;
     protected int m_fontSize;
     protected int m_padding;
@@ -47,6 +48,12 @@ internal abstract class DialogBase(ConfigWindow config, string? acceptButton, st
 
     public virtual void HandleInput(IConsumableInput input)
     {
+        // Prevent user from closing dialog if the dialog has placed itself in a "locked" state
+        if (m_dialogIsLocked)
+        {
+            input.ConsumeAll();
+        }
+
         if (input.ConsumeKeyPressed(Key.MouseLeft))
         {
             var mousePos = input.Manager.MousePosition;
@@ -179,7 +186,7 @@ internal abstract class DialogBase(ConfigWindow config, string? acceptButton, st
     protected void RenderButton(IHudRenderContext hud, string text, Action buttonAction)
     {
         var dim = hud.MeasureText(text, Font, m_fontSize);
-        hud.Text(text, Font, m_fontSize, (-dim.Width, 0));
+        hud.Text(text, Font, m_fontSize, (-dim.Width, 0), color: m_dialogIsLocked ? Color.DarkGray : null);
         hud.AddOffset((-dim.Width, 0));
         m_buttonPosList.Add(new(hud.GetOffset(), hud.GetOffset() + new Vec2I(dim.Width, dim.Height)), m_buttonIndex);
         m_buttonActionList.Add(buttonAction);

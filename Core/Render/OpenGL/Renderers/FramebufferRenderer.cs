@@ -139,7 +139,7 @@ public class FramebufferRenderer : IDisposable
         // dimension's resolution. Also don't let it be larger than the NDC box.
         // Since our vertices are in NDC coordinates, 1.0 is the max we can go.
         Dimension windowDim = m_window.Dimension;
-        Dimension textureDim = Framebuffer.Textures[0].Dimension;
+        Dimension textureDim = Framebuffer.ColorAttachment0.Dimension;
         float scaleX = Math.Min(textureDim.AspectRatio / windowDim.AspectRatio, 1.0f);
         
         return mat4.Scale(scaleX, 1.0f, 1.0f);
@@ -157,7 +157,7 @@ public class FramebufferRenderer : IDisposable
         m_program.Bind();
 
         GL.ActiveTexture(TextureUnit.Texture0);
-        Framebuffer.Textures[0].Bind();
+        Framebuffer.ColorAttachment0.Bind();
         m_program.BoundTexture(TextureUnit.Texture0);
         m_program.Mvp(mvp);
 

@@ -97,7 +97,7 @@ public class TransitionRenderer : IDisposable
         m_program.Bind();
 
         GL.ActiveTexture(TextureUnit.Texture0);
-        m_startBuffer.Textures[0].Bind();
+        m_startBuffer.ColorAttachment0.Bind();
         if (m_program is MeltTransitionProgram meltProgram)
         {
             // the melt shader uses ticks, so convert [0,1] to [0,42] ticks

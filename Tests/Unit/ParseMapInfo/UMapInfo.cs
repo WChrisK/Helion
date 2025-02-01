@@ -40,6 +40,30 @@ public class UMapInfo
             Cluster = 1
         });
 
+        mapInfoDef.MapInfo.AddOrReplaceMap(new MapInfoDef()
+        {
+            MapName = "MAP06",
+            Next = "MAP07"
+        });
+
+        mapInfoDef.MapInfo.AddOrReplaceMap(new MapInfoDef()
+        {
+            MapName = "MAP11",
+            Next = "MAP12"
+        });
+
+        mapInfoDef.MapInfo.AddOrReplaceMap(new MapInfoDef()
+        {
+            MapName = "MAP20",
+            Next = "MAP21"
+        });
+
+        mapInfoDef.MapInfo.AddOrReplaceMap(new MapInfoDef()
+        {
+            MapName = "MAP31",
+            Next = "MAP32"
+        });
+
         var bossActions = new List<BossAction>()
         {
             new("BaronOfHell", VanillaLineSpecialType.S1_LowerLiftRaise, 69)
@@ -80,8 +104,8 @@ public class UMapInfo
         cluster!.SecretExitText.Count.Should().Be(1);
     }
 
-    [Fact(DisplayName = "Parse UMapInfo")]
-    public void ParseUMapInfo()
+    [Fact(DisplayName = "Parse UMapInfo Doom1")]
+    public void ParseUMapInfoDoom1()
     {
         var mapInfoDef = new MapInfoDefinition();
         SetupMapInfo(mapInfoDef);
@@ -245,13 +269,30 @@ public class UMapInfo
         cluster!.Flat.Should().Be("$BGFLATE4");
         cluster.ExitText[0].Should().Be("$E4TEXT");
 
-        getMap = mapInfoDef.MapInfo.GetMap("MAP01").MapInfo;
+        getMap = mapInfoDef.MapInfo.GetMap("E4M8").MapInfo;
+        getMap.Should().NotBeNull();
+        var e4m8 = getMap!;
+        e4m8.Next.Should().Be("EndGame4");
+        cluster = e4m8.ClusterDef;
+        cluster.Should().NotBeNull();
+        cluster!.Flat.Should().Be("$BGFLATE4");
+        cluster.ExitText[0].Should().Be("$E4TEXT");
+    }
+
+    [Fact(DisplayName = "Parse UMapInfo Doom2")]
+    public void ParseUMapInfoDoom2()
+    {
+        var mapInfoDef = new MapInfoDefinition();
+        SetupMapInfo(mapInfoDef);
+
+        mapInfoDef.ParseUniversalMapInfo(IWadBaseType.Doom2, File.ReadAllText("Resources/UMAPINFO1.TXT"));
+
+        var getMap = mapInfoDef.MapInfo.GetMap("MAP01").MapInfo;
         getMap.Should().NotBeNull();
         var map01 = getMap!;
-        map01.Next.Should().Be("EndGame1");
-        cluster = map01.ClusterDef;
+        var cluster = map01.ClusterDef;
         cluster.Should().NotBeNull();
-        cluster!.Flat.Should().Be("$BGFLATE1");
+        cluster!.Flat.Should().Be("$BGFLAT06");
         cluster!.ExitText[0].Should().Be("map01 intertext");
 
         getMap = mapInfoDef.MapInfo.GetMap("MAP02").MapInfo;
@@ -266,6 +307,64 @@ public class UMapInfo
         cluster = map03.ClusterDef;
         cluster!.SecretExitText[0].Should().Be("secret exit");
         cluster!.ExitText.Count.Should().Be(0);
+
+        getMap = mapInfoDef.MapInfo.GetMap("MAP06").MapInfo;
+        getMap.Should().NotBeNull();
+        var map06 = getMap!;
+        map06.ClusterDef.Should().NotBeNull();
+        map06.Next.Should().Be("MAP07");
+        cluster = map06.ClusterDef;
+        cluster!.Flat.Should().Be("$BGFLAT06");
+        cluster.ExitText.Count.Should().Be(1);
+        cluster.ExitText[0].Should().Be("$C1TEXT");
+
+        getMap = mapInfoDef.MapInfo.GetMap("MAP11").MapInfo;
+        getMap.Should().NotBeNull();
+        var map11 = getMap!;
+        map11.Next.Should().Be("MAP12");
+        map11.ClusterDef.Should().NotBeNull();
+        cluster = map11.ClusterDef;
+        cluster!.Flat.Should().Be("$BGFLAT11");
+        cluster.ExitText.Count.Should().Be(1);
+        cluster.ExitText[0].Should().Be("$C2TEXT");
+
+        getMap = mapInfoDef.MapInfo.GetMap("MAP20").MapInfo;
+        getMap.Should().NotBeNull();
+        var map20 = getMap!;
+        map20.Next.Should().Be("MAP21");
+        map20.ClusterDef.Should().NotBeNull();
+        cluster = map20.ClusterDef;
+        cluster!.Flat.Should().Be("$BGFLAT20");
+        cluster.ExitText.Count.Should().Be(1);
+        cluster.ExitText[0].Should().Be("$C3TEXT");
+
+        getMap = mapInfoDef.MapInfo.GetMap("MAP30").MapInfo;
+        getMap.Should().NotBeNull();
+        var map30 = getMap!;
+        map30.ClusterDef.Should().NotBeNull();
+        cluster = map30.ClusterDef;
+        cluster!.Flat.Should().Be("$BGFLAT30");
+        cluster.ExitText.Count.Should().Be(1);
+        cluster.ExitText[0].Should().Be("$C4TEXT");
+
+        getMap = mapInfoDef.MapInfo.GetMap("MAP31").MapInfo;
+        getMap.Should().NotBeNull();
+        var map31 = getMap!;
+        map31.Next.Should().Be("MAP32");
+        map31.ClusterDef.Should().NotBeNull();
+        cluster = map31.ClusterDef;
+        cluster!.Flat.Should().Be("$BGFLAT15");
+        cluster.ExitText.Count.Should().Be(1);
+        cluster.ExitText[0].Should().Be("$C5TEXT");
+
+        getMap = mapInfoDef.MapInfo.GetMap("MAP32").MapInfo;
+        getMap.Should().NotBeNull();
+        var map32 = getMap!;
+        map32.ClusterDef.Should().NotBeNull();
+        cluster = map32.ClusterDef;
+        cluster!.Flat.Should().Be("$BGFLAT31");
+        cluster.ExitText.Count.Should().Be(1);
+        cluster.ExitText[0].Should().Be("$C6TEXT");
     }
 
     [Fact(DisplayName = "UMapInfo label")]

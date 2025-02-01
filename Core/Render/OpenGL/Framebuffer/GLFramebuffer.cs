@@ -24,6 +24,9 @@ public class GLFramebuffer : IDisposable
 
     public IReadOnlyList<GLTexture2D> Textures => m_textures;
 
+    public GLTexture2D ColorAttachment0 = null!;
+    public GLTexture2D? DepthTexture;
+
     public GLFramebuffer(string label, Dimension dimension, int numColorAttachments, GLFrameBufferOptions options = GLFrameBufferOptions.None)
     {
         Debug.Assert(numColorAttachments >= 0, $"Cannot have a negative amount of color attachments for framebuffer {label}");
@@ -67,17 +70,20 @@ public class GLFramebuffer : IDisposable
 
             m_textures.Add(colorAttachmentTexture);
         }
+
+        if (numColorAttachments > 0)
+            ColorAttachment0 = m_textures[0];
     }
 
     private void CreateDepthStencilAttachment(Dimension dimension, string label)
     {
-        GLTexture2D depthTexture = new($"(Framebuffer {label}) Depth Stencil Attachment", dimension);
-        depthTexture.Bind();
+        DepthTexture = new($"(Framebuffer {label}) Depth Stencil Attachment", dimension);
+        DepthTexture.Bind();
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Depth32fStencil8, dimension.Width, Dimension.Height, 0, PixelFormat.DepthStencil, PixelType.Float32UnsignedInt248Rev, IntPtr.Zero);
-        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, depthTexture.Name, 0);
-        depthTexture.Unbind();
+        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, DepthTexture.Name, 0);
+        DepthTexture.Unbind();
 
-        m_textures.Add(depthTexture);
+        m_textures.Add(DepthTexture);
     }
 
     ~GLFramebuffer()

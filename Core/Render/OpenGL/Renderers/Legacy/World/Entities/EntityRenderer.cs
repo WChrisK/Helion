@@ -61,6 +61,7 @@ public class EntityRenderer : IDisposable
     }
 
     public bool HasFuzz() => m_dataManager.HasFuzz();
+    public bool HasAlpha() => m_dataManager.HasAlpha();
 
     public void UpdateTo(IWorld world)
     {

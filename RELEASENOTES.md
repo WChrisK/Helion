@@ -1,4 +1,4 @@
-# 0.9.6.0 (Pre-release)
+# 0.9.6.0
 
 ## Features:
   - Enable trimming (reduces file size of release artifacts)
@@ -67,3 +67,8 @@
   - Fix issue where moving sectors may not render when inside a misclassified voodoo doll closet
   - Fix dehacked weapon ammo use amount
   - Fix music changes not persisting through successive save games
+  - Fix scrolling floors/ceilings stopping when completes a move special
+  - Fix mouse focus issue when loading/reloading a map
+  - Fix default intermission background images and music for UMAPINFO
+  - Fix bex string parsing for mnemonics that have more than two strings
+  - Fix incorrect dehacked state mapping from cacodemon ball to baron ball (522-526)

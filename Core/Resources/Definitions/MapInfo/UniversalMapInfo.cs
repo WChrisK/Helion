@@ -4,37 +4,12 @@ using Helion.Util.Extensions;
 using Helion.Util.Parser;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 
 namespace Helion.Resources.Definitions.MapInfo;
 
 public partial class MapInfoDefinition
 {
-    private readonly Dictionary<string, ClusterDef> m_newClusterDefs = new Dictionary<string, ClusterDef>(StringComparer.OrdinalIgnoreCase);
-    private readonly ClusterDef Ep1 = new(0)
-    {
-        Flat = "$BGFLATE1",
-        ExitText = ["$E1TEXT"],
-        EndGameNext = "EndGame1"
-    };
-    private readonly ClusterDef Ep2 = new(0)
-    {
-        Flat = "$BGFLATE2",
-        ExitText = ["$E2TEXT"],
-        EndGameNext = "EndGame2"
-    };
-    private readonly ClusterDef Ep3 = new(0)
-    {
-        Flat = "$BGFLATE3",
-        ExitText = ["$E3TEXT"],
-        EndGameNext = "EndGame3"
-    };
-    private readonly ClusterDef Ep4 = new(0)
-    {
-        Flat = "$BGFLATE4",
-        ExitText = ["$E4TEXT"],
-        EndGameNext = "EndGame4"
-    };
+    private readonly Dictionary<string, ClusterDef> m_newClusterDefs = new(StringComparer.OrdinalIgnoreCase);
 
     public void ParseUniversalMapInfo(IWadBaseType iwadType, string data)
     {
@@ -127,6 +102,13 @@ public partial class MapInfoDefinition
 
             if (specifiedLevelName && !specifiedTitlePatch)
                 mapDef.TitlePatch = string.Empty;
+
+            if (mapDef.ClusterDef == null && IsDefaultClusterMap(iwadType, mapDef))
+            {
+                mapDef.ClusterDef = GetOrCreateClusterDef(mapDef, iwadType);
+                if (!string.IsNullOrEmpty(mapDef.ClusterDef.EndGameNext))
+                    mapDef.Next = mapDef.ClusterDef.EndGameNext;
+            }
 
             ConsumeBrace(parser, false);
         }
@@ -288,7 +270,7 @@ public partial class MapInfoDefinition
         return clusterDef;
     }
 
-    private ClusterDef GetEndGameClusterDef(MapInfoDef mapDef, IWadBaseType iwadType)
+    private static ClusterDef GetEndGameClusterDef(MapInfoDef mapDef, IWadBaseType iwadType)
     {
         // Setting just endgame = true triggers the default endgame for the episode. 
         var mapName = mapDef.MapName;
@@ -296,20 +278,84 @@ public partial class MapInfoDefinition
             char.ToUpperInvariant(mapName[0]) == 'E' && char.ToUpperInvariant(mapName[2]) == 'M' &&
             int.TryParse(mapName[1].ToString(), out var episode))
         {
-            switch (episode)
-            {
-                case 1:
-                    return Ep1;
-                case 2:
-                    return Ep2;
-                case 3:
-                    return Ep3;
-                case 4:
-                    return Ep4;
-            }
+            return CreateDefaultDoom1ClusterDef(episode);
         }
 
-        return Ep1;
+        return CreateDefaultClusterDef(iwadType, mapName);
+    }
+
+    private static ClusterDef CreateDefaultDoom1ClusterDef(int episode)
+    {
+        if (episode < 1 || episode > 4)
+            episode = 1;
+
+        return new ClusterDef(0)
+        {
+            Flat = $"$BGFLATE{episode}",
+            ExitText = [$"$E{episode}TEXT"],
+            EndGameNext = $"EndGame{episode}"
+        };
+    }
+
+    private static bool IsDefaultClusterMap(IWadBaseType iwadType, MapInfoDef mapDef)
+    {
+        var mapName = mapDef.MapName;
+        if (iwadType == IWadBaseType.Doom1)
+        {
+            if (mapName.Length != 4)
+                return false;
+
+            return mapName[3] == '8';
+        }
+
+        return mapName.EqualsIgnoreCase("MAP06") || mapName.EqualsIgnoreCase("MAP11") || 
+            mapName.EqualsIgnoreCase("MAP20") || mapName.EqualsIgnoreCase("MAP30") || 
+            mapName.EqualsIgnoreCase("MAP31") || mapName.EqualsIgnoreCase("MAP32");
+    }
+
+    private static ClusterDef CreateDefaultClusterDef(IWadBaseType type, string mapName)
+    {
+        string prefix = type switch
+        {
+            IWadBaseType.Plutonia => "$P",
+            IWadBaseType.TNT => "$T",
+            _ => "$C",
+        };
+
+        string flat = "$BGFLAT06";
+        string exitText = prefix + "1TEXT";
+
+        if (mapName.EqualsIgnoreCase("MAP11"))
+        {
+            flat = "$BGFLAT11";
+            exitText = prefix + "2TEXT";
+        }
+        else if (mapName.EqualsIgnoreCase("MAP20"))
+        {
+            flat = "$BGFLAT20";
+            exitText = prefix + "3TEXT";
+        }
+        else if (mapName.EqualsIgnoreCase("MAP30"))
+        {
+            flat = "$BGFLAT30";
+            exitText = prefix + "4TEXT";
+        }
+        else if (mapName.EqualsIgnoreCase("MAP31"))
+        {
+            flat = "$BGFLAT15";
+            exitText = prefix + "5TEXT";
+        }
+        else if (mapName.EqualsIgnoreCase("MAP32"))
+        {
+            flat = "$BGFLAT31";
+            exitText = prefix + "6TEXT";
+        }
+
+        return new(0)
+        {
+            Flat = flat,
+            ExitText = [exitText]
+        };
     }
 
     private static void ParseNoIntermission(SimpleParser parser, MapInfoDef mapDef)

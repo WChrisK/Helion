@@ -651,7 +651,7 @@ public partial class Renderer : IDisposable
     {
         // Bind main buffer for fuzz refraction sampling when player has partial invisibility
         GL.ActiveTexture(TextureUnit.Texture7);
-        GL.BindTexture(TextureTarget.Texture2D, m_mainFramebuffer.Textures[0].Name);
+        GL.BindTexture(TextureTarget.Texture2D, m_mainFramebuffer.ColorAttachment0.Name);
         m_hudRenderer.Render(viewport, m_mainFramebuffer.Dimension, uniforms);
         m_hudRenderer.Clear();
     }
@@ -677,7 +677,7 @@ public partial class Renderer : IDisposable
     private void BlitVirtualFramebufferToMain()
     {
         var mainDimension = m_mainFramebuffer.Dimension;
-        var virtualDimension = m_virtualFramebuffer.Textures[0].Dimension;
+        var virtualDimension = m_virtualFramebuffer.ColorAttachment0.Dimension;
         float scaleX = (m_config.Window.Virtual.Stretch)
             ? 1f
             : Math.Min(virtualDimension.AspectRatio / mainDimension.AspectRatio, 1.0f);

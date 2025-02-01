@@ -169,17 +169,18 @@ public partial class MenuLayer
         var textHeight = textDimension.Height; 
 
         string saveText;
+        var textRowWidth = menuRowWidth - 8;
         if (isSelected && saveMenu.IsTypingName)
         {
-            var rowWidth = menuRowWidth - 10;
+            var typedTextRowWidth = textRowWidth;
             //Account for cursor flashing
             if (!saveRowComponent.Text.EndsWith('_'))
-                rowWidth -= textDimension.Width;
-            saveText = hud.GetTypedText(saveRowComponent.Text, FontName, fontSize, rowWidth - 4);
+                typedTextRowWidth -= textDimension.Width;
+            saveText = hud.GetTypedText(saveRowComponent.Text, FontName, fontSize, typedTextRowWidth);
         }
         else
         {
-            saveText = hud.GetEllipsesText(saveRowComponent.Text, FontName, fontSize, menuRowWidth - 4);
+            saveText = hud.GetEllipsesText(saveRowComponent.Text, FontName, fontSize, textRowWidth);
         }
         
         var rowHeight = textHeight + 3;
@@ -188,7 +189,7 @@ public partial class MenuLayer
         if (isSelected)
         {
             hud.PushAlpha(0.5f);
-            HudBox box = new((0, offsetY), (menuRowWidth - 8, offsetY + rowHeight));
+            HudBox box = new((0, offsetY), (textRowWidth, offsetY + rowHeight));
             hud.FillBox(box, Color.Blue);
             hud.PopAlpha();
         }

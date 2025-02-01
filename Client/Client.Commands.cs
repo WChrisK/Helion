@@ -1,5 +1,4 @@
 using Helion.Geometry.Boxes;
-using Helion.Layer;
 using Helion.Layer.EndGame;
 using Helion.Layer.Transition;
 using Helion.Layer.Worlds;
@@ -44,6 +43,7 @@ public partial class Client
     private readonly Zdbsp m_zdbsp = new();
     private WorldModel? m_lastWorldModel;
     private bool m_isSecretExit;
+    private LevelChangeEvent m_levelChangeEvent = LevelChangeEvent.Default;
 
     [ConsoleCommand("setpos", "Sets the player's position (x y z). Ex setpos 100 100 0")]
     private void SetPosition(ConsoleCommandEventArgs args)
@@ -352,7 +352,7 @@ public partial class Client
         }
 
         m_layerManager.LastSave = new(saveGame, worldModel, string.Empty, true);
-        QueueLoadMap(GetMapInfo(worldModel.MapName), worldModel, null);
+        QueueLoadMap(GetMapInfo(worldModel.MapName), worldModel, null, LevelChangeEvent.Default);
     }
 
     [ConsoleCommand("map", "Starts a new world with the map provided")]
@@ -702,7 +702,7 @@ public partial class Client
     private void NewGame(MapInfoDef mapInfo)
     {
         m_globalData = new();
-        QueueLoadMap(mapInfo, null, null);
+        QueueLoadMap(mapInfo, null, null, LevelChangeEvent.Default);
     }
 
     private MapInfoDef GetMapInfo(string mapName) =>
@@ -742,13 +742,13 @@ public partial class Client
         };
     }
 
-    private void QueueLoadMap(MapInfoDef mapInfoDef, WorldModel? worldModel, IWorld? previousWorld, Action<object?> onComplete, object? completeParam, LevelChangeEvent? eventContext = null, bool transition = true)
+    private void QueueLoadMap(MapInfoDef mapInfoDef, WorldModel? worldModel, IWorld? previousWorld, Action<object?> onComplete, object? completeParam, LevelChangeEvent eventContext, bool transition = true)
     {
         m_onLoadMapComplete = new(onComplete, completeParam);
         m_queueMapLoad = new(mapInfoDef, worldModel, previousWorld, eventContext, transition);
     }
 
-    private void QueueLoadMap(MapInfoDef mapInfoDef, WorldModel? worldModel, IWorld? previousWorld, LevelChangeEvent? eventContext = null, bool transition = true)
+    private void QueueLoadMap(MapInfoDef mapInfoDef, WorldModel? worldModel, IWorld? previousWorld, LevelChangeEvent eventContext, bool transition = true)
     {
         m_queueMapLoad = new(mapInfoDef, worldModel, previousWorld, eventContext, transition);
     }
@@ -902,6 +902,7 @@ public partial class Client
             if (m_config.Game.LevelStat && ShouldWriteStatsFile(e.ChangeType))
                 WriteStatsFile(world);
 
+            m_levelChangeEvent = e;
             m_isSecretExit = false;
             switch (e.ChangeType)
             {
@@ -1018,7 +1019,7 @@ public partial class Client
             }
             else if (nextMapInfo != null)
             {
-                QueueLoadMap(nextMapInfo, null, world);
+                QueueLoadMap(nextMapInfo, null, world, m_levelChangeEvent);
             }
 
             if (!string.IsNullOrEmpty(nextMapResult.Error))
@@ -1053,7 +1054,10 @@ public partial class Client
                 return;
 
             if (endGameLayer.NextMapInfo != null)
-                QueueLoadMap(endGameLayer.NextMapInfo, null, endGameLayer.World);
+            {
+                var changeEvent = new LevelChangeEvent(m_isSecretExit ? LevelChangeType.SecretNext : LevelChangeType.Next, LevelChangeFlags.None);
+                QueueLoadMap(endGameLayer.NextMapInfo, null, endGameLayer.World, eventContext: changeEvent);
+            }
         }
         catch (Exception ex)
         {

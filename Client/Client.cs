@@ -43,7 +43,7 @@ public partial class Client : IDisposable, IInputManagement
 {
     private record class OnLoadMapComplete(Action<object?> OnComplete, object? CompleteParam);
     private record class LoadMapResult(WorldLayer? WorldLayer, WorldModel? WorldModel, LevelChangeEvent? EventContext, IList<Player> Players, IRandom Random, int StartRandomIndex, Exception? Exception = null);
-    private record class QueueLoadMapParams(MapInfoDef MapInfoDef, WorldModel? WorldModel, IWorld? PreviousWorld, LevelChangeEvent? EventContext, bool Transition);
+    private record class QueueLoadMapParams(MapInfoDef MapInfoDef, WorldModel? WorldModel, IWorld? PreviousWorld, LevelChangeEvent EventContext, bool Transition);
 
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
     private static readonly AppInfo AppInfo = new();
@@ -354,10 +354,15 @@ public partial class Client : IDisposable, IInputManagement
         worldLayer.ShouldRender = true;
         m_layerManager.Remove(m_layerManager.LoadingLayer);
 
-        Render();
-        _ = WriteAutoSave(m_loadMapResult);
+        var changeEvent = m_loadMapResult.EventContext;
+        if (changeEvent != null && (changeEvent.ChangeType == LevelChangeType.Next || changeEvent.ChangeType == LevelChangeType.SecretNext))
+        {
+            Render();
+            _ = WriteAutoSave(m_loadMapResult);
+        }
 
         m_loadMapResult = null;
+        m_levelChangeEvent = LevelChangeEvent.Default;
         PlayTransition();
         UpdateVolume();
 

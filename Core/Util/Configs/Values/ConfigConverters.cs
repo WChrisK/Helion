@@ -34,6 +34,8 @@ public static class ConfigConverters
             return MakeThrowableFileInfoConverter<T>();
         if (typeof(T) == typeof(Vec3I))
             return MakeThrowableVec3IConverter<T>();
+        if (typeof(T) == typeof(Vec3F))
+            return MakeThrowableVec3FConverter<T>();
         if (typeof(T) == typeof(Dimension))
             return MakeThrowableDimensionConverter<T>();
 
@@ -165,6 +167,15 @@ public static class ConfigConverters
         return ThrowableVec3IConverter;
     }
 
+    private static Func<object, T> MakeThrowableVec3FConverter<T>() where T : notnull
+    {
+        static T ThrowableVec3FConverter(object obj)
+        {
+            return (T)(object)Vec3F.FromConfigString(obj.ToString() ?? string.Empty);
+        }
+
+        return ThrowableVec3FConverter;
+    }
 
     private static Func<object, T> MakeThrowableDimensionConverter<T>() where T : notnull
     {

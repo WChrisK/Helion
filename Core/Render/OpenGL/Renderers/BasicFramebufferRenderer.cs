@@ -55,7 +55,7 @@ public class BasicFramebufferRenderer : IDisposable
         m_program.Bind();
 
         GL.ActiveTexture(TextureUnit.Texture0);
-        buffer.Textures[0].Bind();
+        buffer.ColorAttachment0.Bind();
         m_program.BoundTexture(TextureUnit.Texture0);
         m_program.Mvp(mat4.Identity);
 

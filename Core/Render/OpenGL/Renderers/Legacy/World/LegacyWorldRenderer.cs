@@ -227,7 +227,10 @@ public class LegacyWorldRenderer : WorldRenderer
         m_spriteTransparency = m_config.Render.SpriteTransparency;
         Clear(world, renderInfo);
 
-        m_oitFrameBuffer.CreateOrUpdate((renderInfo.Viewport.Width, renderInfo.Viewport.Height));
+        if (framebuffer.DepthTexture == null)
+            throw new Exception("Framebuffer must have a depth texture.");
+
+        m_oitFrameBuffer.CreateOrUpdate((renderInfo.Viewport.Width, renderInfo.Viewport.Height), framebuffer.DepthTexture);
 
         if (m_lastTicker != world.GameTicker)
             m_entityRenderer.Start(renderInfo);
@@ -319,9 +322,13 @@ public class LegacyWorldRenderer : WorldRenderer
     private unsafe void RenderTransparent(RenderInfo renderInfo, GLFramebuffer framebuffer, bool vanillaRender)
     {
         bool fuzzData = m_entityRenderer.HasFuzz();
-        GL.DepthMask(false);
+        bool alphaData = m_entityRenderer.HasAlpha();
+        bool alphaWalls = m_worldDataManager.HasAlphaWalls();
+        if (!fuzzData && !alphaData && !alphaWalls)
+            return;
 
-        m_oitFrameBuffer.StartRender(framebuffer);
+        m_oitFrameBuffer.StartRender();
+        GL.DepthMask(false);
         m_entityRenderer.RenderOitTransparentPass(renderInfo);
 
         m_oitFrameBuffer.BindTextures(TextureUnit.Texture4, TextureUnit.Texture5, TextureUnit.Texture6, TextureUnit.Texture7, framebuffer);
@@ -342,7 +349,7 @@ public class LegacyWorldRenderer : WorldRenderer
             m_entityRenderer.RenderOitTransparentFuzzPass(renderInfo);
         }
 
-        if (vanillaRender && m_worldDataManager.HasAlphaWalls())
+        if (vanillaRender && alphaWalls)
             RenderFlatsToDepth(renderInfo);
 
         m_interpolationTransparentProgram.Bind();
@@ -355,7 +362,7 @@ public class LegacyWorldRenderer : WorldRenderer
 
         m_entityRenderer.RenderOitCompositePass(renderInfo);
 
-        if (m_worldDataManager.HasAlphaWalls())
+        if (alphaWalls)
         {
             if (vanillaRender)
                 RenderFlatsToDepth(renderInfo);
@@ -369,6 +376,7 @@ public class LegacyWorldRenderer : WorldRenderer
         if (fuzzData)
             m_entityRenderer.RenderOitFuzzRefractionPass(renderInfo, true);
 
+        m_oitFrameBuffer.UnbindFrameBuffer();
         GL.DepthMask(true);
     }
 

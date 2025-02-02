@@ -16,7 +16,6 @@ public class BlockmapTraverser
 
     private IWorld m_world;
     private Block[] m_blocks;
-    private int[] m_checkedLines;
     private DataCache m_dataCache;
 
     public BlockmapTraverser(IWorld world, BlockMap blockmap)
@@ -25,7 +24,6 @@ public class BlockmapTraverser
         m_dataCache = world.DataCache;
         BlockmapGrid = blockmap.Blocks;
         m_blocks = blockmap.Blocks.Blocks;
-        m_checkedLines = new int[m_world.Lines.Count];
     }
 
     public void UpdateTo(IWorld world, BlockMap blockmap)
@@ -34,8 +32,6 @@ public class BlockmapTraverser
         m_dataCache = world.DataCache;
         BlockmapGrid = blockmap.Blocks;
         m_blocks = blockmap.Blocks.Blocks;
-        if (world.Lines.Count > m_checkedLines.Length)
-            m_checkedLines = new int[m_world.Lines.Count];
     }
 
     public void GetSolidEntityIntersections2D(Entity sourceEntity, DynamicArray<Entity> entities)
@@ -61,59 +57,57 @@ public class BlockmapTraverser
             }
         }
     }
-       
 
-    public unsafe void SightTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections, out bool hitOneSidedLine)
+    public void SightTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections, out bool hitOneSidedLine)
     {
         int checkCounter = ++WorldStatic.CheckCounter;
         hitOneSidedLine = false;
         int length = 0;
         int capacity = intersections.Capacity;
-        BlockmapSegIterator<Block> it = BlockmapGrid.Iterate(seg);
-        var block = it.Next();
+        var it = new BlockmapSegIterator<Block>(BlockmapGrid, seg);
         var arrayData = intersections.Data;
 
-        while (block != null)
+        while (true)
         {
+            var block = it.Next();
+            if (block == null)
+                break;
+
             int blockLineCount = block.BlockLineCount;
             if (capacity < length + blockLineCount)
             {
                 intersections.EnsureCapacity(length + blockLineCount);
                 capacity = intersections.Capacity;
             }
-
-            fixed (BlockLine* lineStart = &block.BlockLines[0])
+                        
+            for (int i = 0; i < blockLineCount; i++)
             {
-                BlockLine* line = lineStart;
-                for (int i = 0; i < blockLineCount; i++, line++)
+                ref var line = ref block.BlockLines[i];
+                if (seg.Intersection(line.Segment.Start.X, line.Segment.Start.Y, line.Segment.End.X, line.Segment.End.Y, out double t))
                 {
-                    if (seg.Intersection(line->Segment.Start.X, line->Segment.Start.Y, line->Segment.End.X, line->Segment.End.Y, out double t))
+                    if (WorldStatic.CheckedLines[line.LineId] == checkCounter)
+                        continue;
+
+                    WorldStatic.CheckedLines[line.LineId] = checkCounter;
+
+                    if (line.OneSided)
                     {
-                        if (m_checkedLines[line->LineId] == checkCounter)
-                            continue;
-
-                        m_checkedLines[line->LineId] = checkCounter;
-
-                        if (line->OneSided)
-                        {
-                            hitOneSidedLine = true;
-                            goto sightTraverseEndOfLoop;
-                        }
-
-                        if (length >= intersections.Capacity)
-                        {
-                            intersections.EnsureCapacity(length + 1);
-                            arrayData = intersections.Data;
-                        }
-
-                        ref var bi = ref arrayData[length];
-                        bi.Index = line->LineId;
-                        bi.SegTime = t;
-                        length++;
+                        hitOneSidedLine = true;
+                        goto sightTraverseEndOfLoop;
                     }
+
+                    if (length >= intersections.Capacity)
+                    {
+                        intersections.EnsureCapacity(length + 1);
+                        arrayData = intersections.Data;
+                    }
+
+                    ref var bi = ref arrayData[length];
+                    bi.Index = line.LineId;
+                    bi.SegTime = t;
+                    length++;
                 }
             }
-            block = it.Next();
         }
         
 
@@ -125,42 +119,41 @@ public class BlockmapTraverser
         intersections.Sort();
     }
 
-    public unsafe void ShootTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections)
+    public void ShootTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections)
     {
         Vec2D intersect = Vec2D.Zero;
         int checkCounter = ++WorldStatic.CheckCounter;
         int length = 0;
-        int capacity = intersections.Capacity;
-        BlockmapSegIterator<Block> it = BlockmapGrid.Iterate(seg);
-        var block = it.Next();
+        var it = new BlockmapSegIterator<Block>(BlockmapGrid, seg);
         var arrayData = intersections.Data;
 
-        while (block != null)
+        while (true)
         {
-            fixed (BlockLine* lineStart = &block.BlockLines[0])
+            var block = it.Next();
+            if (block == null)
+                break;
+
+            for (int i = 0; i < block.BlockLineCount; i++)
             {
-                BlockLine* line = lineStart;
-                for (int i = 0; i < block.BlockLineCount; i++, line++)
+                ref var line = ref block.BlockLines[i];
+                if (seg.Intersection(line.Segment.Start.X, line.Segment.Start.Y, line.Segment.End.X, line.Segment.End.Y, out double t))
                 {
-                    if (seg.Intersection(line->Segment.Start.X, line->Segment.Start.Y, line->Segment.End.X, line->Segment.End.Y, out double t))
+                    if (WorldStatic.CheckedLines[line.LineId] == checkCounter)
+                        continue;
+
+                    WorldStatic.CheckedLines[line.LineId] = checkCounter;
+
+                    if (length >= intersections.Capacity)
                     {
-                        if (m_checkedLines[line->LineId] == checkCounter)
-                            continue;
-
-                        m_checkedLines[line->LineId] = checkCounter;
-
-                        if (length >= intersections.Capacity)
-                        {
-                            intersections.EnsureCapacity(length + 1);
-                            arrayData = intersections.Data;
-                        }
-
-                        ref var bi = ref arrayData[length];
-                        bi.Index = line->LineId;
-                        bi.SegTime = t;
-                        length++;
+                        intersections.EnsureCapacity(length + 1);
+                        arrayData = intersections.Data;
                     }
-                }
+
+                    ref var bi = ref arrayData[length];
+                    bi.Index = line.LineId;
+                    bi.SegTime = t;
+                    length++;
+                }                
             }
 
             for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
@@ -186,7 +179,6 @@ public class BlockmapTraverser
                     length++;
                 }
             }
-            block = it.Next();
         }
         
         intersections.SetLength(length);
@@ -355,30 +347,44 @@ public class BlockmapTraverser
         return true;
     }
 
-    public unsafe void UseTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections)
+    public void UseTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections)
     {
         int checkCounter = ++WorldStatic.CheckCounter;
-        var it = BlockmapGrid.Iterate(seg);
-        var block = it.Next();
-        while (block != null)
+        int length = 0;
+        var arrayData = intersections.Data;
+        var it = new BlockmapSegIterator<Block>(BlockmapGrid, seg);
+
+        while (true)
         {
+            var block = it.Next();
+            if (block == null)
+                break;
+
             for (int i = 0; i < block.BlockLineCount; i++)
             {
-                fixed (BlockLine* line = &block.BlockLines[i])
-                {
-                    if (m_checkedLines[line->LineId] == checkCounter)
-                        continue;
+                ref var line = ref block.BlockLines[i];
+                if (WorldStatic.CheckedLines[line.LineId] == checkCounter)
+                    continue;
 
-                    if (line->Segment.Intersection(seg, out double t))
+                if (seg.Intersection(line.Segment, out double t))
+                {
+                    WorldStatic.CheckedLines[line.LineId] = checkCounter;
+
+                    if (length >= intersections.Capacity)
                     {
-                        m_checkedLines[line->LineId] = checkCounter;
-                        Vec2D intersect = line->Segment.FromTime(t);
-                        intersections.Add(new BlockmapIntersect(line->LineId, intersect.Distance(seg.Start)));
+                        intersections.EnsureCapacity(length + 1);
+                        arrayData = intersections.Data;
                     }
+
+                    ref var bi = ref arrayData[length++];
+                    bi.Index = line.LineId;
+                    bi.SegTime = t;
                 }
+                
             }
-            block = it.Next();
         }
+
+        intersections.Length = length;
         intersections.Sort();
     }
 }

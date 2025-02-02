@@ -612,18 +612,16 @@ public class Player : Entity
                 Block block = grid[by * it.Width + bx];
                 for (int i = 0; i < block.BlockLineCount; i++)
                 {
-                    fixed (BlockLine* blockLine = &block.BlockLines[i])
-                    {
-                        if (!box.Intersects(blockLine->Segment))
-                            continue;
+                    ref var blockLine = ref block.BlockLines[i];
+                    if (!box.Intersects(blockLine.Segment))
+                        continue;
 
-                        var line = blockLine->Line;
-                        if (line.Front.Middle.TextureHandle != Constants.NoTextureIndex ||
-                            (line.Back != null && line.Back.Middle.TextureHandle != Constants.NoTextureIndex))
-                        {
-                            ViewLineClip = true;
-                            return;
-                        }
+                    var line = blockLine.Line;
+                    if (line.Front.Middle.TextureHandle != Constants.NoTextureIndex ||
+                        (line.Back != null && line.Back.Middle.TextureHandle != Constants.NoTextureIndex))
+                    {
+                        ViewLineClip = true;
+                        return;
                     }
                 }
             }

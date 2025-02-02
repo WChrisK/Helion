@@ -237,7 +237,6 @@ public abstract partial class WorldBase : IWorld
         SpecialManager = CreateSpecialManager(reuse);
         BspSegLines = CreateBspSegLines(reuse && sameAsPreviousMap);
 
-        WorldStatic.FlushIntersectionReferences();
         IsFastMonsters = skillDef.IsFastMonsters(config);
 
         m_defaultDamageAction = DefaultDamage;
@@ -529,6 +528,9 @@ public abstract partial class WorldBase : IWorld
         WorldStatic.BFGBall = EntityManager.DefinitionComposer.GetByNameOrDefault("BFGBall");
         WorldStatic.PlasmaBall = EntityManager.DefinitionComposer.GetByNameOrDefault("PlasmaBall");
         WorldStatic.WeaponBfg = EntityManager.DefinitionComposer.GetByNameOrDefault(BFG900Class);
+
+        if (WorldStatic.CheckedLines.Length < Lines.Count)
+            WorldStatic.CheckedLines = new int[Lines.Count];
     }
 
     private void VanillaSectorSound_OnChanged(object? sender, bool enabled) =>

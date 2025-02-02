@@ -7,6 +7,7 @@ using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Util;
 using Helion.Util.Assertion;
+using Helion.Util.Container;
 using Helion.World.Entities;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
@@ -171,16 +172,17 @@ public class BlockMap
 
         side.BlockmapLinked = true;
         
-        BlockmapSegIterator<Block> it = m_blocks.Iterate(side.Line.Segment);
-        var block = it.Next();
-        while (block != null)
+        var it = new BlockmapSegIterator<Block>(m_blocks, side.Line.Segment);
+        while (true)
         {
+            var block = it.Next();
+            if (block == null)
+                break;
             block.DynamicSides.Add(side);
-            block = it.Next();
         }
     }
 
-    private static Box2D? FindMapBoundingBox(IEnumerable<Line> lines)
+    private static Box2D? FindMapBoundingBox(IList<Line> lines)
     {
         var boxes = lines.Select(l => l.Segment.Box);
         return Box2D.Combine(boxes);
@@ -199,10 +201,16 @@ public class BlockMap
 
     private void AddLinesToBlocks(IList<Line> lines)
     {
-        foreach (Line line in lines)
+        for (int i = 0; i < lines.Count; i++)
         {
-            m_blocks.Iterate(line.Segment, block =>
+            var line = lines[i];
+            var it = new BlockmapSegIterator<Block>(m_blocks, line.Segment);
+            while (true)
             {
+                var block = it.Next();
+                if (block == null)
+                    break;
+
                 if (block.BlockLines.Length == block.BlockLineCount)
                 {
                     var newLines = new BlockLine[block.BlockLines.Length * 2];
@@ -211,8 +219,7 @@ public class BlockMap
                 }
 
                 block.BlockLines[block.BlockLineCount++] = new BlockLine(line.Segment, line, line.Back == null, line.Front.Sector, line.Back?.Sector);
-                return GridIterationStatus.Continue;
-            });
+            }
         }
     }
 }

@@ -44,6 +44,7 @@ public static class WorldStatic
     public static EntityManager EntityManager = null!;
     public static WorldSoundManager SoundManager = null!;
     public static List<EntityFrame> Frames = null!;
+    public static int[] CheckedLines = [];
 
     public static EntityDefinition DoomImpBall = EntityDefinition.Default;
     public static EntityDefinition ArachnotronPlasma = EntityDefinition.Default;
@@ -57,13 +58,4 @@ public static class WorldStatic
     public static EntityDefinition PlasmaBall = EntityDefinition.Default;
 
     public static EntityDefinition WeaponBfg = EntityDefinition.Default;
-
-    public static void FlushIntersectionReferences()
-    {
-        //for (int i = 0; i < Intersections.Capacity; i++)
-        //{
-        //    Intersections.Data[i].Entity = null;
-        //    Intersections.Data[i].Line = null;
-        //}
-    }
 }

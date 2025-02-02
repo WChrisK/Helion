@@ -21,6 +21,7 @@ public struct BlockLine
     public int LineId;
     public Seg2D Segment;
     public bool OneSided;
+    public bool HasSpecial;
     public LineFlags Flags;
     public Line Line;
     public Sector FrontSector;
@@ -35,6 +36,7 @@ public struct BlockLine
         OneSided = oneSided;
         FrontSector = frontSector;
         BackSector = backSector;
+        HasSpecial = line.HasSpecial;
     }
 }
 

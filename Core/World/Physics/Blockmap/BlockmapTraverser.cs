@@ -13,6 +13,7 @@ namespace Helion.World.Physics.Blockmap;
 public class BlockmapTraverser
 {
     public UniformGrid<Block> BlockmapGrid;
+    public BlockMap Blockmap;
 
     private IWorld m_world;
     private Block[] m_blocks;
@@ -22,6 +23,7 @@ public class BlockmapTraverser
     {
         m_world = world;
         m_dataCache = world.DataCache;
+        Blockmap = blockmap;
         BlockmapGrid = blockmap.Blocks;
         m_blocks = blockmap.Blocks.Blocks;
     }
@@ -30,6 +32,7 @@ public class BlockmapTraverser
     {
         m_world = world;
         m_dataCache = world.DataCache;
+        Blockmap = blockmap;
         BlockmapGrid = blockmap.Blocks;
         m_blocks = blockmap.Blocks.Blocks;
     }
@@ -79,10 +82,11 @@ public class BlockmapTraverser
                 intersections.EnsureCapacity(length + blockLineCount);
                 capacity = intersections.Capacity;
             }
-                        
-            for (int i = 0; i < blockLineCount; i++)
+
+            int count = block.BlockLineIndex + block.BlockLineCount;
+            for (int i = block.BlockLineIndex; i < count; i++)
             {
-                ref var line = ref block.BlockLines[i];
+                ref var line = ref Blockmap.BlockLines[i];
                 if (seg.Intersection(line.Segment.Start.X, line.Segment.Start.Y, line.Segment.End.X, line.Segment.End.Y, out double t))
                 {
                     if (WorldStatic.CheckedLines[line.LineId] == checkCounter)
@@ -133,9 +137,10 @@ public class BlockmapTraverser
             if (block == null)
                 break;
 
-            for (int i = 0; i < block.BlockLineCount; i++)
+            int count = block.BlockLineIndex + block.BlockLineCount;
+            for (int i = block.BlockLineIndex; i < count; i++)
             {
-                ref var line = ref block.BlockLines[i];
+                ref var line = ref Blockmap.BlockLines[i];
                 if (seg.Intersection(line.Segment.Start.X, line.Segment.Start.Y, line.Segment.End.X, line.Segment.End.Y, out double t))
                 {
                     if (WorldStatic.CheckedLines[line.LineId] == checkCounter)
@@ -347,7 +352,7 @@ public class BlockmapTraverser
         return true;
     }
 
-    public void UseTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections)
+    public unsafe void UseTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections)
     {
         int checkCounter = ++WorldStatic.CheckCounter;
         int length = 0;
@@ -360,9 +365,10 @@ public class BlockmapTraverser
             if (block == null)
                 break;
 
-            for (int i = 0; i < block.BlockLineCount; i++)
+            int count = block.BlockLineIndex + block.BlockLineCount;
+            for (int i = block.BlockLineIndex; i < count; i++)
             {
-                ref var line = ref block.BlockLines[i];
+                ref var line = ref Blockmap.BlockLines[i];
                 if (WorldStatic.CheckedLines[line.LineId] == checkCounter)
                     continue;
 

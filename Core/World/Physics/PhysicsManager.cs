@@ -1005,9 +1005,10 @@ public sealed class PhysicsManager
                 for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
                 {
                     Block block = m_blockmapBlocks[by * it.Width + bx];
-                    for (int i = 0; i < block.BlockLineCount; i++)
+                    int count = block.BlockLineIndex + block.BlockLineCount;
+                    for (int i = block.BlockLineIndex; i < count; i++)
                     {
-                        ref var line = ref block.BlockLines[i];                        
+                        ref var line = ref m_blockmap.BlockLines[i];                        
                         if (WorldStatic.CheckedLines[line.LineId] == checkCounter)
                             continue;
 
@@ -1211,7 +1212,7 @@ doneLinkToSectors:
         {
             for (int bx = blockStartX; bx <= blockEndX; bx++)
             {
-                Block block = m_blockmapBlocks[by * m_blockmapGrid.Width + bx];
+                var block = m_blockmapBlocks[by * m_blockmapGrid.Width + bx];
                 var entityIndices = block.EntityIndices;
                 if (checkEntities)
                 {
@@ -1258,18 +1259,18 @@ doneLinkToSectors:
 
                 tryMove.IntersectSectors.EnsureCapacity(intersectSectorLength + block.BlockLineCount * 2);
 
-                for (int i = 0; i < block.BlockLineCount; i++)
+                int count = block.BlockLineIndex + block.BlockLineCount;
+                for (int i = block.BlockLineIndex; i < count; i++)
                 {
-                    ref var blockLine = ref block.BlockLines[i];
+                    ref var blockLine = ref m_blockmap.BlockLines[i];
                     if (WorldStatic.CheckedLines[blockLine.LineId] == checkCounter)
                         continue;
 
                     WorldStatic.CheckedLines[blockLine.LineId] = checkCounter;
                     if (blockLine.Segment.Intersects(boxMinX, boxMinY, boxMaxX, boxMaxY))
                     {
-                        LineBlock blockType = LineBlocksEntity(entity, x, y, ref blockLine, tryMove);
-
-                        Line line = blockLine.Line;
+                        var blockType = LineBlocksEntity(entity, x, y, ref blockLine, tryMove);
+                        var line = m_world.Lines[blockLine.LineId];
                         if (blockType != LineBlock.NoBlock)
                         {
                             entity.BlockingLine = line;
@@ -1427,19 +1428,18 @@ doneLinkToSectors:
             if (block == null)
                 break;
 
-            for (int i = 0; i < block.BlockLineCount; i++)
+            int count = block.BlockLineIndex + block.BlockLineCount;
+            for (int i = 0; i < count; i++)
             {
-                ref var line = ref block.BlockLines[i];
+                ref var line = ref m_blockmap.BlockLines[i];             
+                if (cornerTracer.Intersection(line.Segment, out double time) && time > 0 && time < 1 &&
+                    LineBlocksEntity(entity, entity.Position.X, entity.Position.Y, ref line, null) != LineBlock.NoBlock &&
+                    time < hitTime)
                 {
-                    if (cornerTracer.Intersection(line.Segment, out double time) && time > 0 && time < 1 &&
-                        LineBlocksEntity(entity, entity.Position.X, entity.Position.Y, ref line, null) != LineBlock.NoBlock &&
-                        time < hitTime)
-                    {
-                        hit = true;
-                        hitTime = time;
-                        blockingLine = line.Line;
-                    }
-                }
+                    hit = true;
+                    hitTime = time;
+                    blockingLine = m_world.Lines[line.LineId];
+                }                
             }
         }
 

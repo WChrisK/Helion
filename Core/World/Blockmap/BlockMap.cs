@@ -25,9 +25,12 @@ public class BlockMap
     public readonly Box2D Bounds;
     private readonly UniformGrid<Block> m_blocks;
     public UniformGrid<Block> Blocks => m_blocks;
+    public BlockLine[] BlockLines;
+    public int BlockLineCount;
     
     public BlockMap(IList<Line> lines, int blockDimension)
     {
+        BlockLines = new BlockLine[lines.Count];
         Bounds = FindMapBoundingBox(lines) ?? new Box2D(Vec2D.Zero, Vec2D.One);
         m_blocks = new UniformGrid<Block>(Bounds, blockDimension);
         SetBlockCoordinates();
@@ -38,8 +41,7 @@ public class BlockMap
     {
         foreach (var block in m_blocks.Blocks)
         {
-            // Note: Entities are unlinked using UnlinkFromWorld. Only need to dump the other data.
-            
+            // Note: Entities are unlinked using UnlinkFromWorld. Only need to dump the other data.            
             var islandNode = block.DynamicSectors.Head;
             while (islandNode != null)
             {
@@ -55,21 +57,11 @@ public class BlockMap
 
     public BlockMap(Box2D bounds, int blockDimension)
     {
+        BlockLines = [];
         Bounds = bounds;
         m_blocks = new UniformGrid<Block>(Bounds, blockDimension);
         SetBlockCoordinates();
-    }
-
-    public void Dispose()
-    {
-        for (int i = 0; i < m_blocks.Blocks.Length; i++)
-        {
-            var block = m_blocks.Blocks[i];
-            for (int j = 0; j < block.BlockLineCount; j++)
-                block.BlockLines[j] = default;
-        }
-    }
-   
+    }   
 
     public void Link(Entity entity, bool checkLastBlock)
     {
@@ -207,15 +199,38 @@ public class BlockMap
                 if (block == null)
                     break;
 
-                if (block.BlockLines.Length == block.BlockLineCount)
+                if (BlockLineCount == BlockLines.Length)
                 {
-                    var newLines = new BlockLine[block.BlockLines.Length * 2];
-                    Array.Copy(block.BlockLines, newLines, block.BlockLines.Length);
-                    block.BlockLines = newLines;
+                    var newLines = new BlockLine[(int)(BlockLines.Length * 1.5)];
+                    Array.Copy(BlockLines, newLines, BlockLineCount);
+                    BlockLines = newLines;
                 }
 
-                block.BlockLines[block.BlockLineCount++] = new BlockLine(line.Segment, line, line.Back == null, line.Front.Sector, line.Back?.Sector);
+                var index = block.Y * m_blocks.Width + block.X;
+                BlockLines[BlockLineCount++] = new BlockLine(index, line.Segment, line, line.Back == null, line.Front.Sector, line.Back?.Sector);
             }
+        }
+
+        Array.Sort(BlockLines, 0, BlockLineCount, null);
+        SetBlockLineIndices();
+    }
+
+    private void SetBlockLineIndices()
+    {
+        int lastIndex = -1;
+        var block = m_blocks.Blocks[0];
+
+        for (int i = 0; i < BlockLineCount; i++)
+        {
+            ref var blockLine = ref BlockLines[i];
+            if (blockLine.BlockIndex != lastIndex)
+            {
+                lastIndex = blockLine.BlockIndex;
+                block = m_blocks[blockLine.BlockIndex];
+                block.BlockLineIndex = i;
+            }
+
+            block.BlockLineCount++;
         }
     }
 }

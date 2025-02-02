@@ -7,47 +7,37 @@ using Helion.World.Geometry.Islands;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Sides;
-using System.Collections.Generic;
+using System;
 using static Helion.Util.Assertion.Assert;
 
 namespace Helion.World.Blockmap;
 
-/// <summary>
-/// Represents a cell in the blockmap.
-/// </summary>
-/// 
-public struct BlockLine
+public struct BlockLine(int blockIndex, in Seg2D segment, Line line, bool oneSided, Sector frontSector, Sector? backSector) : IComparable<BlockLine>
 {
-    public int LineId;
-    public Seg2D Segment;
-    public bool OneSided;
-    public bool HasSpecial;
-    public LineFlags Flags;
-    public Line Line;
-    public Sector FrontSector;
-    public Sector? BackSector;
+    public int BlockIndex = blockIndex;
+    public int LineId = line.Id;
+    public Seg2D Segment = segment;
+    public bool OneSided = oneSided;
+    public bool HasSpecial = line.HasSpecial;
+    public LineFlags Flags = line.Flags;
+    public Sector FrontSector = frontSector;
+    public Sector? BackSector = backSector;
 
-    public BlockLine(Seg2D segment, Line line, bool oneSided, Sector frontSector, Sector? backSector)
+    public readonly int CompareTo(BlockLine other)
     {
-        LineId = line.Id;
-        Segment = segment;
-        Flags = line.Flags;
-        Line = line;
-        OneSided = oneSided;
-        FrontSector = frontSector;
-        BackSector = backSector;
-        HasSpecial = line.HasSpecial;
+        // Doom added lines to the block in line id order
+        // This affects behavior on how block checks will short and needs to be enforced here
+        if (BlockIndex == other.BlockIndex)
+            return LineId.CompareTo(other.LineId);
+
+        return BlockIndex.CompareTo(other.BlockIndex);
     }
 }
 
 public class Block
 {
-    /// <summary>
-    /// All the lines for this block.
-    /// </summary>  
-    public BlockLine[] BlockLines = new BlockLine[8];
+    public int BlockLineIndex;
     public int BlockLineCount;
-
 
     public readonly LinkableList<Island> Sectors = new();
     public readonly LinkableList<Island> DynamicSectors = new();

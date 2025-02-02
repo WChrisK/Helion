@@ -604,19 +604,21 @@ public class Player : Entity
         ViewLineClip = false;
         var box = new Box2D(pos.X, pos.Y, Radius);
         var grid = WorldStatic.World.BlockmapTraverser.BlockmapGrid;
+        var blockLines = WorldStatic.World.BlockmapTraverser.Blockmap.BlockLines;
         var it = grid.CreateBoxIteration(box);
         for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = grid[by * it.Width + bx];
-                for (int i = 0; i < block.BlockLineCount; i++)
+                int count = block.BlockLineIndex + block.BlockLineCount;
+                for (int i = block.BlockLineIndex; i < count; i++)
                 {
-                    ref var blockLine = ref block.BlockLines[i];
+                    ref var blockLine = ref blockLines[i];
                     if (!box.Intersects(blockLine.Segment))
                         continue;
 
-                    var line = blockLine.Line;
+                    var line = WorldStatic.World.Lines[blockLine.LineId];
                     if (line.Front.Middle.TextureHandle != Constants.NoTextureIndex ||
                         (line.Back != null && line.Back.Middle.TextureHandle != Constants.NoTextureIndex))
                     {

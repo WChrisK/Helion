@@ -130,9 +130,9 @@ public class LegacyWorldRenderer : WorldRenderer
 
         var renderBlocks = world.RenderBlockmap.Blocks;
         var it = renderBlocks.CreateBoxIteration(box);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = renderBlocks[by * it.Width + bx];
                 if (occlude && !block.Box.InView(occluder, m_renderData.ViewDirection))

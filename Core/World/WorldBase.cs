@@ -342,7 +342,7 @@ public abstract partial class WorldBase : IWorld
         return LastWorldSoundManager;
     }
 
-    private unsafe BlockMap CreateBlockMap()
+    private BlockMap CreateBlockMap()
     {
         if (SameAsPreviousMap && LastBlockMap != null)
         {

@@ -245,6 +245,7 @@ public class UniformGrid<T> where T : new()
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T? GetBlock(Vec3D position)
     {
         int x = (int)((position.X - Origin.X) / Dimension);
@@ -254,18 +255,7 @@ public class UniformGrid<T> where T : new()
             return default(T);
 
         return Blocks[index];
-    }
-
-    public int GetBlockIndex(double xPos, double yPos)
-    {
-        int x = (int)((xPos - Origin.X) / Dimension);
-        int y = (int)((yPos - Origin.Y) / Dimension);
-        int index = y * Width + x;
-        if (index < 0 || index >= Blocks.Length)
-            return 0;
-
-        return index;
-    }
+    }    
 
     private static Box2D ToBounds(Box2D bounds, int dimension)
     {
@@ -295,56 +285,45 @@ public class UniformGrid<T> where T : new()
         Vec2D topRight = new(alignedRightBlock * dimension, alignedTopBlock * dimension);
 
         return new Box2D(origin, topRight);
-    }
+    }    
 
     public BlockmapBoxIteration CreateBoxIteration(in Box2D box)
     {
-        Vec2I start = new((int)((box.Min.X - Origin.X) / Dimension), (int)((box.Min.Y - Origin.Y) / Dimension));
-        start.X = Math.Max(0, start.X);
-        start.Y = Math.Max(0, start.Y);
-
-        Vec2I end = new((int)((box.Max.X - Origin.X) / Dimension), (int)((box.Max.Y - Origin.Y) / Dimension));
-        end.X = Math.Min(Width - 1, end.X);
-        end.Y = Math.Min(Height - 1, end.Y);
-
-        return new(start, end, Width);
+        int startX = (int)((box.Min.X - Origin.X) / Dimension);
+        int startY = (int)((box.Min.Y - Origin.Y) / Dimension);
+        int endX = (int)((box.Max.X - Origin.X) / Dimension);
+        int endY = (int)((box.Max.Y - Origin.Y) / Dimension);
+        return new(Math.Max(0, startX), Math.Max(0, startY), Math.Min(Width - 1, endX), Math.Min(Height - 1, endY), Width);
     }
 
     public BlockmapBoxIteration CreateBoxIteration(double x, double y, double radius)
     {
-        double minX = x - radius;
-        double minY = y - radius;
-        double maxX = x + radius;
-        double maxY = y + radius;
+        int startX = (int)((x - radius - Origin.X) / Dimension);
+        int startY = (int)((y - radius - Origin.Y) / Dimension);
+        int endX = (int)((x + radius - Origin.X) / Dimension);
+        int endY = (int)((y + radius - Origin.Y) / Dimension);
+        return new(Math.Max(0, startX), Math.Max(0, startY), Math.Min(Width - 1, endX), Math.Min(Height - 1, endY),  Width);
+    }
 
-        Vec2I start = new((int)((minX - Origin.X) / Dimension), (int)((minY - Origin.Y) / Dimension));
-        start.X = Math.Max(0, start.X);
-        start.Y = Math.Max(0, start.Y);
-
-        Vec2I end = new((int)((maxX - Origin.X) / Dimension), (int)((maxY - Origin.Y) / Dimension));
-        end.X = Math.Min(Width - 1, end.X);
-        end.Y = Math.Min(Height - 1, end.Y);
-
-        return new(start, end, Width);
+    public BlockmapBoxIteration CreateBoxIteration(double minX, double minY, double maxX, double maxY)
+    {
+        int startX = (int)((minX - Origin.X) / Dimension);
+        int startY = (int)((minY - Origin.Y) / Dimension);
+        int endX = (int)((maxX - Origin.X) / Dimension);
+        int endY = (int)((maxY - Origin.Y) / Dimension);
+        return new(Math.Max(0, startX), Math.Max(0, startY), Math.Min(Width - 1, endX), Math.Min(Height - 1, endY), Width);
     }
 
     internal int IndexFromBlockCoordinate(Vec2I coordinate) => coordinate.X + (coordinate.Y * Width);
-    
-    public BlockmapSegIterator<T> Iterate(in Seg2D seg) => new(this, seg);
 }
 
-public readonly struct BlockmapBoxIteration
+public struct BlockmapBoxIteration(int blockStartX, int blockStartY, int blockEndX, int blockEndY, int width)
 {
-    public readonly Vec2I BlockStart;
-    public readonly Vec2I BlockEnd;
-    public readonly int Width;
-
-    public BlockmapBoxIteration(Vec2I blockStart, Vec2I blockEnd, int width)
-    {
-        BlockStart = blockStart;
-        BlockEnd = blockEnd;
-        Width = width;
-    }
+    public int BlockStartX = blockStartX;
+    public int BlockStartY = blockStartY;
+    public int BlockEndX = blockEndX;
+    public int BlockEndY = blockEndY;
+    public int Width = width;
 }
 
 public ref struct BlockmapSegIterator<T>  where T : new()

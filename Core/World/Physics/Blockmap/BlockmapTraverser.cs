@@ -39,9 +39,9 @@ public class BlockmapTraverser
         int m_checkCounter = ++WorldStatic.CheckCounter;
         var box = sourceEntity.GetBox2D();
         var it = BlockmapGrid.CreateBoxIteration(box);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = m_blocks[by * it.Width + bx];
                 for (int i = 0; i < block.EntityIndicesLength; i++)
@@ -189,9 +189,9 @@ public class BlockmapTraverser
     {
         int checkCounter = ++WorldStatic.CheckCounter;
         var it = BlockmapGrid.CreateBoxIteration(box);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = m_blocks[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
@@ -214,9 +214,9 @@ public class BlockmapTraverser
     {
         int checkCounter = ++WorldStatic.CheckCounter;
         var it = BlockmapGrid.CreateBoxIteration(box);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = m_blocks[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
@@ -240,9 +240,9 @@ public class BlockmapTraverser
     {
         int checkCounter = ++WorldStatic.CheckCounter;
         var it = BlockmapGrid.CreateBoxIteration(box);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = m_blocks[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
@@ -274,9 +274,9 @@ public class BlockmapTraverser
         Box3D box3D = new(position, sourceEntity.Radius, sourceEntity.Height);
         Box2D box2D = new(position.X, position.Y, sourceEntity.Radius);
         var it = BlockmapGrid.CreateBoxIteration(box2D);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = m_blocks[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
@@ -305,9 +305,9 @@ public class BlockmapTraverser
         Box3D box3D = new(position, sourceEntity.Radius, sourceEntity.Height);
         Box2D box2D = new(position.X, position.Y, sourceEntity.Radius);
         var it = BlockmapGrid.CreateBoxIteration(box2D);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = m_blocks[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)

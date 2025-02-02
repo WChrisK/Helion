@@ -599,15 +599,15 @@ public class Player : Entity
         return m_camera;
     }
 
-    private unsafe void CheckLineClip(in Vec3D pos)
+    private void CheckLineClip(in Vec3D pos)
     {
         ViewLineClip = false;
         var box = new Box2D(pos.X, pos.Y, Radius);
         var grid = WorldStatic.World.BlockmapTraverser.BlockmapGrid;
         var it = grid.CreateBoxIteration(box);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 Block block = grid[by * it.Width + bx];
                 for (int i = 0; i < block.BlockLineCount; i++)

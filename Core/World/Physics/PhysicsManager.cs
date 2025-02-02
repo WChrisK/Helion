@@ -995,11 +995,14 @@ public sealed class PhysicsManager
         }
         else
         {
-            Box2D box = entity.GetBox2D();
-            var it = m_blockmapGrid.CreateBoxIteration(box);
-            for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+            var minX = entity.Position.X - entity.Radius;
+            var minY = entity.Position.Y - entity.Radius;
+            var maxX = entity.Position.X + entity.Radius;
+            var maxY = entity.Position.Y + entity.Radius;
+            var it = m_blockmapGrid.CreateBoxIteration(minX, minY, maxX, maxY);
+            for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
             {
-                for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+                for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
                 {
                     Block block = m_blockmapBlocks[by * it.Width + bx];
                     for (int i = 0; i < block.BlockLineCount; i++)
@@ -1010,7 +1013,7 @@ public sealed class PhysicsManager
 
                         WorldStatic.CheckedLines[line.LineId] = checkCounter;
 
-                        if (line.Segment.Intersects(box.Min.X, box.Min.Y, box.Max.X, box.Max.Y))
+                        if (line.Segment.Intersects(minX, minY, maxX, maxY))
                         {
                             // Doomism: Ignore for moving sectors if blocked by flags only.
                             if (Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, line.Segment, line.OneSided, line.Flags, WorldStatic.Mbf21))
@@ -1156,7 +1159,7 @@ doneLinkToSectors:
     private const int PositionValidFlags1 = EntityFlags.SpecialFlag | EntityFlags.SolidFlag | EntityFlags.ShootableFlag;
     private const int PositionValidFlags2 = EntityFlags.TouchyFlag;
 
-    public unsafe bool IsPositionValid(Entity entity, double x, double y, TryMoveData tryMove)
+    public bool IsPositionValid(Entity entity, double x, double y, TryMoveData tryMove)
     {
         if (!WorldStatic.InfinitelyTallThings && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && !entity.IsPlayer)
         {

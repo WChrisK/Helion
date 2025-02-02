@@ -34,7 +34,7 @@ public class BlockMap
         AddLinesToBlocks(lines);
     }
 
-    public unsafe void Clear()
+    public void Clear()
     {
         foreach (var block in m_blocks.Blocks)
         {
@@ -69,11 +69,7 @@ public class BlockMap
                 block.BlockLines[j] = default;
         }
     }
-    
-    public BlockmapSegIterator<Block> Iterate(in Seg2D seg)
-    {
-        return m_blocks.Iterate(seg);
-    }
+   
 
     public void Link(Entity entity, bool checkLastBlock)
     {
@@ -133,9 +129,9 @@ public class BlockMap
             if (sectorIsland.IsVooDooCloset || sectorIsland.IsMonsterCloset)
                 continue;
             var it = m_blocks.CreateBoxIteration(sectorIsland.Box);
-            for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+            for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
             {
-                for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+                for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
                 {
                     Block block = m_blocks[by * it.Width + bx];
                     var node = world.DataCache.GetLinkableNodeIsland(sectorIsland);
@@ -154,9 +150,9 @@ public class BlockMap
             if (sectorIsland.IsVooDooCloset || sectorIsland.IsMonsterCloset)
                 continue;
             var it = m_blocks.CreateBoxIteration(sectorIsland.Box);
-            for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+            for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
             {
-                for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+                for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
                 {
                     Block block = m_blocks[by * it.Width + bx];
                     block.Sectors.Add(new() { Value = sectorIsland });

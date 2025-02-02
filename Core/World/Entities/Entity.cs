@@ -363,7 +363,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     /// everything except the entity list (which should be unlinked from
     /// when the entity is fully removed from the world).
     /// </remarks>
-    public unsafe void UnlinkFromWorld(bool unlinkBlockmapBlocks = true)
+    public void UnlinkFromWorld(bool unlinkBlockmapBlocks = true)
     {
         for (int i = 0; i < SectorNodes.Length; i++)
         {
@@ -389,7 +389,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         BlockingSectorPlane = null;
     }
 
-    public unsafe void UnlinkBlockMapBlocks()
+    public void UnlinkBlockMapBlocks()
     {
         if (BlockRange.StartX == Constants.ClearBlock)
             return;

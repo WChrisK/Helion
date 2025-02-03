@@ -1419,7 +1419,7 @@ doneLinkToSectors:
                 break;
 
             int count = block.BlockLineIndex + block.BlockLineCount;
-            for (int i = 0; i < count; i++)
+            for (int i = block.BlockLineIndex; i < count; i++)
             {
                 ref var line = ref m_blockmap.BlockLines[i];             
                 if (cornerTracer.Intersection(line.Segment, out double time) && time > 0 && time < 1 &&

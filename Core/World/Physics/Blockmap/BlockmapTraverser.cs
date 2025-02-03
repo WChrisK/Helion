@@ -12,7 +12,7 @@ namespace Helion.World.Physics.Blockmap;
 
 public class BlockmapTraverser
 {
-    public UniformGrid<Block> BlockmapGrid;
+    public UniformGrid BlockmapGrid;
     public BlockMap Blockmap;
 
     private IWorld m_world;
@@ -67,7 +67,7 @@ public class BlockmapTraverser
         hitOneSidedLine = false;
         int length = 0;
         int capacity = intersections.Capacity;
-        var it = new BlockmapSegIterator<Block>(BlockmapGrid, seg);
+        var it = new BlockmapSegIterator(BlockmapGrid, seg);
         var arrayData = intersections.Data;
 
         while (true)
@@ -128,7 +128,7 @@ public class BlockmapTraverser
         Vec2D intersect = Vec2D.Zero;
         int checkCounter = ++WorldStatic.CheckCounter;
         int length = 0;
-        var it = new BlockmapSegIterator<Block>(BlockmapGrid, seg);
+        var it = new BlockmapSegIterator(BlockmapGrid, seg);
         var arrayData = intersections.Data;
 
         while (true)
@@ -357,7 +357,7 @@ public class BlockmapTraverser
         int checkCounter = ++WorldStatic.CheckCounter;
         int length = 0;
         var arrayData = intersections.Data;
-        var it = new BlockmapSegIterator<Block>(BlockmapGrid, seg);
+        var it = new BlockmapSegIterator(BlockmapGrid, seg);
 
         while (true)
         {

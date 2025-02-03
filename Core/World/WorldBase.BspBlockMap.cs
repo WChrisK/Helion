@@ -17,7 +17,7 @@ public partial class WorldBase
 
     private unsafe void CreateBspBlockMap(BlockMap blockmap)
     {
-        m_bspBlockmapDimensions = UniformGrid<Block>.CalculateBlockMapDimensions(blockmap.Bounds, BspBlockDimension);
+        m_bspBlockmapDimensions = UniformGrid.CalculateBlockMapDimensions(blockmap.Bounds, BspBlockDimension);
         m_bspBlockmapNodeIndices = new uint[m_bspBlockmapDimensions.Width * m_bspBlockmapDimensions.Height];
         var origin = m_bspBlockmapDimensions.Bounds.Min;
         for (int y = 0; y < m_bspBlockmapDimensions.Height; y++)

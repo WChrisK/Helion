@@ -23,8 +23,8 @@ namespace Helion.World.Blockmap;
 public class BlockMap
 {
     public readonly Box2D Bounds;
-    private readonly UniformGrid<Block> m_blocks;
-    public UniformGrid<Block> Blocks => m_blocks;
+    private readonly UniformGrid m_blocks;
+    public UniformGrid Blocks => m_blocks;
     public BlockLine[] BlockLines;
     public int BlockLineCount;
     
@@ -32,7 +32,7 @@ public class BlockMap
     {
         BlockLines = new BlockLine[lines.Count];
         Bounds = FindMapBoundingBox(lines) ?? new Box2D(Vec2D.Zero, Vec2D.One);
-        m_blocks = new UniformGrid<Block>(Bounds, blockDimension);
+        m_blocks = new UniformGrid(Bounds, blockDimension);
         SetBlockCoordinates();
         AddLinesToBlocks(lines);
     }
@@ -59,7 +59,7 @@ public class BlockMap
     {
         BlockLines = [];
         Bounds = bounds;
-        m_blocks = new UniformGrid<Block>(Bounds, blockDimension);
+        m_blocks = new UniformGrid(Bounds, blockDimension);
         SetBlockCoordinates();
     }   
 
@@ -160,7 +160,7 @@ public class BlockMap
 
         side.BlockmapLinked = true;
         
-        var it = new BlockmapSegIterator<Block>(m_blocks, side.Line.Segment);
+        var it = new BlockmapSegIterator(m_blocks, side.Line.Segment);
         while (true)
         {
             var block = it.Next();
@@ -192,7 +192,7 @@ public class BlockMap
         for (int i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
-            var it = new BlockmapSegIterator<Block>(m_blocks, line.Segment);
+            var it = new BlockmapSegIterator(m_blocks, line.Segment);
             while (true)
             {
                 var block = it.Next();

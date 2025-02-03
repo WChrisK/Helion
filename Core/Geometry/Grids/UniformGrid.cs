@@ -4,6 +4,7 @@ using Helion.Geometry.Boxes;
 using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Util;
+using Helion.World.Blockmap;
 
 namespace Helion.Geometry.Grids;
 
@@ -26,7 +27,7 @@ public enum GridIterationStatus
 /// 
 public readonly record struct GridDimensions(int Width, int Height, Box2D Bounds);
 
-public class UniformGrid<T> where T : new()
+public class UniformGrid
 {
     public int Dimension;
 
@@ -45,7 +46,7 @@ public class UniformGrid<T> where T : new()
     /// </summary>
     public Box2D Bounds;
 
-    public T[] Blocks;
+    public Block[] Blocks;
 
     /// <summary>
     /// The origin of the grid.
@@ -68,9 +69,9 @@ public class UniformGrid<T> where T : new()
         Width = dimensions.Width;
         Height = dimensions.Height;
 
-        Blocks = new T[TotalBlocks];
+        Blocks = new Block[TotalBlocks];
         for (int i = 0; i < TotalBlocks; i++)
-            Blocks[i] = new T();
+            Blocks[i] = new Block();
     }
 
     public static GridDimensions CalculateBlockMapDimensions(Box2D bounds, int blockDimension)
@@ -90,7 +91,7 @@ public class UniformGrid<T> where T : new()
     /// <param name="index">The index of the block.</param>
     /// <exception cref="System.IndexOutOfRangeException">if the index is
     /// out of range.</exception>
-    public T this[int index] => Blocks[index];
+    public Block this[int index] => Blocks[index];
 
     /// <summary>
     /// Gets the block at the coordinates provided.
@@ -100,7 +101,7 @@ public class UniformGrid<T> where T : new()
     /// <returns>The block at the location.</returns>
     /// <exception cref="System.IndexOutOfRangeException">if the indices
     /// are out of range.</exception>
-    public T this[int row, int col] => Blocks[(row * Width) + col];
+    public Block this[int row, int col] => Blocks[(row * Width) + col];
 
     /// <summary>
     /// Performs iteration over the grid for the segment provided. The
@@ -111,7 +112,7 @@ public class UniformGrid<T> where T : new()
     /// <param name="seg">The segment to iterate with.</param>
     /// <param name="func">The function to call for each block it visits.
     /// </param>
-    public void Iterate(Seg2D seg, Action<T> func)
+    public void Iterate(Seg2D seg, Action<Block> func)
     {
         Iterate(seg, block =>
         {
@@ -130,7 +131,7 @@ public class UniformGrid<T> where T : new()
     /// (true) or continue (false).</param>
     /// <returns>True if it terminated due to a `Stop` condition from the
     /// function, false otherwise.</returns>
-    public bool Iterate(Seg2D seg, Func<T, GridIterationStatus> func)
+    public bool Iterate(Seg2D seg, Func<Block, GridIterationStatus> func)
     {
         // This algorithm requires us to be on the unit interval range for
         // our block coordinates. We also want them to be positive, since
@@ -214,7 +215,7 @@ public class UniformGrid<T> where T : new()
 
         for (int i = 0; i < numBlocks && blockIndex < Blocks.Length && blockIndex > 0; i++)
         {
-            T gridElement = Blocks[blockIndex];
+            Block gridElement = Blocks[blockIndex];
             if (func(gridElement) == GridIterationStatus.Stop)
                 return true;
 
@@ -246,13 +247,13 @@ public class UniformGrid<T> where T : new()
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? GetBlock(Vec3D position)
+    public Block? GetBlock(Vec3D position)
     {
         int x = (int)((position.X - Origin.X) / Dimension);
         int y = (int)((position.Y - Origin.Y) / Dimension);
         int index = y * Width + x;
         if (index < 0 || index >= Blocks.Length)
-            return default(T);
+            return null;
 
         return Blocks[index];
     }    
@@ -326,9 +327,9 @@ public struct BlockmapBoxIteration(int blockStartX, int blockStartY, int blockEn
     public int Width = width;
 }
 
-public ref struct BlockmapSegIterator<T>  where T : new()
+public ref struct BlockmapSegIterator
 {
-    private readonly T[] m_blocks;
+    private readonly Block[] m_blocks;
     private readonly int m_totalBlocks;
     private readonly int m_numBlocks = 1;
     private readonly int m_verticalStep;
@@ -339,7 +340,7 @@ public ref struct BlockmapSegIterator<T>  where T : new()
     private double m_absDeltaX;
     private double m_absDeltaY;
 
-    internal BlockmapSegIterator(UniformGrid<T> grid, in Seg2D seg)
+    internal BlockmapSegIterator(UniformGrid grid, in Seg2D seg)
     {
         m_blocks = grid.Blocks;
         m_totalBlocks = grid.TotalBlocks;
@@ -393,10 +394,10 @@ public ref struct BlockmapSegIterator<T>  where T : new()
             m_numBlocks = grid.Blocks.Length;
     }
         
-    public T? Next()
+    public Block? Next()
     {
         if (m_blocksVisited >= m_numBlocks || m_blockIndex < 0 || m_blockIndex >= m_totalBlocks)
-            return default;
+            return null;
 
         int currentBlockIndex = m_blockIndex;
         m_blocksVisited++;

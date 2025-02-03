@@ -52,7 +52,7 @@ public sealed class PhysicsManager
     private DataCache m_dataCache;
     private CompactBspTree m_bspTree;
     private BlockMap m_blockmap;
-    private UniformGrid<Block> m_blockmapGrid;
+    private UniformGrid m_blockmapGrid;
     private Block[] m_blockmapBlocks;
     private EntityManager m_entityManager;
     private IRandom m_random;
@@ -1414,7 +1414,7 @@ doneLinkToSectors:
         double hitTime = double.MaxValue;
         Line? blockingLine = null;
         
-        var it = new BlockmapSegIterator<Block>(m_blockmap.Blocks, cornerTracer);
+        var it = new BlockmapSegIterator(m_blockmap.Blocks, cornerTracer);
         while (true)
         {
             var block = it.Next();

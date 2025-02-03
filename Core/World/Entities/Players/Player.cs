@@ -603,14 +603,14 @@ public class Player : Entity
     {
         ViewLineClip = false;
         var box = new Box2D(pos.X, pos.Y, Radius);
-        var grid = WorldStatic.World.BlockmapTraverser.BlockmapGrid;
-        var blockLines = WorldStatic.World.BlockmapTraverser.Blockmap.BlockLines;
-        var it = grid.CreateBoxIteration(box);
+        var blockmap = WorldStatic.World.Blockmap;
+        var blockLines = WorldStatic.World.Blockmap.BlockLines;
+        var it = blockmap.CreateBoxIteration(box);
         for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = grid[by * it.Width + bx];
+                Block block = blockmap.Blocks[by * it.Width + bx];
                 int count = block.BlockLineIndex + block.BlockLineCount;
                 for (int i = block.BlockLineIndex; i < count; i++)
                 {

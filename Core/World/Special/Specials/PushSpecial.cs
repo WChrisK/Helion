@@ -4,6 +4,7 @@ using Helion.Geometry.Vectors;
 using Helion.Maps.Specials;
 using Helion.Models;
 using Helion.Util.Container;
+using Helion.World.Blockmap;
 using Helion.World.Entities;
 using Helion.World.Entities.Definition;
 using Helion.World.Geometry.Sectors;

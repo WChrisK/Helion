@@ -129,7 +129,7 @@ public class LegacyWorldRenderer : WorldRenderer
         bool occlude = m_renderData.OccludePos.HasValue;
 
         var renderBlocks = world.RenderBlockmap.Blocks;
-        var it = renderBlocks.CreateBoxIteration(box);
+        var it = world.RenderBlockmap.CreateBoxIteration(box);
         for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)

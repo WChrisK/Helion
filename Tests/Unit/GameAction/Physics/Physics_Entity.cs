@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Helion.Geometry.Grids;
 using Helion.Geometry.Vectors;
+using Helion.World.Blockmap;
 using Helion.World.Entities;
 using Helion.World.Physics;
 using System.Collections.Generic;

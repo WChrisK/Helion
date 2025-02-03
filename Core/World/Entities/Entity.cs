@@ -394,12 +394,12 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         if (BlockRange.StartX == Constants.ClearBlock)
             return;
 
-        var blocks = World.Blockmap.Blocks.Blocks;
+        var blocks = World.Blockmap.Blocks;
         for (var by = BlockRange.StartY; by <= BlockRange.EndY; by++)
         {
             for (var bx = BlockRange.StartX; bx <= BlockRange.EndX; bx++)
             {
-                var block = blocks[by * World.Blockmap.Blocks.Width + bx];
+                var block = blocks[by * World.Blockmap.Width + bx];
                 var data = block.EntityIndices;
                 for (int index = block.EntityIndicesLength - 1; index >= 0; index--)
                 {

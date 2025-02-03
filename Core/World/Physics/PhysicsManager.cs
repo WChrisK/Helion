@@ -52,7 +52,6 @@ public sealed class PhysicsManager
     private DataCache m_dataCache;
     private CompactBspTree m_bspTree;
     private BlockMap m_blockmap;
-    private UniformGrid m_blockmapGrid;
     private Block[] m_blockmapBlocks;
     private EntityManager m_entityManager;
     private IRandom m_random;
@@ -79,8 +78,7 @@ public sealed class PhysicsManager
         m_dataCache = world.DataCache;
         m_bspTree = bspTree;
         m_blockmap = blockmap;
-        m_blockmapGrid = blockmap.Blocks;
-        m_blockmapBlocks = m_blockmapGrid.Blocks;
+        m_blockmapBlocks = blockmap.Blocks;
         m_entityManager = world.EntityManager;
         m_random = random;
         BlockmapTraverser = new BlockmapTraverser(world, m_blockmap);
@@ -97,8 +95,7 @@ public sealed class PhysicsManager
         m_dataCache = world.DataCache;
         m_bspTree = bspTree;
         m_blockmap = blockmap;
-        m_blockmapGrid = blockmap.Blocks;
-        m_blockmapBlocks = m_blockmapGrid.Blocks;
+        m_blockmapBlocks = blockmap.Blocks;
         m_entityManager = world.EntityManager;
         m_random = random;
         m_alwaysStickEntitiesToFloor = alwaysStickEntitiesToFloor;
@@ -992,7 +989,7 @@ public sealed class PhysicsManager
             var minY = entity.Position.Y - entity.Radius;
             var maxX = entity.Position.X + entity.Radius;
             var maxY = entity.Position.Y + entity.Radius;
-            var it = m_blockmapGrid.CreateBoxIteration(minX, minY, maxX, maxY);
+            var it = m_blockmap.CreateBoxIteration(minX, minY, maxX, maxY);
             for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
             {
                 for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
@@ -1195,17 +1192,17 @@ doneLinkToSectors:
         var boxMaxX = x + entity.Radius;
         var boxMinY = y - entity.Radius;
         var boxMaxY = y + entity.Radius;
-        int blockStartX = Math.Max(0, (int)((boxMinX - m_blockmapGrid.Bounds.Min.X) / m_blockmapGrid.Dimension));
-        int blockStartY = Math.Max(0, (int)((boxMinY - m_blockmapGrid.Bounds.Min.Y) / m_blockmapGrid.Dimension));
-        int blockEndX = Math.Min((int)((boxMaxX - m_blockmapGrid.Bounds.Min.X) / m_blockmapGrid.Dimension), m_blockmapGrid.Width - 1);
-        int blockEndY = Math.Min((int)((boxMaxY - m_blockmapGrid.Bounds.Min.Y) / m_blockmapGrid.Dimension), m_blockmapGrid.Height - 1);
+        int blockStartX = Math.Max(0, (int)((boxMinX - m_blockmap.Bounds.Min.X) / m_blockmap.Dimension));
+        int blockStartY = Math.Max(0, (int)((boxMinY - m_blockmap.Bounds.Min.Y) / m_blockmap.Dimension));
+        int blockEndX = Math.Min((int)((boxMaxX - m_blockmap.Bounds.Min.X) / m_blockmap.Dimension), m_blockmap.Width - 1);
+        int blockEndY = Math.Min((int)((boxMaxY - m_blockmap.Bounds.Min.Y) / m_blockmap.Dimension), m_blockmap.Height - 1);
         int intersectSectorLength = 0;
 
         for (int by = blockStartY; by <= blockEndY; by++)
         {
             for (int bx = blockStartX; bx <= blockEndX; bx++)
             {
-                var block = m_blockmapBlocks[by * m_blockmapGrid.Width + bx];
+                var block = m_blockmapBlocks[by * m_blockmap.Width + bx];
                 var entityIndices = block.EntityIndices;
                 if (checkEntities)
                 {
@@ -1414,7 +1411,7 @@ doneLinkToSectors:
         double hitTime = double.MaxValue;
         Line? blockingLine = null;
         
-        var it = new BlockmapSegIterator(m_blockmap.Blocks, cornerTracer);
+        var it = new BlockmapSegIterator(m_blockmap, cornerTracer);
         while (true)
         {
             var block = it.Next();

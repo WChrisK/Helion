@@ -605,13 +605,6 @@ public sealed class PhysicsManager
         }
     }
 
-    private enum LineBlock
-    {
-        NoBlock,
-        BlockStopChecking,
-        BlockContinue,
-    }
-
     private LineBlock LineBlocksEntity(Entity entity, double x, double y, ref BlockLine line, TryMoveData? tryMove)
     {
         if (Line.BlocksEntity(entity, x, y, line.Segment, line.OneSided, line.Flags, WorldStatic.Mbf21))
@@ -1086,8 +1079,8 @@ doneLinkToSectors:
 
             if (numMoves > 1)
             {
-                stepDelta.X = stepDelta.X / numMoves;
-                stepDelta.Y = stepDelta.Y / numMoves;
+                stepDelta.X /= numMoves;
+                stepDelta.Y /= numMoves;
             }
         }
 
@@ -1303,7 +1296,7 @@ doneLinkToSectors:
         tryMove.IntersectSectors.Length = intersectSectorLength;
 
         if (entity.BlockingLine != null && Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, entity.BlockingLine.Segment, 
-            entity.BlockingLine.Back == null, entity.BlockingLine.Flags, WorldStatic.Mbf21))
+            entity.BlockingLine.Back == null, entity.BlockingLine.Flags.Blocking, WorldStatic.Mbf21))
         {
             tryMove.Subsector = null;
             tryMove.Success = false;
@@ -1514,9 +1507,9 @@ doneLinkToSectors:
             }
         }
 
-        Seg2D first = new Seg2D(corners[0], new Vec2D(corners[0].X + stepDelta.X, corners[0].Y + stepDelta.Y));
-        Seg2D second = new Seg2D(corners[1], new Vec2D(corners[1].X + stepDelta.X, corners[1].Y + stepDelta.Y));
-        Seg2D third = new Seg2D(corners[2], new Vec2D(corners[2].X + stepDelta.X, corners[2].Y + stepDelta.Y));
+        var first = new Seg2D(corners[0], new Vec2D(corners[0].X + stepDelta.X, corners[0].Y + stepDelta.Y));
+        var second = new Seg2D(corners[1], new Vec2D(corners[1].X + stepDelta.X, corners[1].Y + stepDelta.Y));
+        var third = new Seg2D(corners[2], new Vec2D(corners[2].X + stepDelta.X, corners[2].Y + stepDelta.Y));
 
         CheckCornerTracerIntersection(first, entity, ref moveInfo);
         CheckCornerTracerIntersection(second, entity, ref moveInfo);

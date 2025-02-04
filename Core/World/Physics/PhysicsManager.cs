@@ -618,7 +618,7 @@ public sealed class PhysicsManager
         }
         else
         {
-            opening = GetLineOpening(m_world.StructLines[line.LineId]);
+            opening = GetLineOpening(line.FrontSector, line.BackSector!);
         }
 
         if (opening.CanPassOrStepThrough(entity))
@@ -627,15 +627,9 @@ public sealed class PhysicsManager
         return LineBlock.BlockContinue;
     }
 
-    public LineOpening GetLineOpening(Line line)
+    public LineOpening GetLineOpening(Sector front, Sector back)
     {
-        m_lineOpening.Set(line);
-        return m_lineOpening;
-    }
-
-    public LineOpening GetLineOpening(in StructLine line)
-    {
-        m_lineOpening.Set(line);
+        m_lineOpening.Set(front, back);
         return m_lineOpening;
     }
 

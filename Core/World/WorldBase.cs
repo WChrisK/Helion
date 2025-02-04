@@ -1240,7 +1240,7 @@ public abstract partial class WorldBase : IWorld
 
             if (line.Back != null)
             {
-                LineOpening opening = PhysicsManager.GetLineOpening(line);
+                LineOpening opening = PhysicsManager.GetLineOpening(line.Front.Sector, line.Back.Sector!);
                 if (opening.OpeningHeight <= 0)
                 {
                     hitBlockLine = true;
@@ -1557,7 +1557,7 @@ public abstract partial class WorldBase : IWorld
                     break;
                 }
 
-                var opening = PhysicsManager.GetLineOpening(line);
+                var opening = PhysicsManager.GetLineOpening(line.FrontSector, line.BackSector!);
                 if ((floorZ != double.MinValue && opening.FloorZ > intersect.Z && intersect.Z > floorZ) || 
                     (ceilingZ != double.MaxValue && opening.CeilingZ < intersect.Z && intersect.Z < ceilingZ))
                 {
@@ -2516,7 +2516,7 @@ public abstract partial class WorldBase : IWorld
                 if (line.FrontSector == line.BackSector)
                     continue;
 
-                var opening = PhysicsManager.GetLineOpening(line);
+                var opening = PhysicsManager.GetLineOpening(line.FrontSector, line.BackSector!);
                 if (opening.FloorZ < opening.CeilingZ)
                 {
                     double sectorPitch = start.Pitch(opening.FloorZ, bi.SegTime * segLength);

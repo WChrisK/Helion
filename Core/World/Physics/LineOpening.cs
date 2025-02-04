@@ -58,44 +58,9 @@ public class LineOpening
         CeilingSector = null;
     }
 
-    public void Set(Line line)
+    public void Set(Sector front, Sector back)
     {
-        Assert.Precondition(line.Back != null, "Cannot create LineOpening with one sided line");
-
-        Sector front = line.Front.Sector;
-        Sector back = line.Back!.Sector;
-
-        if (front.Ceiling.Z < back.Ceiling.Z)
-        {
-            CeilingZ = front.Ceiling.Z;
-            CeilingSector = front;
-        }
-        else
-        {
-            CeilingZ = back.Ceiling.Z;
-            CeilingSector = back;
-        }
-
-        if (front.Floor.Z > back.Floor.Z)
-        {
-            FloorZ = front.Floor.Z;
-            FloorSector = front;
-        }
-        else
-        {
-            FloorZ = back.Floor.Z;
-            FloorSector = back;
-        }
-
-        OpeningHeight = CeilingZ - FloorZ;
-    }
-
-    public void Set(in StructLine line)
-    {
-        Assert.Precondition(line.BackSector != null, "Cannot create LineOpening with one sided line");
-
-        Sector front = line.FrontSector;
-        Sector back = line.BackSector!;
+        Assert.Precondition(back != null, "Cannot create LineOpening with one sided line");
 
         if (front.Ceiling.Z < back.Ceiling.Z)
         {

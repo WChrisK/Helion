@@ -1836,11 +1836,15 @@ public abstract partial class WorldBase : IWorld
             }
 
             bool skyClip = false;
-            if (entity.BlockingLine != null && entity.BlockingLine.Back != null)
+            if (entity.BlockingLineId != -1)
             {
-                GetOrderedSectors(StructLines.Data[entity.BlockingLine.Id], entity.Position, out Sector front, out Sector back);
-                if (IsSkyClipTwoSided(front, back, entity.Position))
-                    skyClip = true;
+                ref var line = ref StructLines.Data[entity.BlockingLineId];
+                if (line.BackSector != null)
+                {
+                    GetOrderedSectors(line, entity.Position, out Sector front, out Sector back);
+                    if (IsSkyClipTwoSided(front, back, entity.Position))
+                        skyClip = true;
+                }
             }
 
             if (entity.BlockingSectorPlane != null && ArchiveCollection.TextureManager.IsSkyTexture(entity.BlockingSectorPlane.TextureHandle))

@@ -24,7 +24,6 @@ public class TryMoveData
     public Subsector? Subsector;
 
     public Entity? BlockingEntity;
-    public Line? BlockingLine;
 
     public DynamicArray<Entity> IntersectEntities2D = new(128);
     public DynamicArray<Line> IntersectSpecialLines = new(128);
@@ -46,7 +45,6 @@ public class TryMoveData
         DropOffEntity = null;
         Subsector = null;
         BlockingEntity = null;
-        BlockingLine = null;
     }
 
     public void SetIntersectionData(LineOpening opening)

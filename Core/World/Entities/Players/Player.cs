@@ -1,5 +1,6 @@
 using Helion.Audio;
 using Helion.Geometry.Boxes;
+using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Maps.Specials.ZDoom;
 using Helion.Models;
@@ -462,16 +463,16 @@ public class Player : Entity
             m_jumpStartZ = double.MaxValue;
         }
 
-        if (!Flags.NoGravity && !Flags.NoClip && !IsDead && BlockingLine != null &&
+        if (!Flags.NoGravity && !Flags.NoClip && !IsDead && BlockingLineId != -1 &&
             Sector.Friction > Constants.DefaultFriction &&
             Position.Z <= Sector.Floor.Z &&
             Math.Abs(velocity.X) + Math.Abs(velocity.Y) > 8 &&
-            CheckIcyBounceLineAngle(BlockingLine, velocity))
+            CheckIcyBounceLineAngle(World.StructLines.Data[BlockingLineId].Segment, velocity))
         {
             var existingSound = SoundChannels[(int)SoundChannel.Default];
             if (existingSound == null || !existingSound.AudioData.SoundInfo.Name.EndsWith("*grunt"))
                 PlayGruntSound();
-            var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, null);
+            var bounceVelocity = MathHelper.BounceVelocity(velocity.XY);
             Velocity.X = bounceVelocity.X / 2;
             Velocity.Y = bounceVelocity.Y / 2;
         }
@@ -479,11 +480,11 @@ public class Player : Entity
         base.Hit(velocity);
     }
 
-    private bool CheckIcyBounceLineAngle(Line line, in Vec3D velocity)
+    private bool CheckIcyBounceLineAngle(in Seg2D segment, in Vec3D velocity)
     {
-        var onFront = line.Segment.OnRight(Position);
+        var onFront = segment.OnRight(Position);
         var velocityAngle = Math.Atan2(velocity.Y, velocity.X);
-        var lineAngle = onFront ? line.Segment.Start.Angle(line.Segment.End) : line.Segment.End.Angle(line.Segment.Start);
+        var lineAngle = onFront ? segment.Start.Angle(segment.End) : segment.End.Angle(segment.Start);
         var bounceAngle = MathHelper.GetPositiveAngle(velocityAngle - lineAngle);
 
         return bounceAngle > MathHelper.QuarterPi && bounceAngle < MathHelper.HalfPi + MathHelper.QuarterPi;

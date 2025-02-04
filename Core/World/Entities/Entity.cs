@@ -83,7 +83,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public DynamicArray<Sector> IntersectSectors = new();
     public int Id;
     public int ThingId;
-    public Line? BlockingLine;
+    public int BlockingLineId;
     public Entity? BlockingEntity;
     public SectorPlane? BlockingSectorPlane;
 
@@ -105,7 +105,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public virtual SoundChannel WeaponSoundChannel => SoundChannel.Default;
     public virtual int ProjectileKickBack => Properties.ProjectileKickBack;
 
-    public bool IsBlocked() => BlockingEntity != null || BlockingLine != null || BlockingSectorPlane != null;
+    public bool IsBlocked() => BlockingEntity != null || BlockingLineId != -1 || BlockingSectorPlane != null;
     public readonly DynamicArray<LinkableNode<Entity>> SectorNodes = new();
     public bool IsDisposed;
 
@@ -148,6 +148,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         SubsectorId = 0;
         Properties = null!;
         BlockRange.StartX = Constants.ClearBlock;
+        BlockingLineId = -1;
     }
 
     public void Set(int index, int id, int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
@@ -384,7 +385,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         }
 
         IntersectSectors.Clear();
-        BlockingLine = null;
+        BlockingLineId = -1;
         BlockingEntity = null;
         BlockingSectorPlane = null;
     }
@@ -870,7 +871,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
             }
 
             // Bounce off plane if it's the only thing blocking
-            if (BlockingSectorPlane != null && BlockingLine == null && BlockingEntity == null)
+            if (BlockingSectorPlane != null && BlockingLineId == -1 && BlockingEntity == null)
             {
                 Velocity = velocity;
                 Velocity.Z = -velocity.Z;
@@ -896,9 +897,9 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
             if (bouncePlane)
                 Velocity.Z = -velocity.Z * zFactor;
 
-            if (bounceWall && BlockingLine != null)
+            if (bounceWall && BlockingLineId != -1)
             {
-                var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, BlockingLine);
+                var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, World.StructLines.Data[BlockingLineId].Segment);
                 Velocity.X = bounceVelocity.X;
                 Velocity.Y = bounceVelocity.Y;
             }
@@ -908,7 +909,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public bool ShouldDieOnCollision()
     {
         if (Flags.MbfBouncer && Flags.Missile)
-            return BlockingEntity != null || BlockingLine != null;
+            return BlockingEntity != null || BlockingLineId != -1;
 
         return Flags.Missile;
     }
@@ -965,7 +966,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Respawn = false;
         HadOnEntity = false;
         ClosetFlags = ClosetFlags.None;
-        BlockingLine = null;
+        BlockingLineId = -1;
         BlockingEntity = null;
         BlockingSectorPlane = null;
         Sector = Sector.Default;

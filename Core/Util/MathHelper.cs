@@ -1,5 +1,6 @@
 using System;
 using Helion.Geometry;
+using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.World.Geometry.Lines;
 
@@ -385,13 +386,16 @@ public static class MathHelper
         return n > 0 && (n & ~(n ^ (n - 1))) == 0;
     }
 
-    public static Vec2D BounceVelocity(Vec2D velocity, Line? line)
+    public static Vec2D BounceVelocity(Vec2D velocity)
     {
         double velocityAngle = Math.Atan2(velocity.X, velocity.Y);
-        if (line == null)
-            return velocity.Rotate(Pi);
+        return velocity.Rotate(Pi);
+    }
 
-        double newAngle = 2 * line.Segment.Start.Angle(line.Segment.End) - velocityAngle;
+    public static Vec2D BounceVelocity(Vec2D velocity, in Seg2D segment)
+    {
+        double velocityAngle = Math.Atan2(velocity.X, velocity.Y);
+        double newAngle = 2 * segment.Start.Angle(segment.End) - velocityAngle;
         if (GetPositiveAngle(newAngle) == GetPositiveAngle(velocityAngle))
             newAngle += Pi;
         return velocity.Rotate(newAngle - velocityAngle);

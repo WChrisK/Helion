@@ -1390,7 +1390,7 @@ doneLinkToSectors:
             MoveCloseToBlockingLine(entity, stepDelta, moveInfo, out Vec2D residualStep, tryMove) &&
             !entity.Flags.Teleported)
         {
-            ReorientToSlideAlong(entity, moveInfo.BlockingLine!, residualStep, ref stepDelta, ref movesLeft);
+            ReorientToSlideAlong(entity, m_world.Blockmap.BlockLines[moveInfo.BlockLineIndex].Segment, residualStep, ref stepDelta, ref movesLeft);
             return;
         }
 
@@ -1412,7 +1412,7 @@ doneLinkToSectors:
     {
         bool hit = false;
         double hitTime = double.MaxValue;
-        Line? blockingLine = null;
+        int blockLineIndex = -1;
         
         var it = new BlockmapSegIterator(m_blockmap, cornerTracer);
         while (true)
@@ -1431,13 +1431,13 @@ doneLinkToSectors:
                 {
                     hit = true;
                     hitTime = time;
-                    blockingLine = m_world.Lines[line.LineId];
+                    blockLineIndex = i;
                 }                
             }
         }
 
         if (hit && hitTime < moveInfo.LineIntersectionTime)
-            moveInfo = MoveInfo.From(blockingLine!, hitTime);
+            moveInfo = MoveInfo.From(blockLineIndex, hitTime);
     }
 
     private bool FindClosestBlockingLine(Entity entity, Vec2D stepDelta, out MoveInfo moveInfo)
@@ -1549,14 +1549,14 @@ doneLinkToSectors:
         return false;
     }
 
-    private static void ReorientToSlideAlong(Entity entity, Line blockingLine, Vec2D residualStep, ref Vec2D stepDelta,
+    private static void ReorientToSlideAlong(Entity entity, in Seg2D blockingLineSeg, Vec2D residualStep, ref Vec2D stepDelta,
         ref int movesLeft)
     {
         // Our slide direction depends on if we're going along with the
         // line or against the line. If the dot product is negative, it
         // means we are facing away from the line and should slide in
         // the opposite direction from the way the line is pointing.
-        Vec2D unitDirection = blockingLine.Segment.Delta.Unit();
+        Vec2D unitDirection = blockingLineSeg.Delta.Unit();
         if (stepDelta.Dot(unitDirection) < 0)
             unitDirection = -unitDirection;
 

@@ -47,7 +47,6 @@ using Helion.Maps.Specials;
 using Helion.World.Entities.Definition.States;
 using Helion.World.Special.Specials;
 using Helion.World.Static;
-using Helion.Geometry.Grids;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Primitives;
 using static Helion.Dehacked.DehackedDefinition;
 using Helion.Resources.Definitions.MusInfo;

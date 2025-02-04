@@ -17,6 +17,7 @@ using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Subsectors;
 using Helion.World.Physics.Blockmap;
+using Helion.World.Special;
 using Helion.World.Special.SectorMovement;
 using Helion.World.Special.Specials;
 using static Helion.Util.Assertion.Assert;
@@ -1259,14 +1260,13 @@ doneLinkToSectors:
                     if (blockLine.Segment.Intersects(boxMinX, boxMinY, boxMaxX, boxMaxY))
                     {
                         var blockType = LineBlocksEntity(entity, x, y, ref blockLine, tryMove);
-                        var line = m_world.Lines[blockLine.LineId];
                         if (blockType != LineBlock.NoBlock)
                         {
                             entity.BlockingLineId = blockLine.LineId;
                             blockLineIndex = i;
                             tryMove.Success = false;
                             if (!entity.Flags.NoClip && blockLine.HasSpecial)
-                                tryMove.ImpactSpecialLines.Add(line);
+                                tryMove.ImpactSpecialLines.Add(blockLine.LineId);
                             if (blockType == LineBlock.BlockStopChecking)
                                 goto doneIsPositionValid;
                         }
@@ -1274,9 +1274,9 @@ doneLinkToSectors:
                         if (!entity.Flags.NoClip && blockLine.HasSpecial)
                         {
                             if (blockType == LineBlock.NoBlock)
-                                tryMove.IntersectSpecialLines.Add(line);
+                                tryMove.IntersectSpecialLines.Add(blockLine.LineId);
                             else
-                                tryMove.ImpactSpecialLines.Add(line);
+                                tryMove.ImpactSpecialLines.Add(blockLine.LineId);
                         }
 
                         tryMove.IntersectSectors.Data[intersectSectorLength++] = blockLine.FrontSector;
@@ -1369,17 +1369,18 @@ doneLinkToSectors:
             if (entity.Flags.Teleported)
                 break;
 
-            var line = tryMove.IntersectSpecialLines[i];
-            bool fromFront = line.Segment.PerpDot(prevX, prevY) <= 0;
-            if (fromFront != (line.Segment.PerpDot(entity.Position.X, entity.Position.Y) <= 0))
+            var lineId = tryMove.IntersectSpecialLines[i];
+            ref var lineSeg = ref m_world.StructLines.Data[lineId].Segment;
+            bool fromFront = lineSeg.PerpDot(prevX, prevY) <= 0;
+            if (fromFront != (lineSeg.PerpDot(entity.Position.X, entity.Position.Y) <= 0))
             {
-                if (line.Special.IsTeleport() && !fromFront)
+                if (!fromFront && m_world.Lines[lineId].Special.IsTeleport())
                     continue;
 
-                if (!m_world.CanActivate(entity, line, ActivationContext.CrossLine))
+                if (!m_world.CanActivate(entity, m_world.Lines[lineId], ActivationContext.CrossLine))
                     continue;
 
-                m_world.ActivateSpecialLine(entity, line, ActivationContext.CrossLine, fromFront);
+                m_world.ActivateSpecialLine(entity, m_world.Lines[lineId], ActivationContext.CrossLine, fromFront);
             }
         }
     }

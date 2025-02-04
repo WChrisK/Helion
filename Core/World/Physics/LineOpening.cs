@@ -62,7 +62,7 @@ public class LineOpening
     {
         Assert.Precondition(back != null, "Cannot create LineOpening with one sided line");
 
-        if (front.Ceiling.Z < back.Ceiling.Z)
+        if (front.Ceiling.Z < back!.Ceiling.Z)
         {
             CeilingZ = front.Ceiling.Z;
             CeilingSector = front;

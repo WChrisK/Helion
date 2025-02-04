@@ -489,10 +489,10 @@ public partial class Entity
             if (tryMove != null)
             {
                 for (int i = 0; i < tryMove.ImpactSpecialLines.Length; i++)
-                    WorldStatic.World.ActivateSpecialLine(this, tryMove.ImpactSpecialLines[i], ActivationContext.UseLine, true);
+                    WorldStatic.World.ActivateSpecialLine(this, WorldStatic.World.Lines[tryMove.ImpactSpecialLines[i]], ActivationContext.UseLine, true);
 
                 for (int i = 0; i < tryMove.IntersectSpecialLines.Length; i++)
-                    WorldStatic.World.ActivateSpecialLine(this, tryMove.IntersectSpecialLines[i], ActivationContext.UseLine, true);
+                    WorldStatic.World.ActivateSpecialLine(this, WorldStatic.World.Lines[tryMove.IntersectSpecialLines[i]], ActivationContext.UseLine, true);
             }
 
             return false;

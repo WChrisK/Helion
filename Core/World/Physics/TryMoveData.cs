@@ -26,8 +26,8 @@ public class TryMoveData
     public Entity? BlockingEntity;
 
     public DynamicArray<Entity> IntersectEntities2D = new(128);
-    public DynamicArray<Line> IntersectSpecialLines = new(128);
-    public DynamicArray<Line> ImpactSpecialLines = new(128);
+    public DynamicArray<int> IntersectSpecialLines = new(128);
+    public DynamicArray<int> ImpactSpecialLines = new(128);
     public DynamicArray<Sector> IntersectSectors = new();
 
     public void SetPosition(double x, double y)

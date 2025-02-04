@@ -1820,7 +1820,7 @@ public abstract partial class WorldBase : IWorld
         if (tryMove != null && (entity.Flags.Missile || entity.IsPlayer))
         {
             for (int i = 0; i < tryMove.ImpactSpecialLines.Length; i++)
-                ActivateSpecialLine(entity, tryMove.ImpactSpecialLines[i], ActivationContext.EntityImpactsWall, true);
+                ActivateSpecialLine(entity, Lines[tryMove.ImpactSpecialLines[i]], ActivationContext.EntityImpactsWall, true);
 
             if (entity.PlayerObj != null && !entity.PlayerObj.IsVooDooDoll && Config.Game.BumpUse)
                 PlayerBumpUse(entity);

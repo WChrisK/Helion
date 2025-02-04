@@ -1231,8 +1231,8 @@ doneLinkToSectors:
                         // This flag can be modified by dehacked
                         if (overlapsZ && canPickup && nextEntity.Flags.Special)
                         {
-                            // Set the next node - this pickup can be removed from the list
-                            m_world.PerformItemPickup(entity, nextEntity);
+                            if (entity.PlayerObj != null)
+                                m_world.PerformItemPickup(entity, nextEntity);
                             continue;
                         }
 

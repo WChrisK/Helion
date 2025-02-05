@@ -31,7 +31,7 @@ public class PlayerClippedLine
 
         int startTick = World.Gametick;
         GameActions.PlayerRunBackward(World, Player.AngleRadians, () => { return World.Gametick - startTick < 5; }, TimeSpan.FromSeconds(5));
-        Player.BlockingLineId.Should().Be(2);
+        World.Blockmap.BlockLines[Player.BlockingLineId].LineId.Should().Be(2);
         Player.Position.Should().Be(startPos);
 
         GameActions.PlayerRunForward(World, Player.AngleRadians, () => { return Player.Position.Y < -600; }, TimeSpan.FromSeconds(5));

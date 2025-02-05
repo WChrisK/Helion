@@ -899,7 +899,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
             if (bounceWall && BlockingLineId != -1)
             {
-                var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, World.StructLines.Data[BlockingLineId].Segment);
+                var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, World.Blockmap.BlockLines[BlockingLineId].Segment);
                 Velocity.X = bounceVelocity.X;
                 Velocity.Y = bounceVelocity.Y;
             }

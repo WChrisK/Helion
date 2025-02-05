@@ -15,15 +15,9 @@ public struct BlockmapIntersect : IComparable<BlockmapIntersect>
     public const int EntityMask = ~EntityFlag;
 
     // Packs to 8 bytes
+    // Index maps to DataCache.Entites or Blockmap.BlockLines
     public int Index;
     public double SegTime;
-
-    public BlockmapIntersect(int lineId, double segTime)
-    {
-        Index = lineId;
-        SegTime = segTime;
-    }
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly IntersectType GetIndex(out int index)

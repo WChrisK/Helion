@@ -1219,7 +1219,7 @@ public abstract partial class WorldBase : IWorld
             if (bi.GetIndex(out var lineIndex) != IntersectType.Line)
                 continue;
 
-            var line = Lines[lineIndex];
+            var line = Lines[Blockmap.BlockLines[lineIndex].LineId];
             OnTryEntityUseLine(entity, line);
 
             if (line.Segment.OnRight(start))
@@ -1281,7 +1281,7 @@ public abstract partial class WorldBase : IWorld
             if (bi.GetIndex(out var lineIndex) != IntersectType.Line)
                 continue;
 
-            var line = Lines[lineIndex];
+            var line = Lines[Blockmap.BlockLines[lineIndex].LineId];
             bool specialActivate = line.HasSpecial && line.Segment.OnRight(start);
             if (specialActivate)
                 shouldUse = true;
@@ -1498,11 +1498,11 @@ public abstract partial class WorldBase : IWorld
             var isLine = bi.GetIndex(out var index) == IntersectType.Line;
             if (isLine)
             {
-                ref var line = ref StructLines.Data[index];
-                if (damage != Constants.HitscanTestDamage && (line.Flags & StructLineFlags.HasSpecial) != 0 && 
-                    CanActivate(shooter, line.Line, ActivationContext.HitscanImpactsWall))
+                ref var line = ref Blockmap.BlockLines[index];
+                if (damage != Constants.HitscanTestDamage && line.HasSpecial && 
+                    CanActivate(shooter, Lines[line.LineId], ActivationContext.HitscanImpactsWall))
                 {
-                    var args = new EntityActivateSpecial(ActivationContext.HitscanImpactsWall, shooter, line.Line, true);
+                    var args = new EntityActivateSpecial(ActivationContext.HitscanImpactsWall, shooter, Lines[line.LineId], true);
                     EntityActivatedSpecial(args);
                 }
 
@@ -1837,7 +1837,7 @@ public abstract partial class WorldBase : IWorld
             bool skyClip = false;
             if (entity.BlockingLineId != -1)
             {
-                ref var line = ref StructLines.Data[entity.BlockingLineId];
+                ref var line = ref Blockmap.BlockLines[entity.BlockingLineId];
                 if (line.BackSector != null)
                 {
                     GetOrderedSectors(line, entity.Position, out Sector front, out Sector back);
@@ -2512,7 +2512,7 @@ public abstract partial class WorldBase : IWorld
 
             if (bi.GetIndex(out int index) == IntersectType.Line)
             {
-                ref var line = ref StructLines.Data[index];
+                ref var line = ref Blockmap.BlockLines[index];
                 if (line.BackSector == null)
                     return TraversalPitchStatus.Blocked;
 
@@ -2609,7 +2609,7 @@ public abstract partial class WorldBase : IWorld
         }
     }
 
-    private static void GetOrderedSectors(in StructLine line, in Vec3D start, out Sector front, out Sector back)
+    private static void GetOrderedSectors(in BlockLine line, in Vec3D start, out Sector front, out Sector back)
     {
         if (line.Segment.OnRight(start))
         {

@@ -467,7 +467,7 @@ public class Player : Entity
             Sector.Friction > Constants.DefaultFriction &&
             Position.Z <= Sector.Floor.Z &&
             Math.Abs(velocity.X) + Math.Abs(velocity.Y) > 8 &&
-            CheckIcyBounceLineAngle(World.StructLines.Data[BlockingLineId].Segment, velocity))
+            CheckIcyBounceLineAngle(World.Blockmap.BlockLines[BlockingLineId].Segment, velocity))
         {
             var existingSound = SoundChannels[(int)SoundChannel.Default];
             if (existingSound == null || !existingSound.AudioData.SoundInfo.Name.EndsWith("*grunt"))

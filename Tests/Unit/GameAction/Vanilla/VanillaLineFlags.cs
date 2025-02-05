@@ -85,7 +85,7 @@ namespace Helion.Tests.Unit.GameAction
             var bi = GameActions.FireHitscanTest(World, Player);
             bi.Should().NotBeNull();
             bi!.Value.GetIndex(out var index).Should().Be(IntersectType.Line);
-            index.Should().Be(2);
+            World.Blockmap.BlockLines[index].LineId.Should().Be(2);
         }
 
         [Fact(DisplayName = "Two-sided line block monster")]
@@ -106,7 +106,7 @@ namespace Helion.Tests.Unit.GameAction
             var bi = GameActions.FireHitscanTest(World, Player);
             bi.Should().NotBeNull();
             bi!.Value.GetIndex(out var index).Should().Be(IntersectType.Line);
-            index.Should().Be(6);
+            World.Blockmap.BlockLines[index].LineId.Should().Be(6);
         }
     }
 }

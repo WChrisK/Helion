@@ -57,6 +57,6 @@ public class Friendly
         Player.AngleRadians = GameActions.GetAngle(Bearing.South);
         GameActions.SetEntityPosition(World, Player, start);
         GameActions.MoveEntity(World, Player, 32);
-        Player.BlockingLineId.Should().Be(line.Id);
+        World.Blockmap.BlockLines[Player.BlockingLineId].LineId.Should().Be(line.Id);
     }
 }

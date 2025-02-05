@@ -1101,7 +1101,7 @@ doneLinkToSectors:
 
             if (entity.BlockingLineId != -1 && entity.PlayerObj != null && !entity.PlayerObj.IsVooDooDoll)
             {
-                ref var line = ref m_world.StructLines.Data[entity.BlockingLineId];
+                ref var line = ref m_world.Blockmap.BlockLines[entity.BlockingLineId];
                 if (Line.CanMoveOutOf(entity, nextX, nextY, line.Segment, line.BackSector == null))
                 {
                     TryMoveData.BlockedLineClearsVelocity = false;
@@ -1262,7 +1262,7 @@ doneLinkToSectors:
                         var blockType = LineBlocksEntity(entity, x, y, ref blockLine, tryMove);
                         if (blockType != LineBlock.NoBlock)
                         {
-                            entity.BlockingLineId = blockLine.LineId;
+                            entity.BlockingLineId = i;
                             blockLineIndex = i;
                             tryMove.Success = false;
                             if (!entity.Flags.NoClip && blockLine.HasSpecial)

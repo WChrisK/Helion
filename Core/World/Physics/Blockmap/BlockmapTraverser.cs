@@ -95,7 +95,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
                     }
 
                     ref var bi = ref arrayData[length];
-                    bi.Index = line.LineId;
+                    bi.Index = i;
                     bi.SegTime = t;
                     length++;
                 }
@@ -143,7 +143,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
                     }
 
                     ref var bi = ref arrayData[length];
-                    bi.Index = line.LineId;
+                    bi.Index = i;
                     bi.SegTime = t;
                     length++;
                 }                
@@ -371,7 +371,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
                     }
 
                     ref var bi = ref arrayData[length++];
-                    bi.Index = line.LineId;
+                    bi.Index = i;
                     bi.SegTime = t;
                 }
                 

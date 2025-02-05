@@ -26,7 +26,7 @@ public partial class Physics
         var plasma = GameActions.GetEntity(World, "PlasmaBall");
         GameActions.TickWorld(World, () => plasma.BlockingLineId == -1 && plasma.BlockingEntity == null, () => { });
 
-        plasma.BlockingLineId.Should().Be(410);
+        World.Blockmap.BlockLines[plasma.BlockingLineId].LineId.Should().Be(410);
         World.Config.Compatibility.MissileClip.Set(false);
     }
 

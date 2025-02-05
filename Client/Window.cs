@@ -69,6 +69,9 @@ public class Window : GameWindow, IWindow
             m_config.Controller.GyroNoise,
             m_config.Controller.GyroDrift,
             m_inputManager);
+
+        m_config.Render.MaxFPS.OnChanged += OnMaxFpsChanged;
+        m_config.Render.VSync.OnChanged += OnVSyncChanged;
     }
 
     public void SetMousePosition(Vec2I pos)

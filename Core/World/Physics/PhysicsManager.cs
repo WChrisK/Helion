@@ -1409,7 +1409,7 @@ doneLinkToSectors:
         movesLeft = 0;
     }
 
-    private void CheckCornerTracerIntersection(Seg2D cornerTracer, Entity entity, ref MoveInfo moveInfo)
+    private void CheckCornerTracerIntersection(in Seg2D cornerTracer, Entity entity, ref MoveInfo moveInfo)
     {
         bool hit = false;
         double hitTime = double.MaxValue;

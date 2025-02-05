@@ -49,7 +49,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         }
     }
 
-    public void SightTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections, out bool hitOneSidedLine)
+    public void SightTraverse(in Seg2D seg, DynamicArray<BlockmapIntersect> intersections, out bool hitOneSidedLine)
     {
         int checkCounter = ++WorldStatic.CheckCounter;
         hitOneSidedLine = false;
@@ -111,7 +111,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         intersections.Sort();
     }
 
-    public void ShootTraverse(Seg2D seg, DynamicArray<BlockmapIntersect> intersections)
+    public void ShootTraverse(in Seg2D seg, DynamicArray<BlockmapIntersect> intersections)
     {
         Vec2D intersect = Vec2D.Zero;
         int checkCounter = ++WorldStatic.CheckCounter;

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Helion.Client.Input;
 using Helion.Client.Input.Controller;
 using Helion.Geometry;
@@ -15,8 +17,6 @@ using NLog;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using System;
-using System.Collections.Generic;
 using static Helion.Util.Assertion.Assert;
 
 namespace Helion.Client;
@@ -49,10 +49,10 @@ public class Window : GameWindow, IWindow
         Log.Debug("Creating client window");
         onCreate();
         m_config = config;
+        UpdateWindow();
         m_inputManagement = inputManagement;
         CursorState = config.Mouse.Focus ? CursorState.Grabbed : CursorState.Hidden;
         Renderer = new(this, config, archiveCollection, tracker);
-        SetSyncMode(config.Render.MaxFPS, config.Render.VSync);
 
         KeyDown += Window_KeyDown;
         KeyUp += Window_KeyUp;
@@ -80,25 +80,6 @@ public class Window : GameWindow, IWindow
         InputManager.MousePosition = pos;
     }
 
-    public void SetWindowState(RenderWindowState state)
-    {
-        switch (state)
-        {
-            case RenderWindowState.Fullscreen:
-                WindowState = WindowState.Fullscreen;
-                break;
-            case RenderWindowState.Normal:
-                WindowState = WindowState.Normal;
-                break;
-        }
-    }
-
-    public void SetDimension(Dimension dimension) =>
-        Size = new(dimension.Width, dimension.Height);
-
-    public void SetBorder(WindowBorder border) =>
-        WindowBorder = border;
-
     public void SetDisplay(int display)
     {
         // Setting the monitor will force to fullscreen
@@ -106,7 +87,7 @@ public class Window : GameWindow, IWindow
             return;
 
         CurrentMonitor = GetMonitorHandle(display);
-        SetSyncMode(m_config.Render.MaxFPS, m_config.Render.VSync);
+        UpdateWindow();
     }
 
     public List<MonitorData> GetMonitors(out MonitorData? currentMonitor)
@@ -177,6 +158,40 @@ public class Window : GameWindow, IWindow
             RenderWindowState.Fullscreen => WindowState.Fullscreen,
             _ => WindowState.Normal,
         };
+    }
+
+    /// <summary>
+    /// Update the window, ensuring that all of the border/dimension/screen state parameters remain logically consistent
+    /// </summary>
+    public void UpdateWindow()
+    {
+        // Apply fullscreen / window / borderless fullscreen window mode, ensure size and borders
+        switch (m_config.Window.State.Value)
+        {
+            case RenderWindowState.Fullscreen:
+                WindowState = WindowState.Fullscreen;
+                break;
+            case RenderWindowState.Normal:
+                WindowState oldWindowState = WindowState;
+                WindowState = WindowState.Normal;
+                Dimension dimension = m_config.Window.Dimension.Value;
+                Size = (dimension.Width, dimension.Height);
+                if (WindowState != oldWindowState)
+                {
+                    CenterWindow();
+                }
+                WindowBorder = m_config.Window.Border;
+                break;
+            case RenderWindowState.BorderlessFullscreenWindow:
+                CenterWindow();
+                WindowState = WindowState.Normal;
+                WindowBorder = WindowBorder.Hidden;
+                MonitorInfo monitorInfo = Monitors.GetMonitorFromWindow(this);
+                Size = (monitorInfo.HorizontalResolution, monitorInfo.VerticalResolution);
+                break;
+        }
+
+        SetSyncMode(m_config.Render.MaxFPS.Value, m_config.Render.VSync.Value);
     }
 
     private static void SetDisplay(int display, NativeWindowSettings settings)

@@ -51,8 +51,12 @@ public partial class Client
             CalculateHudScale();
     }
 
-    private void WindowDisplay_OnChanged(object? sender, int display) =>
+    private void WindowDisplay_OnChanged(object? sender, int display)
+    {
         m_window.SetDisplay(display);
+        m_window.UpdateWindow();
+        CalculateHudScale();
+    }
 
     private void WindowVirtualEnable_OnChanged(object? sender, bool set) =>
         CalculateHudScale();
@@ -62,18 +66,18 @@ public partial class Client
 
     private void WindowBorder_OnChanged(object? sender, WindowBorder border)
     {
-        m_window.SetBorder(border);
+        m_window.UpdateWindow();
     }
 
     private void WindowDimension_OnChanged(object? sender, Dimension dimension)
     {
-        m_window.SetDimension(dimension);
+        m_window.UpdateWindow();
         CalculateHudScale();
     }
 
     private void WindowState_OnChanged(object? sender, RenderWindowState state)
     {
-        m_window.SetWindowState(state);
+        m_window.UpdateWindow();
         CalculateHudScale();
     }
 

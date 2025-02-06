@@ -12,7 +12,10 @@ public enum RenderWindowState
 {
     [Description("Window")]
     Normal,
+    [Description("Full Screen (exclusive)")]
     Fullscreen,
+    [Description("Full Screen (borderless window)")]
+    BorderlessFullscreenWindow
 }
 
 public enum BlitFilter

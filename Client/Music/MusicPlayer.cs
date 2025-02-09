@@ -138,7 +138,15 @@ public class MusicPlayer : IMusicPlayer
         while (!m_disposed)
         {
             if (m_playQueue.TryDequeue(out var playParams))
-                CreateAndPlayMusic(playParams);
+                try
+                {
+                    CreateAndPlayMusic(playParams);
+                }
+                catch(Exception ex)
+                {
+                    Log.Warn($"Could not start music playback.");
+                    Log.Info(ex);
+                }
 
             if (m_cancelPlayQueue.IsCancellationRequested)
                 break;

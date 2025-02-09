@@ -106,7 +106,7 @@ public class FluidSynthMusicPlayer : IMusicPlayer
         catch (Exception ex)
         {
             Log.Warn("Error starting FluidSynth music playback.");
-            Log.Info(ex.ToString());
+            Log.Info(ex);
         }
 
         return false;

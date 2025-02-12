@@ -790,7 +790,7 @@ public class DehackedApplier
 
         if (category == Id24AmmoCategory.Weapon)
         {
-            var weaponDef = composer.GetByName(dehacked.WeaponNames[type]);
+            var weaponDef = composer.GetByName(dehacked.AmmoToWeaponNames[type][0]);
             if (weaponDef == null)
                 return;
 
@@ -978,8 +978,11 @@ public class DehackedApplier
 
             var normalAmmo = composer.GetByName(dehacked.AmmoNames[ammo.AmmoNumber]);
             var boxAmmo = composer.GetByName(dehacked.AmmoDoubleNames[ammo.AmmoNumber]);
+            var weapons = dehacked.AmmoToWeaponNames[ammo.AmmoNumber];
             ApplyAmmo(normalAmmo, ammo, 1);
             ApplyAmmo(boxAmmo, ammo, 5);
+            ApplyWeaponAmmo(composer, weapons, ammo);
+
             ApplyId24Ammo(composer, normalAmmo, boxAmmo, ammo);
 
             if (ammo.AmmoNumber >= weaponDefs.Count)
@@ -1006,11 +1009,21 @@ public class DehackedApplier
         }
     }
 
+    private static void ApplyWeaponAmmo(EntityDefinitionComposer composer, string[] weapons, DehackedAmmo ammo)
+    {
+        foreach (var weaponName in weapons)
+        {
+            var weapon = composer.GetByName(weaponName);
+            if (ammo.PerAmmo.HasValue && weapon != null)
+                weapon.Properties.Weapons.AmmoGive = ammo.PerAmmo.Value * 2;
+        }
+    }
+
     private static List<EntityDefinition[]> GetAmmoWeaponDefinitions(DehackedDefinition dehacked, EntityDefinitionComposer composer)
     {
         List<EntityDefinition[]> weaponDefs = [];
         foreach (var weaponNames in dehacked.AmmoToWeaponNames)
-            weaponDefs.Add(weaponNames.Select(x => composer.GetByNameOrDefault(x)).ToArray());
+            weaponDefs.Add(weaponNames.Select(composer.GetByNameOrDefault).ToArray());
         return weaponDefs;
     }
 

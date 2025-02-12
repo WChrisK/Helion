@@ -182,8 +182,8 @@ public class DataCache
     {
         int id = EntityId++;
         int index = EntityLength++;
-        if (index >= EntityLength)
-            Array.Resize(ref Entities, Entities.Length * 2);
+        if (index >= Entities.Length)
+            EnsureEntityCount(Entities.Length * 2);
 
         Player newPlayer = new();
         Entities[index] = newPlayer;

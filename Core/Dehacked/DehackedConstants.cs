@@ -34,17 +34,9 @@ public partial class DehackedDefinition
         "RocketBox"
     ];
 
-    public readonly string[] WeaponNames = 
-    [
-        "Pistol",
-        "Shotgun",
-        "PlasmaRifle",
-        "RocketLauncher"
-    ];
-
     public readonly string[][] AmmoToWeaponNames =
     [
-        ["Pistol"],
+        ["Chaingun", "Pistol"],
         ["Shotgun", "SuperShotgun"],
         ["PlasmaRifle", "BFG9000"],
         ["RocketLauncher"]

@@ -588,7 +588,7 @@ public partial class Client : IDisposable, IInputManagement
             using IMusicPlayer musicPlayer = commandLineArgs.NoMusic ?
                 new MockMusicPlayer() :
                 new MusicPlayer(config.Audio, archiveCollection);
-            using IAudioSystem audioPlayer = new OpenALAudioSystem(config, archiveCollection, musicPlayer);
+            using IAudioSystem audioPlayer = new OpenALAudioSystem(config, archiveCollection, musicPlayer, Log);
 
             using Client client = new(commandLineArgs, config, console, audioPlayer, archiveCollection);
             client.Run();

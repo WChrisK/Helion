@@ -1202,8 +1202,25 @@ public static class EntityActionFunctions
         WorldStatic.SoundManager.CreateSoundOn(entity, "weapons/pistol",
             new SoundParams(entity, channel: entity.WeaponSoundChannel,
             context: new SoundContext(SoundEventType.WeaponFired, 0, ushort.MaxValue, 100)));
-        int offset = entity.PlayerObj.Weapon == null ? 0 : Math.Clamp(entity.PlayerObj.Weapon.FrameState.Frame.Frame, 0, 1);
-        entity.PlayerObj.Weapon?.SetFlashState(offset);
+
+        if (entity.PlayerObj.Weapon != null)
+        {
+            var frame = entity.PlayerObj.Weapon.FrameState.Frame;
+            int offset = 0;
+            if (WorldStatic.Dehacked)
+            {
+                // Use vanilla frame index calculation for dehacked
+                if (frame.VanillaIndex >= (int)ThingState.CHAIN1 && frame.VanillaIndex <= (int)ThingState.CHAIN3)
+                    offset = frame.VanillaIndex - (int)ThingState.CHAIN1;
+            }
+            else
+            {
+                offset = Math.Clamp(entity.PlayerObj.Weapon.FrameState.Frame.Frame, 0, 1);
+            }
+
+            entity.PlayerObj.Weapon.SetFlashState(offset);
+        }
+
         WorldStatic.World.FirePlayerHitscanBullets(entity.PlayerObj, 1, Constants.DefaultSpreadAngle, 0,
             entity.PlayerObj.PitchRadians, Constants.EntityShootDistance, WorldStatic.World.Config.Game.AutoAim);
     }

@@ -53,7 +53,6 @@ public sealed class PhysicsManager
     private DataCache m_dataCache;
     private CompactBspTree m_bspTree;
     private BlockMap m_blockmap;
-    private Block[] m_blockmapBlocks;
     private EntityManager m_entityManager;
     private IRandom m_random;
     private bool m_alwaysStickEntitiesToFloor;
@@ -79,7 +78,6 @@ public sealed class PhysicsManager
         m_dataCache = world.DataCache;
         m_bspTree = bspTree;
         m_blockmap = blockmap;
-        m_blockmapBlocks = blockmap.Blocks;
         m_entityManager = world.EntityManager;
         m_random = random;
         BlockmapTraverser = new BlockmapTraverser(world, m_blockmap);
@@ -96,7 +94,6 @@ public sealed class PhysicsManager
         m_dataCache = world.DataCache;
         m_bspTree = bspTree;
         m_blockmap = blockmap;
-        m_blockmapBlocks = blockmap.Blocks;
         m_entityManager = world.EntityManager;
         m_random = random;
         m_alwaysStickEntitiesToFloor = alwaysStickEntitiesToFloor;
@@ -989,7 +986,7 @@ public sealed class PhysicsManager
             {
                 for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
                 {
-                    Block block = m_blockmapBlocks[by * it.Width + bx];
+                    ref var block = ref m_blockmap.Lines[by * it.Width + bx];
                     int count = block.BlockLineIndex + block.BlockLineCount;
                     for (int i = block.BlockLineIndex; i < count; i++)
                     {
@@ -1248,7 +1245,7 @@ doneLinkToSectors:
                     }
                 }
 
-                var block = m_blockmapBlocks[index];
+                ref var block = ref m_blockmap.Lines[index];
                 tryMove.IntersectSectors.EnsureCapacity(intersectSectorLength + block.BlockLineCount * 2);
 
                 int count = block.BlockLineIndex + block.BlockLineCount;
@@ -1420,10 +1417,11 @@ doneLinkToSectors:
         var it = new BlockmapSegIterator(m_blockmap, cornerTracer);
         while (true)
         {
-            var block = it.Next();
-            if (block == null)
+            var index = it.NextIndex();
+            if (index == -1)
                 break;
 
+            ref var block = ref m_blockmap.Lines[index];
             int count = block.BlockLineIndex + block.BlockLineCount;
             for (int i = block.BlockLineIndex; i < count; i++)
             {

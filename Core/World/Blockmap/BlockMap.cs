@@ -30,6 +30,12 @@ public struct BlockEntities
     public int EntityIndicesLength;
 }
 
+public struct BlockLines
+{
+    public int BlockLineIndex;
+    public int BlockLineCount;
+}
+
 public class BlockMap
 {
     public int Dimension;
@@ -46,6 +52,7 @@ public class BlockMap
     public int BlockLineCount;
 
     public BlockEntities[] Entities = [];
+    public BlockLines[] Lines = [];
 
     public LinkableList<Island>[] Sectors = [];
     public LinkableList<Island>[] DynamicSectors = [];
@@ -67,6 +74,7 @@ public class BlockMap
 
         Blocks = new Block[TotalBlocks];
         Entities = new BlockEntities[TotalBlocks];
+        Lines = new BlockLines[TotalBlocks];
 
         for (int i = 0; i < TotalBlocks; i++)
         {
@@ -340,7 +348,7 @@ public class BlockMap
     private void SetBlockLineIndices()
     {
         int lastIndex = -1;
-        var block = Blocks[0];
+        ref var lines = ref Lines[0];
 
         for (int i = 0; i < BlockLineCount; i++)
         {
@@ -348,11 +356,11 @@ public class BlockMap
             if (blockLine.BlockIndex != lastIndex)
             {
                 lastIndex = blockLine.BlockIndex;
-                block = Blocks[blockLine.BlockIndex];
-                block.BlockLineIndex = i;
+                lines = ref Lines[blockLine.BlockIndex];
+                lines.BlockLineIndex = i;
             }
 
-            block.BlockLineCount++;
+            lines.BlockLineCount++;
         }
     }
 

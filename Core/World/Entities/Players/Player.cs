@@ -611,7 +611,7 @@ public class Player : Entity
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = blockmap.Blocks[by * it.Width + bx];
+                ref var block = ref WorldStatic.World.Blockmap.Lines[by * it.Width + bx];
                 int count = block.BlockLineIndex + block.BlockLineCount;
                 for (int i = block.BlockLineIndex; i < count; i++)
                 {

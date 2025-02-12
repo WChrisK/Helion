@@ -7,9 +7,6 @@ namespace Helion.World.Blockmap;
 
 public class Block
 {
-    public int BlockLineIndex;
-    public int BlockLineCount;
-
     public Entity? HeadEntity;
 
     public Box2D Box;

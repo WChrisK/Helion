@@ -61,9 +61,11 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
 
         while (true)
         {
-            var block = it.Next();
-            if (block == null)
+            var index = it.NextIndex();
+            if (index == -1)
                 break;
+
+            ref var block = ref Blockmap.Lines[index];
 
             int blockLineCount = block.BlockLineCount;
             if (capacity < length + blockLineCount)
@@ -126,7 +128,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
             if (blockIndex == -1)
                 break;
 
-            var block = m_blocks[blockIndex];
+            ref var block = ref Blockmap.Lines[blockIndex];
             int count = block.BlockLineIndex + block.BlockLineCount;
             for (int i = block.BlockLineIndex; i < count; i++)
             {
@@ -352,10 +354,11 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
 
         while (true)
         {
-            var block = it.Next();
-            if (block == null)
+            var index = it.NextIndex();
+            if (index == -1)
                 break;
 
+            ref var block = ref Blockmap.Lines[index];
             int count = block.BlockLineIndex + block.BlockLineCount;
             for (int i = block.BlockLineIndex; i < count; i++)
             {

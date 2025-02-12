@@ -10,9 +10,6 @@ public class Block
     public int BlockLineIndex;
     public int BlockLineCount;
 
-    public int[] EntityIndices = new int[8];
-    public int EntityIndicesLength;
-
     public Entity? HeadEntity;
 
     public Box2D Box;

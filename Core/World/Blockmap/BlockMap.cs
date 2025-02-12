@@ -24,6 +24,12 @@ public enum GridIterationStatus
 
 public readonly record struct GridDimensions(int Width, int Height, Box2D Bounds);
 
+public struct BlockEntities
+{
+    public int[] EntityIndices;
+    public int EntityIndicesLength;
+}
+
 public class BlockMap
 {
     public int Dimension;
@@ -38,6 +44,8 @@ public class BlockMap
 
     public BlockLine[] BlockLines;
     public int BlockLineCount;
+
+    public BlockEntities[] Entities = [];
 
     public LinkableList<Island>[] Sectors = [];
     public LinkableList<Island>[] DynamicSectors = [];
@@ -58,8 +66,13 @@ public class BlockMap
         TotalBlocks = Width * Height;
 
         Blocks = new Block[TotalBlocks];
+        Entities = new BlockEntities[TotalBlocks];
+
         for (int i = 0; i < TotalBlocks; i++)
+        {
             Blocks[i] = new Block();
+            Entities[i].EntityIndices = new int[8];
+        }
 
         SetBlockCoordinates();
         AddLinesToBlocks(lines);
@@ -192,8 +205,10 @@ public class BlockMap
         {
             for (var bx = blockStartX; bx <= blockEndX; bx++)
             {
-                var block = Blocks[by * Width + bx];
-                
+                //var block = Blocks[by * Width + bx];
+                var index = by * Width + bx;
+                ref var block = ref Entities[index];
+
                 if (block.EntityIndicesLength == block.EntityIndices.Length)                
                     Array.Resize(ref block.EntityIndices, block.EntityIndices.Length * 2);
 

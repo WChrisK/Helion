@@ -1202,11 +1202,12 @@ doneLinkToSectors:
         {
             for (int bx = blockStartX; bx <= blockEndX; bx++)
             {
-                var block = m_blockmapBlocks[by * m_blockmap.Width + bx];
-                var entityIndices = block.EntityIndices;
+                var index = by * m_blockmap.Width + bx;
+                ref var blockEntities = ref m_blockmap.Entities[index];
+                var entityIndices = blockEntities.EntityIndices;
                 if (checkEntities)
                 {
-                    for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
+                    for (int i = blockEntities.EntityIndicesLength - 1; i >= 0; i--)
                     {
                         nextEntity = m_dataCache.Entities[entityIndices[i]];
                         if (nextEntity.BlockmapCount == checkCounter)
@@ -1247,6 +1248,7 @@ doneLinkToSectors:
                     }
                 }
 
+                var block = m_blockmapBlocks[index];
                 tryMove.IntersectSectors.EnsureCapacity(intersectSectorLength + block.BlockLineCount * 2);
 
                 int count = block.BlockLineIndex + block.BlockLineCount;

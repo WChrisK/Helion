@@ -34,7 +34,8 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = m_blocks[by * it.Width + bx];
+                var index = by * it.Width + bx;
+                ref var block = ref Blockmap.Entities[index];
                 for (int i = 0; i < block.EntityIndicesLength; i++)
                 {
                     var entity = m_dataCache.Entities[block.EntityIndices[i]];
@@ -121,10 +122,11 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
 
         while (true)
         {
-            var block = it.Next();
-            if (block == null)
+            var blockIndex = it.NextIndex();
+            if (blockIndex == -1)
                 break;
 
+            var block = m_blocks[blockIndex];
             int count = block.BlockLineIndex + block.BlockLineCount;
             for (int i = block.BlockLineIndex; i < count; i++)
             {
@@ -149,9 +151,10 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
                 }                
             }
 
-            for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
+            ref var blockEntities = ref Blockmap.Entities[blockIndex];
+            for (int i = blockEntities.EntityIndicesLength - 1; i >= 0; i--)
             {
-                var entity = m_dataCache.Entities[block.EntityIndices[i]];
+                var entity = m_dataCache.Entities[blockEntities.EntityIndices[i]];
                 if (entity.BlockmapCount == checkCounter)
                     continue;
                 if (!entity.Flags.Shootable)
@@ -186,7 +189,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = m_blocks[by * it.Width + bx];
+                ref var block = ref Blockmap.Entities[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
                 {
                     var entity = m_dataCache.Entities[block.EntityIndices[i]];
@@ -211,7 +214,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = m_blocks[by * it.Width + bx];
+                ref var block = ref Blockmap.Entities[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
                 {
                     var entity = m_dataCache.Entities[block.EntityIndices[i]];
@@ -237,7 +240,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = m_blocks[by * it.Width + bx];
+                ref var block = ref Blockmap.Entities[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
                 {
                     var entity = m_dataCache.Entities[block.EntityIndices[i]];
@@ -271,7 +274,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = m_blocks[by * it.Width + bx];
+                ref var block = ref Blockmap.Entities[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
                 {
                     var entity = m_dataCache.Entities[block.EntityIndices[i]];
@@ -302,7 +305,7 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = m_blocks[by * it.Width + bx];
+                ref var block = ref Blockmap.Entities[by * it.Width + bx];
                 for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
                 {
                     var entity = m_dataCache.Entities[block.EntityIndices[i]];

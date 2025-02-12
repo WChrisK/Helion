@@ -400,7 +400,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         {
             for (var bx = BlockRange.StartX; bx <= BlockRange.EndX; bx++)
             {
-                var block = blocks[by * World.Blockmap.Width + bx];
+                var blockIndex = by * World.Blockmap.Width + bx;
+                ref var block = ref World.Blockmap.Entities[blockIndex];
                 var data = block.EntityIndices;
                 for (int index = block.EntityIndicesLength - 1; index >= 0; index--)
                 {

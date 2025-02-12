@@ -7,7 +7,9 @@ using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Util;
 using Helion.Util.Assertion;
+using Helion.Util.Container;
 using Helion.World.Entities;
+using Helion.World.Geometry.Islands;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Sides;
@@ -36,7 +38,11 @@ public class BlockMap
 
     public BlockLine[] BlockLines;
     public int BlockLineCount;
-    
+
+    public LinkableList<Island>[] Sectors = [];
+    public LinkableList<Island>[] DynamicSectors = [];
+    public DynamicArray<Side>[] DynamicSides = [];
+
     public BlockMap(IList<Line> lines, int blockDimension)
     {
         BlockLines = new BlockLine[lines.Count];
@@ -59,7 +65,6 @@ public class BlockMap
         AddLinesToBlocks(lines);
     }
 
-
     public BlockMap(Box2D bounds, int blockDimension)
     {
         BlockLines = [];
@@ -77,6 +82,11 @@ public class BlockMap
         Blocks = new Block[TotalBlocks];
         for (int i = 0; i < TotalBlocks; i++)
             Blocks[i] = new Block();
+
+        Sectors = new LinkableList<Island>[TotalBlocks];
+        DynamicSectors = new LinkableList<Island>[TotalBlocks];
+        DynamicSides = new DynamicArray<Side>[TotalBlocks];
+
         SetBlockCoordinates();
     }
 
@@ -121,19 +131,24 @@ public class BlockMap
 
     public void Clear()
     {
-        foreach (var block in Blocks)
+        for (int i = 0; i < TotalBlocks; i++)
         {
-            // Note: Entities are unlinked using UnlinkFromWorld. Only need to dump the other data.            
-            var islandNode = block.DynamicSectors.Head;
-            while (islandNode != null)
+            // Note: Entities are unlinked using UnlinkFromWorld. Only need to dump the other data.
+            var sectors = DynamicSectors[i];
+            if (sectors != null)
             {
-                var nextNode = islandNode.Next;
-                islandNode.Unlink();
-                WorldStatic.DataCache.FreeLinkableNodeIsland(islandNode);
-                islandNode = nextNode;
+                var islandNode = DynamicSectors[i].Head;
+                while (islandNode != null)
+                {
+                    var nextNode = islandNode.Next;
+                    islandNode.Unlink();
+                    WorldStatic.DataCache.FreeLinkableNodeIsland(islandNode);
+                    islandNode = nextNode;
+                }
             }
 
-            block.DynamicSides.Clear();
+            var sides = DynamicSides[i];
+            sides?.Clear();
         }
     }
 
@@ -211,9 +226,12 @@ public class BlockMap
             {
                 for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
                 {
-                    Block block = Blocks[by * it.Width + bx];
+                    int index = by * it.Width + bx;
                     var node = world.DataCache.GetLinkableNodeIsland(sectorIsland);
-                    block.DynamicSectors.Add(node);
+
+                    DynamicSectors[index] ??= new();
+                    DynamicSectors[index].Add(node);
+                    
                     sector.BlockmapNodes.Add(node);
                 }
             }
@@ -232,8 +250,10 @@ public class BlockMap
             {
                 for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
                 {
-                    Block block = Blocks[by * it.Width + bx];
-                    block.Sectors.Add(new() { Value = sectorIsland });
+                    var index = by * it.Width + bx;
+
+                    Sectors[index] ??= new();
+                    Sectors[index].Add(new() { Value = sectorIsland });
                 }
             }
         }
@@ -249,10 +269,12 @@ public class BlockMap
         var it = new BlockmapSegIterator(this, side.Line.Segment);
         while (true)
         {
-            var block = it.Next();
-            if (block == null)
+            var index = it.NextIndex();
+            if (index == -1)
                 break;
-            block.DynamicSides.Add(side);
+
+            DynamicSides[index] ??= new();
+            DynamicSides[index].Add(side);
         }
     }
 

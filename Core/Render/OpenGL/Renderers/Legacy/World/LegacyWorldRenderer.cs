@@ -134,14 +134,15 @@ public class LegacyWorldRenderer : WorldRenderer
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = renderBlocks[by * it.Width + bx];
+                var index = by * it.Width + bx;
+                var block = renderBlocks[index];
                 if (occlude && !block.Box.InView(occluder, m_renderData.ViewDirection))
                     continue;
 
-                RenderSectors(world, block);
+                RenderSectors(world, index);
 
                 if (m_renderStatic)
-                    RenderSides(block);
+                    RenderSides(world, index);
 
                 for (var entity = block.HeadEntity; entity != null; entity = entity.RenderBlockNext)
                     RenderEntity(world, entity);
@@ -151,9 +152,12 @@ public class LegacyWorldRenderer : WorldRenderer
         m_lastTicker = world.GameTicker;
     }
 
-    private void RenderSectors(IWorld world, Block block)
+    private void RenderSectors(IWorld world, int blockIndex)
     {
-        var sectorList = m_renderStatic ? block.DynamicSectors : block.Sectors;
+        var sectorList = m_renderStatic ? world.RenderBlockmap.DynamicSectors[blockIndex] : world.RenderBlockmap.Sectors[blockIndex];
+        if (sectorList == null)
+            return;
+
         for (var islandNode = sectorList.Head; islandNode != null; islandNode = islandNode.Next)
         {
             var sectorIsland = islandNode.Value;
@@ -178,13 +182,17 @@ public class LegacyWorldRenderer : WorldRenderer
         }
     }
 
-    private void RenderSides(Block block)
+    private void RenderSides(IWorld world, int blockIndex)
     {
+        var sides = world.RenderBlockmap.DynamicSides[blockIndex];
+        if (sides == null)
+            return;
+
         // DynamicSides are either scrolling textures or alpha, neither should setup cover walls.
         m_geometryRenderer.SetBufferCoverWall(false);
-        for (int i = 0; i < block.DynamicSides.Length; i++)
+        for (int i = 0; i < sides.Length; i++)
         {
-            var side = block.DynamicSides.Data[i];
+            var side = sides.Data[i];
             if (side.BlockmapCount == m_renderData.CheckCount)
                 continue;
             if (side.Sector.IsMoving || (side.PartnerSide != null && side.PartnerSide.Sector.IsMoving))

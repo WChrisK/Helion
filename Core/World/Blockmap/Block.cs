@@ -1,9 +1,6 @@
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Vectors;
-using Helion.Util.Container;
 using Helion.World.Entities;
-using Helion.World.Geometry.Islands;
-using Helion.World.Geometry.Sides;
 using static Helion.Util.Assertion.Assert;
 
 namespace Helion.World.Blockmap;
@@ -13,9 +10,6 @@ public class Block
     public int BlockLineIndex;
     public int BlockLineCount;
 
-    public LinkableList<Island> Sectors = new();
-    public LinkableList<Island> DynamicSectors = new();
-    public DynamicArray<Side> DynamicSides = new();
     public int[] EntityIndices = new int[8];
     public int EntityIndicesLength;
 

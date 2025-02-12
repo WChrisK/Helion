@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Helion.Geometry.Boxes;
-using Helion.Geometry.Grids;
 using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Util;
 using Helion.Util.Assertion;
-using Helion.Util.Container;
 using Helion.World.Entities;
 using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
@@ -283,8 +281,8 @@ public class BlockMap
             var it = new BlockmapSegIterator(this, line.Segment);
             while (true)
             {
-                var block = it.Next();
-                if (block == null)
+                var index = it.NextIndex();
+                if (index == -1)
                     break;
 
                 if (BlockLineCount == BlockLines.Length)
@@ -294,7 +292,6 @@ public class BlockMap
                     BlockLines = newLines;
                 }
 
-                var index = block.Y * Width + block.X;
                 BlockLines[BlockLineCount++] = new BlockLine(index, line.Segment, line, line.Back == null, line.Front.Sector, line.Back?.Sector);
             }
         }
@@ -448,5 +445,27 @@ public ref struct BlockmapSegIterator
         }
 
         return m_blocks[currentBlockIndex];
+    }
+
+    public int NextIndex()
+    {
+        if (m_blocksVisited >= m_numBlocks || m_blockIndex < 0 || m_blockIndex >= m_totalBlocks)
+            return -1;
+
+        int currentBlockIndex = m_blockIndex;
+        m_blocksVisited++;
+
+        if (m_error > 0)
+        {
+            m_blockIndex += m_verticalStep;
+            m_error -= m_absDeltaX;
+        }
+        else
+        {
+            m_blockIndex += m_horizontalStep;
+            m_error += m_absDeltaY;
+        }
+
+        return currentBlockIndex;
     }
 }

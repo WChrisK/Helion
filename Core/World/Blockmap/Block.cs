@@ -1,13 +1,9 @@
 using Helion.Geometry.Boxes;
-using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Util.Container;
 using Helion.World.Entities;
 using Helion.World.Geometry.Islands;
-using Helion.World.Geometry.Lines;
-using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Sides;
-using System;
 using static Helion.Util.Assertion.Assert;
 
 namespace Helion.World.Blockmap;
@@ -17,27 +13,15 @@ public class Block
     public int BlockLineIndex;
     public int BlockLineCount;
 
-    public readonly LinkableList<Island> Sectors = new();
-    public readonly LinkableList<Island> DynamicSectors = new();
-    public readonly DynamicArray<Side> DynamicSides = new();
+    public LinkableList<Island> Sectors = new();
+    public LinkableList<Island> DynamicSectors = new();
+    public DynamicArray<Side> DynamicSides = new();
     public int[] EntityIndices = new int[8];
     public int EntityIndicesLength;
 
     public Entity? HeadEntity;
 
     public Box2D Box;
-
-    /// <summary>
-    /// Gets the block X coordinate, assuming the coordinate was set.
-    /// </summary>
-    public int X => m_coordinate.X;
-
-    /// <summary>
-    /// Gets the block Y coordinate, assuming the coordinate was set.
-    /// </summary>
-    public int Y => m_coordinate.Y;
-
-    private Vec2I m_coordinate = Vec2I.Zero;
 
     /// <summary>
     /// Sets the internal coordinates for this block.
@@ -57,8 +41,6 @@ public class Block
     {
         Precondition(x >= 0, "Cannot have a negative blockmap X index");
         Precondition(y >= 0, "Cannot have a negative blockmap Y index");
-
-        m_coordinate = new Vec2I(x, y);
 
         Vec2D point = new Vec2D(x * dimension, y * dimension) + origin;
         Box = new(point, point + (dimension, dimension));

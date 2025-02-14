@@ -104,13 +104,13 @@ public class ViewClipper
     {
         unchecked
         {
-            const double TwoPi = Math.PI * 2;
-            radians %= TwoPi;
+            radians = Math.IEEERemainder(radians, MathHelper.TwoPi);
             if (radians < 0)
-                radians = TwoPi + radians;
+                radians = MathHelper.TwoPi + radians;
             return (uint)(radians * RadiansToDiamondAngleFactor);
         }
     }
+
 
     /// <summary>
     /// Takes a position and gets the diamond angle value relative to the

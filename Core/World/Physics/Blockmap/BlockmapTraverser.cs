@@ -14,7 +14,6 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
     public BlockMap Blockmap = blockmap;
 
     private IWorld m_world = world;
-    private Block[] m_blocks = blockmap.Blocks;
     private DataCache m_dataCache = world.DataCache;
 
     public void UpdateTo(IWorld world, BlockMap blockmap)
@@ -22,7 +21,6 @@ public class BlockmapTraverser(IWorld world, BlockMap blockmap)
         m_world = world;
         m_dataCache = world.DataCache;
         Blockmap = blockmap;
-        m_blocks = blockmap.Blocks;
     }
 
     public void GetSolidEntityIntersections2D(Entity sourceEntity, DynamicArray<Entity> entities)

@@ -1,5 +1,4 @@
 using System;
-using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
@@ -15,10 +14,10 @@ using Helion.Resources.Archives.Collection;
 using Helion.Util;
 using Helion.Util.Configs;
 using Helion.World;
-using Helion.World.Blockmap;
 using Helion.World.Entities;
 using Helion.World.Geometry.Sectors;
 using OpenTK.Graphics.OpenGL;
+using zdbspSharp;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World;
 
@@ -37,7 +36,6 @@ public class LegacyWorldRenderer : WorldRenderer
     private readonly LegacyGLTextureManager m_textureManager;
     private Vec2D m_occludeViewPos;
     private bool m_occlude;
-    private bool m_spriteTransparency;
     private bool m_vanillaRender;
     private bool m_renderStatic;
     private int m_lastTicker = -1;
@@ -128,15 +126,15 @@ public class LegacyWorldRenderer : WorldRenderer
         Vec2D occluder = m_renderData.OccludePos ?? Vec2D.Zero;
         bool occlude = m_renderData.OccludePos.HasValue;
 
-        var renderBlocks = world.RenderBlockmap.Blocks;
         var it = world.RenderBlockmap.CreateBoxIteration(box);
+        var dimension = world.RenderBlockmap.Dimension;
+        var origin = world.RenderBlockmap.Origin;
         for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
             for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
                 var index = by * it.Width + bx;
-                var block = renderBlocks[index];
-                if (occlude && !block.Box.InView(occluder, m_renderData.ViewDirection))
+                if (occlude && !BlockInView(bx, by, dimension, origin, occluder, m_renderData.ViewDirection))
                     continue;
 
                 RenderSectors(world, index);
@@ -144,12 +142,26 @@ public class LegacyWorldRenderer : WorldRenderer
                 if (m_renderStatic)
                     RenderSides(world, index);
 
-                for (var entity = block.HeadEntity; entity != null; entity = entity.RenderBlockNext)
+                for (var entity = world.RenderBlockmap.HeadRenderEntities[index]; entity != null; entity = entity.RenderBlockNext)
                     RenderEntity(world, entity);
             }
         }
 
         m_lastTicker = world.GameTicker;
+    }
+
+    private static bool BlockInView(int x, int y, int dimension, in Vec2D origin, in Vec2D viewPos, in Vec2D viewDirection)
+    {
+        double minX = x * dimension + origin.X;
+        double minY = y * dimension + origin.Y;
+        double maxX = minX + dimension;
+        double maxY = minY + dimension;
+
+        Vec2D p1 = new(minX - viewPos.X, minY - viewPos.Y);
+        Vec2D p2 = new(maxX - viewPos.X, maxY - viewPos.Y);
+        Vec2D p3 = new(minX - viewPos.X, maxY - viewPos.Y);
+        Vec2D p4 = new(maxX - viewPos.X, minY - viewPos.Y);
+        return p1.Dot(viewDirection) >= 0 || p2.Dot(viewDirection) >= 0 || p3.Dot(viewDirection) >= 0 || p4.Dot(viewDirection) >= 0;
     }
 
     private void RenderSectors(IWorld world, int blockIndex)
@@ -232,7 +244,6 @@ public class LegacyWorldRenderer : WorldRenderer
         // If the transfer height view is not the middle then the cached static geometry cannot be used.
         // Render all sectors dynamically instead.
         m_renderStatic = renderInfo.TransferHeightView == TransferHeightView.Middle;
-        m_spriteTransparency = m_config.Render.SpriteTransparency;
         Clear(world, renderInfo);
 
         if (framebuffer.DepthTexture == null)

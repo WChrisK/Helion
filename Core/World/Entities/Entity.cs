@@ -12,14 +12,12 @@ using Helion.World.Entities.Definition.Properties;
 using Helion.World.Entities.Definition.States;
 using Helion.World.Entities.Inventories;
 using Helion.World.Entities.Players;
-using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Physics;
 using Helion.World.Sound;
 using System;
 using System.Diagnostics;
 using static Helion.Util.Assertion.Assert;
-using Helion.World.Blockmap;
 using Helion.Graphics.Palettes;
 using System.Runtime.CompilerServices;
 
@@ -43,7 +41,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public Entity? RenderBlockNext;
     public Entity? RenderBlockPrevious;
-    public Block? RenderBlock;
+    public int RenderBlock = -1;
     public BlockRange BlockRange;
 
     public int BlockmapCount;
@@ -378,10 +376,10 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         if (unlinkBlockmapBlocks)
             UnlinkBlockMapBlocks();
 
-        if (RenderBlock != null)
+        if (RenderBlock != -1)
         {
-            RenderBlock.RemoveLink(this);
-            RenderBlock = null;
+            World.RenderBlockmap.RemoveRenderLink(this);
+            RenderBlock = -1;
         }
 
         IntersectSectors.Clear();
@@ -395,7 +393,6 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         if (BlockRange.StartX == Constants.ClearBlock)
             return;
 
-        var blocks = World.Blockmap.Blocks;
         for (var by = BlockRange.StartY; by <= BlockRange.EndY; by++)
         {
             for (var bx = BlockRange.StartX; bx <= BlockRange.EndX; bx++)

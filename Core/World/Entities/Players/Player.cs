@@ -5,6 +5,7 @@ using Helion.Geometry.Vectors;
 using Helion.Maps.Specials.ZDoom;
 using Helion.Models;
 using Helion.Render.Common.World;
+using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Shared;
 using Helion.Resources.Archives.Entries;
 using Helion.Resources.Definitions.MapInfo;
@@ -602,6 +603,9 @@ public class Player : Entity
 
     private void CheckLineClip(in Vec3D pos)
     {
+        if (ShaderVars.ReversedZ)
+            return;
+
         ViewLineClip = false;
         var box = new Box2D(pos.X, pos.Y, Radius);
         var blockmap = WorldStatic.World.Blockmap;
@@ -613,7 +617,7 @@ public class Player : Entity
             {
                 ref var block = ref WorldStatic.World.Blockmap.Lines[by * it.Width + bx];
                 int count = block.BlockLineIndex + block.BlockLineCount;
-                for (int i = block.BlockLineIndex; i < count; i++)
+                for (int i = count - 1; i >= block.BlockLineIndex; i--)
                 {
                     ref var blockLine = ref blockLines[i];
                     if (!box.Intersects(blockLine.Segment))
@@ -718,7 +722,7 @@ public class Player : Entity
     private Vec3D CheckPlaneClip(Vec3D pos, Vec3D prevPos, Vec3D interpolatedPos)
     {
         ViewPlaneClip = false;
-        if (Sector.TransferHeights == null)
+        if (ShaderVars.ReversedZ || Sector.TransferHeights == null)
             return interpolatedPos;
 
         var transferView = TransferHeights.GetView(Sector, pos.Z);
@@ -771,7 +775,7 @@ public class Player : Entity
         }
     }
 
-    private bool IsMaxFpsTickRate() =>
+    private static bool IsMaxFpsTickRate() =>
         WorldStatic.World.Config.Render.MaxFPS != 0 && WorldStatic.World.Config.Render.MaxFPS <= Constants.TicksPerSecond;
 
     protected bool ShouldInterpolate()

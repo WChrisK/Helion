@@ -30,7 +30,7 @@ public struct BlockEntities
     public int EntityIndicesLength;
 }
 
-public struct BlockLines
+public struct BlockLineIndices
 {
     public int BlockLineIndex;
     public int BlockLineCount;
@@ -46,14 +46,13 @@ public class BlockMap
     public Box2D Bounds;
     public Vec2D Origin;
 
-    public Block[] Blocks;
-
     public BlockLine[] BlockLines;
     public int BlockLineCount;
 
     public BlockEntities[] Entities = [];
-    public BlockLines[] Lines = [];
+    public BlockLineIndices[] Lines = [];
 
+    public Entity?[] HeadRenderEntities = [];
     public LinkableList<Island>[] Sectors = [];
     public LinkableList<Island>[] DynamicSectors = [];
     public DynamicArray<Side>[] DynamicSides = [];
@@ -72,17 +71,12 @@ public class BlockMap
         Origin = Bounds.Min;
         TotalBlocks = Width * Height;
 
-        Blocks = new Block[TotalBlocks];
         Entities = new BlockEntities[TotalBlocks];
-        Lines = new BlockLines[TotalBlocks];
+        Lines = new BlockLineIndices[TotalBlocks];
 
         for (int i = 0; i < TotalBlocks; i++)
-        {
-            Blocks[i] = new Block();
             Entities[i].EntityIndices = new int[8];
-        }
 
-        SetBlockCoordinates();
         AddLinesToBlocks(lines);
     }
 
@@ -100,15 +94,10 @@ public class BlockMap
         Origin = Bounds.Min;
         TotalBlocks = Width * Height;
 
-        Blocks = new Block[TotalBlocks];
-        for (int i = 0; i < TotalBlocks; i++)
-            Blocks[i] = new Block();
-
+        HeadRenderEntities = new Entity[TotalBlocks];
         Sectors = new LinkableList<Island>[TotalBlocks];
         DynamicSectors = new LinkableList<Island>[TotalBlocks];
         DynamicSides = new DynamicArray<Side>[TotalBlocks];
-
-        SetBlockCoordinates();
     }
 
     public static GridDimensions CalculateBlockMapDimensions(Box2D bounds, int blockDimension)
@@ -152,7 +141,7 @@ public class BlockMap
 
     public void Clear()
     {
-        for (int i = 0; i < TotalBlocks; i++)
+        for (int i = 0; i < DynamicSectors.Length; i++)
         {
             // Note: Entities are unlinked using UnlinkFromWorld. Only need to dump the other data.
             var sectors = DynamicSectors[i];
@@ -174,15 +163,15 @@ public class BlockMap
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Block? GetBlock(Vec3D position)
+    public int GetBlockIndex(Vec3D position)
     {
         int x = (int)((position.X - Origin.X) / Dimension);
         int y = (int)((position.Y - Origin.Y) / Dimension);
         int index = y * Width + x;
-        if (index < 0 || index >= Blocks.Length)
-            return null;
+        if (index < 0 || index >= TotalBlocks)
+            return -1;
 
-        return Blocks[index];
+        return index;
     }
 
     public void Link(Entity entity, bool checkLastBlock)
@@ -213,10 +202,7 @@ public class BlockMap
         {
             for (var bx = blockStartX; bx <= blockEndX; bx++)
             {
-                //var block = Blocks[by * Width + bx];
-                var index = by * Width + bx;
-                ref var block = ref Entities[index];
-
+                ref var block = ref Entities[by * Width + bx];
                 if (block.EntityIndicesLength == block.EntityIndices.Length)                
                     Array.Resize(ref block.EntityIndices, block.EntityIndices.Length * 2);
 
@@ -227,12 +213,44 @@ public class BlockMap
 
     public void RenderLink(Entity entity)
     {
-        Assert.Precondition(entity.RenderBlock == null, "Forgot to unlink entity from render blockmap");
-        entity.RenderBlock = GetBlock(entity.Position);
-        if (entity.RenderBlock == null)
+        Assert.Precondition(entity.RenderBlock == -1, "Forgot to unlink entity from render blockmap");
+        entity.RenderBlock = GetBlockIndex(entity.Position);
+        if (entity.RenderBlock == -1)
             return;
 
-        entity.RenderBlock.AddLink(entity);
+        var headEntity = HeadRenderEntities[entity.RenderBlock];
+        if (headEntity == null)
+        {
+            HeadRenderEntities[entity.RenderBlock] = entity;
+            return;
+        }
+
+        entity.RenderBlockNext = headEntity;
+        headEntity.RenderBlockPrevious = entity;
+        HeadRenderEntities[entity.RenderBlock] = entity;
+    }
+
+    public void RemoveRenderLink(Entity entity)
+    {
+        var headEntity = HeadRenderEntities[entity.RenderBlock];
+        if (entity == headEntity)
+        {
+            headEntity = entity.RenderBlockNext;
+            HeadRenderEntities[entity.RenderBlock] = headEntity;
+            if (headEntity != null)
+                headEntity.RenderBlockPrevious = null;
+            entity.RenderBlockNext = null;
+            entity.RenderBlockPrevious = null;
+            return;
+        }
+
+        if (entity.RenderBlockNext != null)
+            entity.RenderBlockNext.RenderBlockPrevious = entity.RenderBlockPrevious;
+        if (entity.RenderBlockPrevious != null)
+            entity.RenderBlockPrevious.RenderBlockNext = entity.RenderBlockNext;
+
+        entity.RenderBlockNext = null;
+        entity.RenderBlockPrevious = null;
     }
 
     public void LinkDynamic(IWorld world, Sector sector)
@@ -305,17 +323,6 @@ public class BlockMap
     {
         var boxes = lines.Select(l => l.Segment.Box);
         return Box2D.Combine(boxes);
-    }
-
-    private void SetBlockCoordinates()
-    {
-        // Unfortunately we have to do it this way because we can't get
-        // constraining for generic parameters, so the UniformGrid will
-        // not be able to do this for us via it's constructor.
-        int index = 0;
-        for (int y = 0; y < Height; y++)
-            for (int x = 0; x < Width; x++)
-                Blocks[index++].SetCoordinate(x, y, Dimension, Origin);
     }
 
     private void AddLinesToBlocks(IList<Line> lines)
@@ -405,7 +412,6 @@ public struct BlockmapBoxIteration(int blockStartX, int blockStartY, int blockEn
 
 public ref struct BlockmapSegIterator
 {
-    private readonly Block[] m_blocks;
     private readonly int m_totalBlocks;
     private readonly int m_numBlocks = 1;
     private readonly int m_verticalStep;
@@ -418,7 +424,6 @@ public ref struct BlockmapSegIterator
 
     internal BlockmapSegIterator(BlockMap grid, in Seg2D seg)
     {
-        m_blocks = grid.Blocks;
         m_totalBlocks = grid.TotalBlocks;
 
         var blockUnitStartX = (seg.Start.X - grid.Origin.X) / grid.Dimension;
@@ -466,30 +471,8 @@ public ref struct BlockmapSegIterator
             m_error -= (blockUnitStartY - Math.Floor(blockUnitStartY)) * m_absDeltaX;
         }
 
-        if (m_numBlocks > grid.Blocks.Length)
-            m_numBlocks = grid.Blocks.Length;
-    }
-
-    public Block? Next()
-    {
-        if (m_blocksVisited >= m_numBlocks || m_blockIndex < 0 || m_blockIndex >= m_totalBlocks)
-            return null;
-
-        int currentBlockIndex = m_blockIndex;
-        m_blocksVisited++;
-
-        if (m_error > 0)
-        {
-            m_blockIndex += m_verticalStep;
-            m_error -= m_absDeltaX;
-        }
-        else
-        {
-            m_blockIndex += m_horizontalStep;
-            m_error += m_absDeltaY;
-        }
-
-        return m_blocks[currentBlockIndex];
+        if (m_numBlocks > grid.TotalBlocks)
+            m_numBlocks = grid.TotalBlocks;
     }
 
     public int NextIndex()

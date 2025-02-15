@@ -382,7 +382,7 @@ public partial class Entity
         if (m_direction == MoveDir.None)
             return;
 
-        AngleRadians -= AngleRadians % MathHelper.QuarterPi;
+        AngleRadians = Math.Round(AngleRadians / MathHelper.QuarterPi) * MathHelper.QuarterPi;
         if (AngleRadians < 0 || AngleRadians > MathHelper.TwoPi)
             AngleRadians = MathHelper.GetPositiveAngle(AngleRadians);
         double delta = AngleRadians - (int)m_direction * MathHelper.QuarterPi;

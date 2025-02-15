@@ -104,11 +104,7 @@ public class ViewClipper
     {
         unchecked
         {
-            const double TwoPi = Math.PI * 2;
-            radians %= TwoPi;
-            if (radians < 0)
-                radians = TwoPi + radians;
-            return (uint)(radians * RadiansToDiamondAngleFactor);
+            return (uint)((long)(radians * RadiansToDiamondAngleFactor) % uint.MaxValue);
         }
     }
 

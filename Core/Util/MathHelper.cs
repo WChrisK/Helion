@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Helion.Geometry;
 using Helion.Geometry.Vectors;
 using Helion.World.Geometry.Lines;
@@ -334,9 +335,10 @@ public static class MathHelper
     /// </summary>
     /// <param name="angleRadians">The radian angle.</param>
     /// <returns>Angle between 0 and 2pi.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double GetPositiveAngle(double angleRadians)
     {
-        angleRadians %= TwoPi;
+        angleRadians = Math.IEEERemainder(angleRadians, TwoPi);
         if (angleRadians < 0)
             return TwoPi + angleRadians;
         return angleRadians;

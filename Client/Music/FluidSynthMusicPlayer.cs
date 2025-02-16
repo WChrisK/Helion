@@ -90,7 +90,7 @@ public class FluidSynthMusicPlayer : IMusicPlayer
 
             m_player = new(m_synth);
 
-            if (options.HasFlag(MusicPlayerOptions.Loop))
+            if ((options & MusicPlayerOptions.Loop) != 0)
                 m_player.SetLoop(-1);
 
             m_player.Add(m_lastFile);

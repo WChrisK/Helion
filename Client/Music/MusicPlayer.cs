@@ -142,7 +142,7 @@ public class MusicPlayer : IMusicPlayer
                 {
                     CreateAndPlayMusic(playParams);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Log.Warn($"Could not start music playback.");
                     Log.Info(ex);
@@ -164,7 +164,7 @@ public class MusicPlayer : IMusicPlayer
         var data = playParams.Data;
         var options = playParams.Options;
         uint hash = data.CalculateCrc32();
-        if (options.HasFlag(MusicPlayerOptions.IgnoreAlreadyPlaying))
+        if ((options & MusicPlayerOptions.IgnoreAlreadyPlaying) != 0)
         {
             if (hash == m_lastDataHash)
                 return;
@@ -187,7 +187,7 @@ public class MusicPlayer : IMusicPlayer
         {
             // MP3, OGG, MOD, XM, IT, etc. -- use ZMusic.
             // No need for the "play thread" wrapper here because the player spins up its own thread/task internally
-            m_zMusicPlayer.Play(data, playParams.Options.HasFlag(MusicPlayerOptions.Loop));
+            m_zMusicPlayer.Play(data, (playParams.Options & MusicPlayerOptions.Loop) != 0);
         }
         else
         {

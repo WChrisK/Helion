@@ -135,7 +135,7 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
         {
             offset.X += StandardWidth;
             // Set offset to draw from bottom up (only for skytransfer specials or id24 skies with midtexel property)
-            if (options.HasFlag(SkyOptions.SkyTransfer) || transform.MidTexel.HasValue)
+            if ((options & SkyOptions.SkyTransfer) != 0 || transform.MidTexel.HasValue)
                 offset.Y += skyTexture.GlTexture.Height - StandardHeight;
 
             // Calculate the offset so that the midtexel is in the center of the sphere projection
@@ -262,7 +262,7 @@ public class SkySphereTexture(ArchiveCollection archiveCollection, LegacyGLTextu
         GetAverageColors(skyImage, out var topColor, out var bottomColor);
         var colormap = m_archiveCollection.Colormap;
         var glTexture = CreateTexture(skyImage, $"[SKY][{textureIndex}] {m_archiveCollection.TextureManager.SkyTextureName}");
-        texture = new(glTexture, textureIndex, topColor, bottomColor, 
+        texture = new(glTexture, textureIndex, topColor, bottomColor,
             colormap.GetNearestColorIndex(FromRgba(topColor)), colormap.GetNearestColorIndex(FromRgba(bottomColor)));
         return true;
     }

@@ -40,7 +40,7 @@ public class GLFramebuffer : IDisposable
         Bind();
         GLHelper.ObjectLabel(ObjectLabelIdentifier.Framebuffer, m_name, $"Framebuffer: {Label}");
         CreateColorAttachments(numColorAttachments, dimension, label);
-        if (options.HasFlag(GLFrameBufferOptions.DepthStencilAttachment))
+        if ((options & GLFrameBufferOptions.DepthStencilAttachment) != 0)
             CreateDepthStencilAttachment(dimension, label);
         CheckFramebufferOrThrow();
         Unbind();
@@ -104,7 +104,7 @@ public class GLFramebuffer : IDisposable
         foreach (GLTexture2D texture in m_textures)
             texture.Dispose();
         m_textures.Clear();
-        
+
         GL.DeleteFramebuffer(m_name);
 
         m_disposed = true;

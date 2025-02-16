@@ -1200,10 +1200,10 @@ doneLinkToSectors:
             for (int bx = blockStartX; bx <= blockEndX; bx++)
             {
                 var index = by * m_blockmap.Width + bx;
-                ref var blockEntities = ref m_blockmap.Entities[index];
-                var entityIndices = blockEntities.EntityIndices;
                 if (checkEntities)
                 {
+                    ref var blockEntities = ref m_blockmap.Entities[index];
+                    var entityIndices = blockEntities.EntityIndices;
                     for (int i = blockEntities.EntityIndicesLength - 1; i >= 0; i--)
                     {
                         nextEntity = m_dataCache.Entities[entityIndices[i]];

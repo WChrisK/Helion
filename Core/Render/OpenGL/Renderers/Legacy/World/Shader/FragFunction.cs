@@ -131,7 +131,7 @@ public class FragFunction
                 @"usePalette = int(mix(0, usePalette, float(drawPaletteFrag)));"
                 : "")
             .Replace("${LightOffset}", ctx == ColorMapFetchContext.Hud ? "int(hudColorMapIndexFrag) * 256" : "0");
-            
+
         // Use the alpha flag to indicate we need to fetch from the colormap buffer since we don't need it for fullbright.
         return @"
                 const int paletteSize = 256 * 34;
@@ -146,7 +146,7 @@ public class FragFunction
                 .Replace("${IndexAdd}", indexAdd);
     }
 
-    public static string FragColorFunction(FragColorFunctionOptions options, ColorMapFetchContext ctx = ColorMapFetchContext.Default, 
+    public static string FragColorFunction(FragColorFunctionOptions options, ColorMapFetchContext ctx = ColorMapFetchContext.Default,
         OitOptions oitOptions = OitOptions.None, string postProcess = "")
     {
         var fragColor = @"fragColor = texture(boundTexture, uvFrag.st);";
@@ -155,16 +155,16 @@ public class FragFunction
 
         return
             fragColor +
-            (options.HasFlag(FragColorFunctionOptions.Colormap) ? ColorMapFetch(true, ctx) : "")
+            ((options & FragColorFunctionOptions.Colormap) != 0 ? ColorMapFetch(true, ctx) : "")
             + AlphaFlag(true) +
             (ShaderVars.PaletteColorMode ? "\n" : "fragColor.xyz *= lightLevel;\n") +
-            (options.HasFlag(FragColorFunctionOptions.AddAlpha) ?
+            ((options & FragColorFunctionOptions.AddAlpha) != 0 ?
                 @"fragColor.w = fragColor.w * alphaFrag + addAlphaFrag;"
                 +
                 GetClearAlpha(oitOptions)
                 :
                 "") +
-            (options.HasFlag(FragColorFunctionOptions.Alpha) ?
+            ((options & FragColorFunctionOptions.Alpha) != 0 ?
                 "fragColor.w *= alphaFrag;" :
                 "") +
             @"
@@ -268,7 +268,7 @@ public class FragFunction
         if (options == OitOptions.OitTransparentPass)
             return
                 "float weight = clamp(10 / (1e-5 + pow(dist/1000, 2)) + pow(dist/8192, 6), 100.0, 1000.0);" +
-                (fragColorOptions.HasFlag(FragColorFunctionOptions.Fuzz) ?
+                ((fragColorOptions & FragColorFunctionOptions.Fuzz) != 0 ?
                 @"
                 outFuzz = fuzzFrag;
                 float weightClear = mix(1, 0, fuzzFrag - renderFuzz);

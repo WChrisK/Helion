@@ -362,17 +362,17 @@ public class DehackedApplier
     private static void ApplyWeaponMbf21Bits(EntityDefinition weaponDef, uint value)
     {
         Mbf21WeaponFlags flags = (Mbf21WeaponFlags)value;
-        if (flags.HasFlag(Mbf21WeaponFlags.NOTHRUST))
+        if ((flags & Mbf21WeaponFlags.NOTHRUST) != 0)
         {
             weaponDef.Properties.Weapons.DefaultKickBack = false;
             weaponDef.Properties.Weapons.KickBack = 0;
         }
 
-        weaponDef.Flags.WeaponNoAlert = flags.HasFlag(Mbf21WeaponFlags.SILENT);
-        weaponDef.Flags.WeaponNoAutofire = flags.HasFlag(Mbf21WeaponFlags.NOAUTOFIRE);
-        weaponDef.Flags.WeaponMeleeWeapon = flags.HasFlag(Mbf21WeaponFlags.FLEEMELEE);
-        weaponDef.Flags.WeaponWimpyWeapon = flags.HasFlag(Mbf21WeaponFlags.AUTOSWITCHFROM);
-        weaponDef.Flags.WeaponNoAutoSwitch = flags.HasFlag(Mbf21WeaponFlags.NOAUTOSWITCHTO);
+        weaponDef.Flags.WeaponNoAlert = (flags & Mbf21WeaponFlags.SILENT) != 0;
+        weaponDef.Flags.WeaponNoAutofire = (flags & Mbf21WeaponFlags.NOAUTOFIRE) != 0;
+        weaponDef.Flags.WeaponMeleeWeapon = (flags & Mbf21WeaponFlags.FLEEMELEE) != 0;
+        weaponDef.Flags.WeaponWimpyWeapon = (flags & Mbf21WeaponFlags.AUTOSWITCHFROM) != 0;
+        weaponDef.Flags.WeaponNoAutoSwitch = (flags & Mbf21WeaponFlags.NOAUTOSWITCHTO) != 0;
     }
 
     private static void SetWeaponAmmo(EntityDefinition weaponDef, List<WeaponProperty> properties, int ammoType)
@@ -557,7 +557,7 @@ public class DehackedApplier
     private static void ApplyFrameMbf21Bits(EntityFrame entityFrame, uint value)
     {
         Mbf21FrameFlags flags = (Mbf21FrameFlags)value;
-        entityFrame.Properties.Fast = flags.HasFlag(Mbf21FrameFlags.SKILL5FAST);
+        entityFrame.Properties.Fast = (flags & Mbf21FrameFlags.SKILL5FAST) != 0;
     }
 
     private void SetSprite(EntityFrame entityFrame, DehackedDefinition dehacked, int spriteNumber)
@@ -759,7 +759,7 @@ public class DehackedApplier
             GetEntityDefinition(dehacked, thing, composer);
     }
 
-    private void ApplyPickupAmmoType(DehackedThing thing, DehackedDefinition dehacked, EntityDefinitionComposer composer, EntityDefinition definition, 
+    private void ApplyPickupAmmoType(DehackedThing thing, DehackedDefinition dehacked, EntityDefinitionComposer composer, EntityDefinition definition,
         int type, Id24AmmoCategory category)
     {
         Id24AmmoCategory categoryFlags = (Id24AmmoCategory)((int)category & 0xC);
@@ -858,7 +858,7 @@ public class DehackedApplier
 
         definition.Properties.AddTranslatedPickup(weaponDef);
     }
-    
+
     private static void SetDroppedItem(int thingNumber, DehackedDefinition dehacked, EntityDefinition definition)
     {
         if (dehacked.GetEntityDefinitionName(thingNumber, out var droppedName))
@@ -987,7 +987,7 @@ public class DehackedApplier
 
             if (ammo.AmmoNumber >= weaponDefs.Count)
                 continue;
-            
+
             var ammoWeaponDefs = weaponDefs[ammo.AmmoNumber];
             if (ammo.WeaponAmmo.HasValue)
             {
@@ -1005,7 +1005,7 @@ public class DehackedApplier
             {
                 foreach (var weaponDef in ammoWeaponDefs)
                     weaponDef.Properties.Weapons.DeathmatchAmmoGive = ammo.DeathmatchWeaponAmmo.Value;
-            }  
+            }
         }
     }
 
@@ -1227,27 +1227,27 @@ public class DehackedApplier
     public static void SetEntityFlagsMbf21(EntityProperties properties, ref EntityFlags flags, uint value, bool opAnd)
     {
         Mbf21ThingFlags thingProperties = (Mbf21ThingFlags)value;
-        properties.Gravity = GetNewFlagValue(flags.NoTarget, thingProperties.HasFlag(Mbf21ThingFlags.LOGRAV), opAnd) ? 1 / 8.0 : 1.0; // Lower gravity (1/8)
-        properties.MaxTargetRange = GetNewFlagValue(flags.NoTarget, thingProperties.HasFlag(Mbf21ThingFlags.SHORTMRANGE), opAnd) ? 896 : 0; // Short missile range (archvile)
-        properties.MinMissileChance = GetNewFlagValue(flags.NoTarget, thingProperties.HasFlag(Mbf21ThingFlags.HIGHERMPROB), opAnd) ? 160 : 200; // Higher missile attack probability (cyberdemon)
-        properties.MeleeThreshold = GetNewFlagValue(flags.NoTarget, thingProperties.HasFlag(Mbf21ThingFlags.LONGMELEE), opAnd) ? 196 : 0; // Has long melee range (revenant)
+        properties.Gravity = GetNewFlagValue(flags.NoTarget, (thingProperties & Mbf21ThingFlags.LOGRAV) != 0, opAnd) ? 1 / 8.0 : 1.0; // Lower gravity (1/8)
+        properties.MaxTargetRange = GetNewFlagValue(flags.NoTarget, (thingProperties & Mbf21ThingFlags.SHORTMRANGE) != 0, opAnd) ? 896 : 0; // Short missile range (archvile)
+        properties.MinMissileChance = GetNewFlagValue(flags.NoTarget, (thingProperties & Mbf21ThingFlags.HIGHERMPROB) != 0, opAnd) ? 160 : 200; // Higher missile attack probability (cyberdemon)
+        properties.MeleeThreshold = GetNewFlagValue(flags.NoTarget, (thingProperties & Mbf21ThingFlags.LONGMELEE) != 0, opAnd) ? 196 : 0; // Has long melee range (revenant)
 
-        flags.NoTarget = GetNewFlagValue(flags.NoTarget, thingProperties.HasFlag(Mbf21ThingFlags.DMGIGNORED), opAnd);
-        flags.NoRadiusDmg = GetNewFlagValue(flags.NoRadiusDmg, thingProperties.HasFlag(Mbf21ThingFlags.NORADIUSDMG), opAnd);
-        flags.ForceRadiusDmg = GetNewFlagValue(flags.ForceRadiusDmg, thingProperties.HasFlag(Mbf21ThingFlags.FORCERADIUSDMG), opAnd);
-        flags.MissileMore = GetNewFlagValue(flags.MissileMore, thingProperties.HasFlag(Mbf21ThingFlags.RANGEHALF), opAnd);
-        flags.QuickToRetaliate = GetNewFlagValue(flags.QuickToRetaliate, thingProperties.HasFlag(Mbf21ThingFlags.NOTHRESHOLD), opAnd);
-        flags.Boss = GetNewFlagValue(flags.Boss, thingProperties.HasFlag(Mbf21ThingFlags.BOSS), opAnd);
-        flags.Map07Boss1 = GetNewFlagValue(flags.Map07Boss1, thingProperties.HasFlag(Mbf21ThingFlags.MAP07BOSS1), opAnd);
-        flags.Map07Boss2 = GetNewFlagValue(flags.Map07Boss2, thingProperties.HasFlag(Mbf21ThingFlags.MAP07BOSS2), opAnd);
-        flags.E1M8Boss = GetNewFlagValue(flags.E1M8Boss, thingProperties.HasFlag(Mbf21ThingFlags.E1M8BOSS), opAnd);
-        flags.E2M8Boss = GetNewFlagValue(flags.E2M8Boss, thingProperties.HasFlag(Mbf21ThingFlags.E2M8BOSS), opAnd);
-        flags.E3M8Boss = GetNewFlagValue(flags.E2M8Boss, thingProperties.HasFlag(Mbf21ThingFlags.E2M8BOSS), opAnd);
-        flags.E4M6Boss = GetNewFlagValue(flags.E4M6Boss, thingProperties.HasFlag(Mbf21ThingFlags.E4M6BOSS), opAnd);
-        flags.E4M8Boss = GetNewFlagValue(flags.E4M8Boss, thingProperties.HasFlag(Mbf21ThingFlags.E4M8BOSS), opAnd);
-        flags.Ripper = GetNewFlagValue(flags.Ripper, thingProperties.HasFlag(Mbf21ThingFlags.RIP), opAnd);
-        flags.FullVolSee = GetNewFlagValue(flags.FullVolSee, thingProperties.HasFlag(Mbf21ThingFlags.FULLVOLSOUNDS), opAnd);
-        flags.FullVolDeath = GetNewFlagValue(flags.FullVolDeath, thingProperties.HasFlag(Mbf21ThingFlags.FULLVOLSOUNDS), opAnd);
+        flags.NoTarget = GetNewFlagValue(flags.NoTarget, (thingProperties & Mbf21ThingFlags.DMGIGNORED) != 0, opAnd);
+        flags.NoRadiusDmg = GetNewFlagValue(flags.NoRadiusDmg, (thingProperties & Mbf21ThingFlags.NORADIUSDMG) != 0, opAnd);
+        flags.ForceRadiusDmg = GetNewFlagValue(flags.ForceRadiusDmg, (thingProperties & Mbf21ThingFlags.FORCERADIUSDMG) != 0, opAnd);
+        flags.MissileMore = GetNewFlagValue(flags.MissileMore, (thingProperties & Mbf21ThingFlags.RANGEHALF) != 0, opAnd);
+        flags.QuickToRetaliate = GetNewFlagValue(flags.QuickToRetaliate, (thingProperties & Mbf21ThingFlags.NOTHRESHOLD) != 0, opAnd);
+        flags.Boss = GetNewFlagValue(flags.Boss, (thingProperties & Mbf21ThingFlags.BOSS) != 0, opAnd);
+        flags.Map07Boss1 = GetNewFlagValue(flags.Map07Boss1, (thingProperties & Mbf21ThingFlags.MAP07BOSS1) != 0, opAnd);
+        flags.Map07Boss2 = GetNewFlagValue(flags.Map07Boss2, (thingProperties & Mbf21ThingFlags.MAP07BOSS2) != 0, opAnd);
+        flags.E1M8Boss = GetNewFlagValue(flags.E1M8Boss, (thingProperties & Mbf21ThingFlags.E1M8BOSS) != 0, opAnd);
+        flags.E2M8Boss = GetNewFlagValue(flags.E2M8Boss, (thingProperties & Mbf21ThingFlags.E2M8BOSS) != 0, opAnd);
+        flags.E3M8Boss = GetNewFlagValue(flags.E2M8Boss, (thingProperties & Mbf21ThingFlags.E2M8BOSS) != 0, opAnd);
+        flags.E4M6Boss = GetNewFlagValue(flags.E4M6Boss, (thingProperties & Mbf21ThingFlags.E4M6BOSS) != 0, opAnd);
+        flags.E4M8Boss = GetNewFlagValue(flags.E4M8Boss, (thingProperties & Mbf21ThingFlags.E4M8BOSS) != 0, opAnd);
+        flags.Ripper = GetNewFlagValue(flags.Ripper, (thingProperties & Mbf21ThingFlags.RIP) != 0, opAnd);
+        flags.FullVolSee = GetNewFlagValue(flags.FullVolSee, (thingProperties & Mbf21ThingFlags.FULLVOLSOUNDS) != 0, opAnd);
+        flags.FullVolDeath = GetNewFlagValue(flags.FullVolDeath, (thingProperties & Mbf21ThingFlags.FULLVOLSOUNDS) != 0, opAnd);
     }
 
     private static void ClearEntityFlagsId24(ref EntityFlags flags)
@@ -1261,10 +1261,10 @@ public class DehackedApplier
     public static void SetEntityFlagsId24(ref EntityFlags flags, uint value, bool opAnd)
     {
         Id24ThingFlags thingProperties = (Id24ThingFlags)value;
-        flags.NoRespawn = GetNewFlagValue(flags.NoRespawn, thingProperties.HasFlag(Id24ThingFlags.NORESPAWN), opAnd);
-        flags.SpecialStaySingle = GetNewFlagValue(flags.NoRespawn, thingProperties.HasFlag(Id24ThingFlags.SPECIALSTAYSSINGLE), opAnd);
-        flags.SpecialStayCooperative = GetNewFlagValue(flags.SpecialStayCooperative, thingProperties.HasFlag(Id24ThingFlags.SPECIALSTAYSCOOP), opAnd);
-        flags.SpecialStayDeathmatch = GetNewFlagValue(flags.SpecialStayDeathmatch, thingProperties.HasFlag(Id24ThingFlags.SPECIALSTAYSDM), opAnd);
+        flags.NoRespawn = GetNewFlagValue(flags.NoRespawn, (thingProperties & Id24ThingFlags.NORESPAWN) != 0, opAnd);
+        flags.SpecialStaySingle = GetNewFlagValue(flags.NoRespawn, (thingProperties & Id24ThingFlags.SPECIALSTAYSSINGLE) != 0, opAnd);
+        flags.SpecialStayCooperative = GetNewFlagValue(flags.SpecialStayCooperative, (thingProperties & Id24ThingFlags.SPECIALSTAYSCOOP) != 0, opAnd);
+        flags.SpecialStayDeathmatch = GetNewFlagValue(flags.SpecialStayDeathmatch, (thingProperties & Id24ThingFlags.SPECIALSTAYSDM) != 0, opAnd);
     }
 
     private static bool GetNewFlagValue(bool existingFlag, bool newFlag, bool opAnd)
@@ -1343,13 +1343,13 @@ public class DehackedApplier
         flags.Translation2 = GetNewFlagValue(flags.Translation2, (thingProperties & ThingProperties.TRANSLATION2) != 0, opAnd);
         flags.InFloat = GetNewFlagValue(flags.InFloat, (thingProperties & ThingProperties.INFLOAT) != 0, opAnd);
 
-        properties.Alpha = GetNewFlagValue(flags.Friendly, (thingProperties & ThingProperties.TRANSLUCENT) != 0, opAnd) ? TranslucentValue: 1;
+        properties.Alpha = GetNewFlagValue(flags.Friendly, (thingProperties & ThingProperties.TRANSLUCENT) != 0, opAnd) ? TranslucentValue : 1;
     }
 
     public static bool CheckEntityFlags(Entity entity, uint flags)
     {
         // This could have been a lookup but it would have to to map to a property, invoking would likely be slow and this happens at runtime.
-        ThingProperties thingProperties = (ThingProperties)flags;        
+        ThingProperties thingProperties = (ThingProperties)flags;
         if ((thingProperties & ThingProperties.SPECIAL) != 0 && !entity.Flags.Special)
             return false;
         if ((thingProperties & ThingProperties.SOLID) != 0 && !entity.Flags.Solid)
@@ -1402,7 +1402,7 @@ public class DehackedApplier
             return false;
         if ((thingProperties & ThingProperties.TOUCHY) != 0 && !entity.Flags.Touchy)
             return false;
-        if ((thingProperties & ThingProperties.BOUNCES) != 0  && !entity.Flags.MbfBouncer)
+        if ((thingProperties & ThingProperties.BOUNCES) != 0 && !entity.Flags.MbfBouncer)
             return false;
         if ((thingProperties & ThingProperties.FRIEND) != 0 && !entity.Flags.Friendly)
             return false;
@@ -1630,7 +1630,7 @@ public class DehackedApplier
             string id = $"*deh/sound{sound.Index}";
             string entryName = sound.EntryName;
             if (!entryName.StartsWith("DS", StringComparison.OrdinalIgnoreCase))
-                entryName = "DS" + entryName; 
+                entryName = "DS" + entryName;
 
             soundInfoDef.Add(id, new SoundInfo(id, entryName, 0));
             m_dehacked.NewSoundLookup[sound.Index.Value] = id;

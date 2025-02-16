@@ -29,7 +29,7 @@ public class MapInfo
     private readonly List<EpisodeDef> m_episodes = new();
     private readonly List<MapInfoDef> m_maps = new();
     private readonly List<ClusterDef> m_clusters = new();
-    private readonly List<SkillDef> m_skills = new ();
+    private readonly List<SkillDef> m_skills = new();
 
     public void ClearEpisodes() => m_episodes.Clear();
 
@@ -105,7 +105,7 @@ public class MapInfo
         if (DefaultMap == null)
             return new MapInfoDef() { MapName = mapName.ToUpperInvariant() };
 
-        mapInfoDef =  (MapInfoDef)DefaultMap.Clone();
+        mapInfoDef = (MapInfoDef)DefaultMap.Clone();
         mapInfoDef.MapName = mapName.ToUpperInvariant();
         return mapInfoDef;
     }
@@ -132,7 +132,7 @@ public class MapInfo
     }
 
     public MapInfoDef GetStartMapOrDefault(ArchiveCollection archiveCollection, string mapName)
-    {        
+    {
         if (IsWarpTrans(mapName) && MapWarp.GetMap(mapName[WarpTrans.Length..], archiveCollection, out var mapInfoDef))
             return mapInfoDef;
 
@@ -160,7 +160,7 @@ public class MapInfo
                 isChangingClusters = false;
         }
 
-        return isChangingClusters || mapDef.EndGame != null || nextMapResult.Options.HasFlag(FindMapResultOptions.EndGame);
+        return isChangingClusters || mapDef.EndGame != null || (nextMapResult.Options & FindMapResultOptions.EndGame) != 0;
     }
 
     private static void AddOrReplace<T>(List<T> items, T newItem)

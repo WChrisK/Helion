@@ -98,7 +98,7 @@ public abstract partial class WorldBase : IWorld
     public event EventHandler<MusicChangeEvent>? OnMusicChanged;
     public event EventHandler? OnTick;
     public event EventHandler? OnDestroying;
-        
+
     private static int StaticId;
     public abstract WorldType WorldType { get; }
     public int Id { get; } = StaticId++;
@@ -348,7 +348,7 @@ public abstract partial class WorldBase : IWorld
         if (SameAsPreviousMap && LastBlockMap != null)
         {
             m_bspBlockmapDimensions = LastBspBlockmapDimensions;
-            m_bspBlockmapNodeIndices = LastBspBlockmapNodeIndices!;            
+            m_bspBlockmapNodeIndices = LastBspBlockmapNodeIndices!;
             LastBlockMap.Clear();
             return LastBlockMap;
         }
@@ -443,7 +443,7 @@ public abstract partial class WorldBase : IWorld
         Config.SlowTick.ChaseMultiplier.OnChanged += SlowTickChaseMultiplier_OnChanged;
         Config.SlowTick.LookMultiplier.OnChanged += SlowTickLookMultiplier_OnChanged;
         Config.SlowTick.TracerMultiplier.OnChanged += SlowTickTracerMultiplier_OnChanged;
-        
+
         Config.Compatibility.MissileClip.OnChanged += MissileClip_OnChanged;
         Config.Compatibility.AllowItemDropoff.OnChanged += AllowItemDropoff_OnChanged;
         Config.Compatibility.InfinitelyTallThings.OnChanged += InfinitelyTallThings_OnChanged;
@@ -737,7 +737,7 @@ public abstract partial class WorldBase : IWorld
                 RecursiveSound(target, other, block);
             }
         }
-    }  
+    }
 
     public void Link(Entity entity)
     {
@@ -869,7 +869,7 @@ public abstract partial class WorldBase : IWorld
 
                 if (!WorldStatic.InfinitelyTallThings &&
                     (entity.HadOnEntity || entity.OnEntity() != null) &&
-                    !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&                    
+                    !entity.Flags.NoGravity && !entity.Flags.NoBlockmap &&
                     entity.Velocity.Z == 0 && entity.Position.Z > entity.HighestFloorSector.Floor.Z)
                 {
                     m_fallCheckEntities.Add(entity);
@@ -971,7 +971,7 @@ public abstract partial class WorldBase : IWorld
         if (Paused)
             return;
 
-        DrawPause = options.HasFlag(PauseOptions.DrawPause);
+        DrawPause = (options & PauseOptions.DrawPause) != 0;
         SoundManager.Pause();
 
         Paused = true;
@@ -1111,7 +1111,7 @@ public abstract partial class WorldBase : IWorld
                 yield return def;
     }
 
-    private void AddMonsterCountSpecial(List<IMonsterCounterSpecial> monsterCountSpecials, Func<EntityFlags, bool> isMatch, int sectorTag, 
+    private void AddMonsterCountSpecial(List<IMonsterCounterSpecial> monsterCountSpecials, Func<EntityFlags, bool> isMatch, int sectorTag,
         MapSpecialAction mapSpecialAction)
     {
         foreach (var def in GetEntityDefinitionsByFlag(isMatch))
@@ -1374,7 +1374,7 @@ public abstract partial class WorldBase : IWorld
         if (projectile.Flags.Randomize)
             projectile.SetRandomizeTicks();
 
-        double speed = IsFastMonsters && projectile.Properties.FastSpeed > 0 ? 
+        double speed = IsFastMonsters && projectile.Properties.FastSpeed > 0 ?
             projectile.Properties.FastSpeed : projectile.Properties.MissileMovementSpeed;
 
         Vec3D velocity = Vec3D.UnitSphere(angle, pitch) * speed;
@@ -1386,7 +1386,7 @@ public abstract partial class WorldBase : IWorld
 
         if (projectile.Flags.NoClip)
             return projectile;
-        
+
         Vec3D testPos = projectile.Position;
         if (projectile.Properties.MissileMovementSpeed > 0)
             testPos += Vec3D.UnitSphere(angle, pitch) * (shooter.Radius - 2.0);
@@ -1429,7 +1429,7 @@ public abstract partial class WorldBase : IWorld
         {
             shooter.PlayerObj.Tracers.AddLookPath(shooter.HitscanAttackPos, shooter.AngleRadians, originalPitch, distance, Gametick);
             shooter.PlayerObj.Tracers.AddAutoAimPath(shooter.HitscanAttackPos, shooter.AngleRadians, pitch, distance, Gametick);
-        }        
+        }
 
         if (!shooter.Refire && bulletCount == 1)
         {
@@ -1545,7 +1545,7 @@ public abstract partial class WorldBase : IWorld
                 }
 
                 var opening = PhysicsManager.GetLineOpening(bi.Line);
-                if ((floorZ != double.MinValue && opening.FloorZ > intersect.Z && intersect.Z > floorZ) || 
+                if ((floorZ != double.MinValue && opening.FloorZ > intersect.Z && intersect.Z > floorZ) ||
                     (ceilingZ != double.MaxValue && opening.CeilingZ < intersect.Z && intersect.Z < ceilingZ))
                 {
                     returnValue = bi;
@@ -1723,7 +1723,7 @@ public abstract partial class WorldBase : IWorld
         }
 
         definition = ArchiveCollection.EntityDefinitionComposer.GetByName(def);
-        return definition!= null;
+        return definition != null;
     }
 
     public virtual void PerformItemPickup(Entity entity, Entity item)
@@ -1769,7 +1769,7 @@ public abstract partial class WorldBase : IWorld
             player = findPlayer;
         }
 
-        m_itemPickupIndexToPlayers[item.Index] = player; 
+        m_itemPickupIndexToPlayers[item.Index] = player;
         item.FrameState.SetState(item, item.Definition, Constants.FrameStates.Pickup, warn: false);
         m_itemPickupIndexToPlayers.Remove(item.Index);
 
@@ -1984,7 +1984,7 @@ public abstract partial class WorldBase : IWorld
         Vec2D entityToTarget = new(to.Position.X - from.Position.X, to.Position.Y - from.Position.Y);
         entityToTarget.Normalize();
         var angle = Math.Acos(entityToTarget.Dot(entityLookingVector));
-        return angle < fieldOfViewRadians/2;
+        return angle < fieldOfViewRadians / 2;
     }
 
     private static bool InFieldOfViewOrInMeleeDistance(Entity from, Entity to)
@@ -2084,11 +2084,11 @@ public abstract partial class WorldBase : IWorld
                     pos.Z = deathEntity.Position.Z + deathEntity.Definition.Properties.Height / 2;
                     addVelocity = 4;
                 }
-                
+
                 Entity? dropItem = EntityManager.Create(dropItemDef.Value.ClassName, pos, initSpawn: initSpawn);
                 if (dropItem == null)
                     continue;
-                
+
                 dropItem.Flags.Dropped = true;
                 dropItem.Velocity.Z += addVelocity;
             }
@@ -2237,7 +2237,7 @@ public abstract partial class WorldBase : IWorld
                 HighlightSector(sector);
         }
     }
-        
+
     public bool SetSkillLevel(SkillLevel skill)
     {
         var skillDef = ArchiveCollection.Definitions.MapInfoDefinition.MapInfo.GetSkill(skill);
@@ -2250,7 +2250,7 @@ public abstract partial class WorldBase : IWorld
     }
 
     private void HighlightSector(Sector sector)
-    {        
+    {
         var islands = Geometry.IslandGeometry.SectorIslands[sector.Id];
         if (islands.Count == 0)
             return;
@@ -2476,7 +2476,7 @@ public abstract partial class WorldBase : IWorld
         PitchNotSet,
     }
 
-    private TraversalPitchStatus GetBlockmapTraversalPitch(DynamicArray<BlockmapIntersect> intersections, in Vec3D start, Entity startEntity, 
+    private TraversalPitchStatus GetBlockmapTraversalPitch(DynamicArray<BlockmapIntersect> intersections, in Vec3D start, Entity startEntity,
         double segLength, ref double topPitch, ref double bottomPitch,
         out double pitch, out Entity? entity)
     {
@@ -2872,7 +2872,7 @@ public abstract partial class WorldBase : IWorld
         if (!m_newTracerTargetData.Owner.ValidEnemyTarget(checkEntity))
             return GridIterationStatus.Continue;
 
-        if (m_newTracerTargetData.FieldOfViewRadians > 0 && 
+        if (m_newTracerTargetData.FieldOfViewRadians > 0 &&
             !InFieldOfView(m_newTracerTargetData.Entity, checkEntity, m_newTracerTargetData.FieldOfViewRadians))
             return GridIterationStatus.Continue;
 

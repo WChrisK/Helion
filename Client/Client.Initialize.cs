@@ -102,7 +102,7 @@ public partial class Client
 
     private void FindInstalledIWads()
     {
-        var iwadLocator = IWadLocator.CreateDefault(m_config.Files.Directories.Value);
+        var iwadLocator = IWadLocator.CreateDefault(m_config.Files.Directories.Value, m_config.Files.SearchCommonDirectories.Value);
         m_installedIwads.AddRange(iwadLocator.Locate());
     }
 

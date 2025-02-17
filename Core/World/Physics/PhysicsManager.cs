@@ -133,7 +133,7 @@ public sealed class PhysicsManager
     public void Move(Entity entity)
     {
         entity.BlockingEntity = null;
-        entity.BlockingLineId = -1;
+        entity.BlockingBlockLineIndex = -1;
         entity.BlockingSectorPlane = null;
         MoveXY(entity);
         MoveZ(entity);
@@ -1096,9 +1096,9 @@ doneLinkToSectors:
                 continue;
             }
 
-            if (entity.BlockingLineId != -1 && entity.PlayerObj != null && !entity.PlayerObj.IsVooDooDoll)
+            if (entity.BlockingBlockLineIndex != -1 && entity.PlayerObj != null && !entity.PlayerObj.IsVooDooDoll)
             {
-                ref var line = ref m_world.Blockmap.BlockLines[entity.BlockingLineId];
+                ref var line = ref m_world.Blockmap.BlockLines[entity.BlockingBlockLineIndex];
                 if (Line.CanMoveOutOf(entity, nextX, nextY, line.Segment, line.BackSector == null))
                 {
                     TryMoveData.BlockedLineClearsVelocity = false;
@@ -1110,10 +1110,10 @@ doneLinkToSectors:
             {
                 // BlockingLine and BlockingEntity will get cleared on HandleSlide(IsPositionValid) calls.
                 // Carry them over so other functions after TryMoveXY can use them for verification.
-                var blockingLineId = entity.BlockingLineId;
+                var blockingLineId = entity.BlockingBlockLineIndex;
                 var blockingEntity = entity.BlockingEntity;
                 HandleSlide(entity, ref stepDelta, ref movesLeft, TryMoveData);
-                entity.BlockingLineId = blockingLineId;
+                entity.BlockingBlockLineIndex = blockingLineId;
                 entity.BlockingEntity = blockingEntity;
                 if (slideBlockLineId == -1 && blockingLineId != -1)
                     slideBlockLineId = blockingLineId;
@@ -1134,8 +1134,8 @@ doneLinkToSectors:
         {
             if (slideBlockEntity != null && entity.BlockingEntity == null)
                 entity.BlockingEntity = slideBlockEntity;
-            if (slideBlockLineId != -1 && entity.BlockingLineId == -1)
-                entity.BlockingLineId = slideBlockLineId;
+            if (slideBlockLineId != -1 && entity.BlockingBlockLineIndex == -1)
+                entity.BlockingBlockLineIndex = slideBlockLineId;
             m_world.HandleEntityHit(entity, saveVelocity, TryMoveData);
         }
 
@@ -1176,7 +1176,7 @@ doneLinkToSectors:
             tryMove.LowestCeilingZ = tryMove.Subsector.Sector.Ceiling.Z;
         }
 
-        entity.BlockingLineId = -1;
+        entity.BlockingBlockLineIndex = -1;
         entity.BlockingEntity = null;
         
         int checkCounter = ++WorldStatic.CheckCounter;
@@ -1261,7 +1261,7 @@ doneLinkToSectors:
                         var blockType = LineBlocksEntity(entity, x, y, ref blockLine, tryMove);
                         if (blockType != LineBlock.NoBlock)
                         {
-                            entity.BlockingLineId = i;
+                            entity.BlockingBlockLineIndex = i;
                             blockLineIndex = i;
                             tryMove.Success = false;
                             if (!entity.Flags.NoClip && blockLine.HasSpecial)

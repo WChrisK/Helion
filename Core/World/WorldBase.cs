@@ -1835,9 +1835,9 @@ public abstract partial class WorldBase : IWorld
             }
 
             bool skyClip = false;
-            if (entity.BlockingLineId != -1)
+            if (entity.BlockingBlockLineIndex != -1)
             {
-                ref var line = ref Blockmap.BlockLines[entity.BlockingLineId];
+                ref var line = ref Blockmap.BlockLines[entity.BlockingBlockLineIndex];
                 if (line.BackSector != null)
                 {
                     GetOrderedSectors(line, entity.Position, out Sector front, out Sector back);

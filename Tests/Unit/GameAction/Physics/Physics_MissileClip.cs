@@ -24,9 +24,9 @@ public partial class Physics
         Player.FireWeapon().Should().BeTrue();
         GameActions.TickWorld(World, 10);
         var plasma = GameActions.GetEntity(World, "PlasmaBall");
-        GameActions.TickWorld(World, () => plasma.BlockingLineId == -1 && plasma.BlockingEntity == null, () => { });
+        GameActions.TickWorld(World, () => plasma.BlockingBlockLineIndex == -1 && plasma.BlockingEntity == null, () => { });
 
-        World.Blockmap.BlockLines[plasma.BlockingLineId].LineId.Should().Be(410);
+        World.Blockmap.BlockLines[plasma.BlockingBlockLineIndex].LineId.Should().Be(410);
         World.Config.Compatibility.MissileClip.Set(false);
     }
 
@@ -47,7 +47,7 @@ public partial class Physics
         Player.FireWeapon().Should().BeTrue();
         GameActions.TickWorld(World, 1);
         var plasma = GameActions.GetEntity(World, "PlasmaBall");
-        GameActions.TickWorld(World, () => plasma.BlockingLineId == -1 && plasma.BlockingEntity == null, () => { });
+        GameActions.TickWorld(World, () => plasma.BlockingBlockLineIndex == -1 && plasma.BlockingEntity == null, () => { });
 
         plasma.BlockingEntity.Should().NotBeNull();
         plasma.BlockingEntity!.Definition.Name.Equals("BigTree", StringComparison.OrdinalIgnoreCase).Should().BeTrue();

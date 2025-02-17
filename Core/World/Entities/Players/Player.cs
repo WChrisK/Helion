@@ -464,11 +464,11 @@ public class Player : Entity
             m_jumpStartZ = double.MaxValue;
         }
 
-        if (!Flags.NoGravity && !Flags.NoClip && !IsDead && BlockingLineId != -1 &&
+        if (!Flags.NoGravity && !Flags.NoClip && !IsDead && BlockingBlockLineIndex != -1 &&
             Sector.Friction > Constants.DefaultFriction &&
             Position.Z <= Sector.Floor.Z &&
             Math.Abs(velocity.X) + Math.Abs(velocity.Y) > 8 &&
-            CheckIcyBounceLineAngle(World.Blockmap.BlockLines[BlockingLineId].Segment, velocity))
+            CheckIcyBounceLineAngle(World.Blockmap.BlockLines[BlockingBlockLineIndex].Segment, velocity))
         {
             var existingSound = SoundChannels[(int)SoundChannel.Default];
             if (existingSound == null || !existingSound.AudioData.SoundInfo.Name.EndsWith("*grunt"))

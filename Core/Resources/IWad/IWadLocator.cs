@@ -10,10 +10,18 @@ public class IWadLocator
 {
     private readonly List<string> m_directories;
 
-    public static IWadLocator CreateDefault(IEnumerable<string> configDirectories)
+    public static IWadLocator CreateDefault(IEnumerable<string> configDirectories, bool searchCommonDirectories)
     {
-        List<string> paths = [Directory.GetCurrentDirectory(), .. configDirectories,
-            .. WadPaths.GetFromSteamAndLinuxDirs(), .. WadPaths.GetFromEnvVars()];
+        List<string> paths = searchCommonDirectories
+            ? [
+                Directory.GetCurrentDirectory(),
+                .. configDirectories,
+                .. WadPaths.GetFromSteamAndLinuxDirs(),
+                .. WadPaths.GetFromEnvVars()]
+            : [
+                Directory.GetCurrentDirectory(),
+                .. configDirectories,
+                .. WadPaths.GetFromEnvVars()];
         return new IWadLocator(paths);
     }
 

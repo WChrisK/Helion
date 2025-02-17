@@ -183,7 +183,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Alpha = (float)Properties.Alpha;
         MonsterMovementSpeed = Properties.MonsterMovementSpeed;
 
-        FrameState = new(definition);
+        FrameState = new(FrameStateOptions.DestroyOnStop);
     }
 
     public void Set(int index, EntityModel entityModel, EntityDefinition definition, IWorld world)
@@ -227,7 +227,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Alpha = (float)Properties.Alpha;
         MonsterMovementSpeed = Properties.MonsterMovementSpeed;
 
-        FrameState = new(this, definition, entityModel.Frame);
+        FrameState = new(this, entityModel.Frame);
 
         if (entityModel.OnGround.HasValue)
             OnGround = entityModel.OnGround.Value;

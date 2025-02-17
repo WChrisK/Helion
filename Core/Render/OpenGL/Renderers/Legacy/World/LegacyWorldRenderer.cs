@@ -218,7 +218,7 @@ public class LegacyWorldRenderer : WorldRenderer
 
     void RenderEntity(IWorld world, Entity entity)
     {
-        if (entity.Frame.IsInvisible || entity.Flags.Invisible || entity.Flags.NoSector || entity == m_viewerEntity)
+        if (entity.FrameState.Frame.IsInvisible || entity.Flags.Invisible || entity.Flags.NoSector || entity == m_viewerEntity)
             return;
 
         // Not in front 180 FOV

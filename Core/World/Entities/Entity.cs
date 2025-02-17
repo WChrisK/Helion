@@ -114,9 +114,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public double Radius;
     public bool IsFrozen => FrozenTics > 0;
     public bool IsDead => Health <= 0;
-    public EntityFrame Frame => FrameState.Frame;
     public virtual double ViewZ => 8.0;
-    public bool IsDeathStateFinished => IsDead && Frame.Ticks == -1;
+    public bool IsDeathStateFinished => IsDead && FrameState.Frame.Ticks == -1;
     public virtual bool IsInvulnerable => Flags.Invulnerable;
     public virtual Player? PlayerObj => null;
     public virtual bool IsPlayer => false;

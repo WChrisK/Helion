@@ -1733,7 +1733,7 @@ public abstract partial class WorldBase : IWorld
     {
         // Vanilla determined pickups by the sprite name
         // E.g. batman doom has an enemy that drops a shotgun with the blue key sprite
-        if (!dehacked.PickupLookup.TryGetValue(item.Frame.Sprite, out string? def))
+        if (!dehacked.PickupLookup.TryGetValue(item.FrameState.Frame.Sprite, out string? def))
         {
             definition = null;
             return false;
@@ -2411,7 +2411,7 @@ public abstract partial class WorldBase : IWorld
 
         // Doom had the blood states hardcoded. Supercharged bulletride seems to function differing in gz vs dsda.
         // The changed the frame for blood that dsda will ignore because of hardcoded states, but work in gz.
-        if (HasDehacked && entity != null && entity.Frame.VanillaIndex != (int)ThingState.BLOOD1)
+        if (HasDehacked && entity != null && entity.FrameState.Frame.VanillaIndex != (int)ThingState.BLOOD1)
             return;
 
         int offset = 0;

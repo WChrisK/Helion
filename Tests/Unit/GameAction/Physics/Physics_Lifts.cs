@@ -268,7 +268,7 @@ namespace Helion.Tests.Unit.GameAction
                     monster.Height.Should().Be(0);
                     monster.Flags.DontGib.Should().BeTrue();
                     monster.Flags.Solid.Should().BeFalse();
-                    monster.Frame.Sprite.Should().Be("POL5");
+                    monster.FrameState.Frame.Sprite.Should().Be("POL5");
                 }
 
                 monster.Position.Z.Should().Be(sector.Floor.Z);

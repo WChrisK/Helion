@@ -86,11 +86,11 @@ public partial class EndGameLayer
         if (hud.Textures is not LegacyGLTextureManager textureManager)
             return;
 
-        var spriteDef = textureManager.GetSpriteDefinition(m_castEntity.Frame.SpriteIndex);
+        var spriteDef = textureManager.GetSpriteDefinition(m_castEntity.FrameState.Frame.SpriteIndex);
         if (spriteDef == null)
             return;
 
-        var spriteRotation = textureManager.GetSpriteRotation(spriteDef, m_castEntity.Frame.Frame, 0, 0);
+        var spriteRotation = textureManager.GetSpriteRotation(spriteDef, m_castEntity.FrameState.Frame.Frame, 0, 0);
         if (spriteRotation == null)
             return;
 

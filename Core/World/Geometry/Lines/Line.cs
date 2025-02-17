@@ -165,7 +165,7 @@ public sealed class Line
 
     private static SideModel ToSideModel(IWorld world, Side side)
     {
-        SideModel sideModel = new SideModel() { DataChanges = (int)side.DataChanges };
+        var sideModel = new SideModel() { DataChanges = (int)side.DataChanges };
         if ((side.DataChanges & SideDataTypes.UpperTexture) != 0)
             sideModel.UpperTex = world.TextureManager.GetTexture(side.Upper.TextureHandle).Name;
         if ((side.DataChanges & SideDataTypes.MiddleTexture) != 0)
@@ -213,17 +213,17 @@ public sealed class Line
         return linePoint.DistanceSquared(oldPos) <= linePoint.DistanceSquared(newPos);        
     }
 
-    public static bool BlocksEntity(Entity entity, double x, double y, in Seg2D seg, bool oneSided, in LineFlags flags, bool mbf21)
+    public static bool BlocksEntity(Entity entity, double x, double y, in Seg2D seg, bool oneSided, in LineBlockFlags blockFlags, bool mbf21)
     {
         if (oneSided)
             return !CanMoveOutOf(entity, x, y, seg, oneSided);
 
         bool isPlayerOrFriendly = entity.IsPlayer || entity.Flags.Friendly;
         if (!isPlayerOrFriendly && !entity.Flags.Missile &&
-            (flags.Blocking.Monsters || (mbf21 && flags.Blocking.LandMonstersMbf21 && !entity.Flags.Float)))
+            (blockFlags.Monsters || (mbf21 && blockFlags.LandMonstersMbf21 && !entity.Flags.Float)))
             return true;
 
-        if (entity.IsPlayer && (flags.Blocking.Players || (mbf21 && flags.Blocking.PlayersMbf21)))
+        if (entity.IsPlayer && (blockFlags.Players || (mbf21 && blockFlags.PlayersMbf21)))
             return true;
 
         return false;

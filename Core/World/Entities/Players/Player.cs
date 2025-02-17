@@ -1,9 +1,11 @@
 using Helion.Audio;
 using Helion.Geometry.Boxes;
+using Helion.Geometry.Segments;
 using Helion.Geometry.Vectors;
 using Helion.Maps.Specials.ZDoom;
 using Helion.Models;
 using Helion.Render.Common.World;
+using Helion.Render.OpenGL.Renderers.Legacy.World.Shader;
 using Helion.Render.OpenGL.Shared;
 using Helion.Resources.Archives.Entries;
 using Helion.Resources.Definitions.MapInfo;
@@ -462,16 +464,16 @@ public class Player : Entity
             m_jumpStartZ = double.MaxValue;
         }
 
-        if (!Flags.NoGravity && !Flags.NoClip && !IsDead && BlockingLine != null &&
+        if (!Flags.NoGravity && !Flags.NoClip && !IsDead && BlockingBlockLineIndex != -1 &&
             Sector.Friction > Constants.DefaultFriction &&
             Position.Z <= Sector.Floor.Z &&
             Math.Abs(velocity.X) + Math.Abs(velocity.Y) > 8 &&
-            CheckIcyBounceLineAngle(BlockingLine, velocity))
+            CheckIcyBounceLineAngle(World.Blockmap.BlockLines[BlockingBlockLineIndex].Segment, velocity))
         {
             var existingSound = SoundChannels[(int)SoundChannel.Default];
             if (existingSound == null || !existingSound.AudioData.SoundInfo.Name.EndsWith("*grunt"))
                 PlayGruntSound();
-            var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, null);
+            var bounceVelocity = MathHelper.BounceVelocity(velocity.XY);
             Velocity.X = bounceVelocity.X / 2;
             Velocity.Y = bounceVelocity.Y / 2;
         }
@@ -479,11 +481,11 @@ public class Player : Entity
         base.Hit(velocity);
     }
 
-    private bool CheckIcyBounceLineAngle(Line line, in Vec3D velocity)
+    private bool CheckIcyBounceLineAngle(in Seg2D segment, in Vec3D velocity)
     {
-        var onFront = line.Segment.OnRight(Position);
+        var onFront = segment.OnRight(Position);
         var velocityAngle = Math.Atan2(velocity.Y, velocity.X);
-        var lineAngle = onFront ? line.Segment.Start.Angle(line.Segment.End) : line.Segment.End.Angle(line.Segment.Start);
+        var lineAngle = onFront ? segment.Start.Angle(segment.End) : segment.End.Angle(segment.Start);
         var bounceAngle = MathHelper.GetPositiveAngle(velocityAngle - lineAngle);
 
         return bounceAngle > MathHelper.QuarterPi && bounceAngle < MathHelper.HalfPi + MathHelper.QuarterPi;
@@ -599,31 +601,34 @@ public class Player : Entity
         return m_camera;
     }
 
-    private unsafe void CheckLineClip(in Vec3D pos)
+    private void CheckLineClip(in Vec3D pos)
     {
+        if (ShaderVars.ReversedZ)
+            return;
+
         ViewLineClip = false;
         var box = new Box2D(pos.X, pos.Y, Radius);
-        var grid = WorldStatic.World.BlockmapTraverser.BlockmapGrid;
-        var it = grid.CreateBoxIteration(box);
-        for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+        var blockmap = WorldStatic.World.Blockmap;
+        var blockLines = WorldStatic.World.Blockmap.BlockLines;
+        var it = blockmap.CreateBoxIteration(box);
+        for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
         {
-            for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+            for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
             {
-                Block block = grid[by * it.Width + bx];
-                for (int i = 0; i < block.BlockLineCount; i++)
+                ref var block = ref WorldStatic.World.Blockmap.Lines[by * it.Width + bx];
+                int count = block.BlockLineIndex + block.BlockLineCount;
+                for (int i = count - 1; i >= block.BlockLineIndex; i--)
                 {
-                    fixed (BlockLine* blockLine = &block.BlockLines[i])
-                    {
-                        if (!box.Intersects(blockLine->Segment))
-                            continue;
+                    ref var blockLine = ref blockLines[i];
+                    if (!box.Intersects(blockLine.Segment))
+                        continue;
 
-                        var line = blockLine->Line;
-                        if (line.Front.Middle.TextureHandle != Constants.NoTextureIndex ||
-                            (line.Back != null && line.Back.Middle.TextureHandle != Constants.NoTextureIndex))
-                        {
-                            ViewLineClip = true;
-                            return;
-                        }
+                    var line = WorldStatic.World.Lines[blockLine.LineId];
+                    if (line.Front.Middle.TextureHandle != Constants.NoTextureIndex ||
+                        (line.Back != null && line.Back.Middle.TextureHandle != Constants.NoTextureIndex))
+                    {
+                        ViewLineClip = true;
+                        return;
                     }
                 }
             }
@@ -717,7 +722,7 @@ public class Player : Entity
     private Vec3D CheckPlaneClip(Vec3D pos, Vec3D prevPos, Vec3D interpolatedPos)
     {
         ViewPlaneClip = false;
-        if (Sector.TransferHeights == null)
+        if (ShaderVars.ReversedZ || Sector.TransferHeights == null)
             return interpolatedPos;
 
         var transferView = TransferHeights.GetView(Sector, pos.Z);
@@ -770,7 +775,7 @@ public class Player : Entity
         }
     }
 
-    private bool IsMaxFpsTickRate() =>
+    private static bool IsMaxFpsTickRate() =>
         WorldStatic.World.Config.Render.MaxFPS != 0 && WorldStatic.World.Config.Render.MaxFPS <= Constants.TicksPerSecond;
 
     protected bool ShouldInterpolate()

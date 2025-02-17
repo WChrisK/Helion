@@ -88,7 +88,7 @@ public partial class EndGameLayer
         if (m_castEntityFrameTicks > 0)
             return;
 
-        if (m_castEntity.Frame.Ticks == -1 || m_castEntity.Frame.IsNullFrame || m_castEntity.Frame.NextFrame.IsNullFrame)
+        if (m_castEntity.FrameState.Frame.Ticks == -1 || m_castEntity.FrameState.Frame.IsNullFrame || m_castEntity.FrameState.Frame.NextFrame.IsNullFrame)
         {
             SetNextCastEntity();
             return;
@@ -133,16 +133,16 @@ public partial class EndGameLayer
 
         if (!setNewState)
         {
-            if (m_castEntity.Frame.BranchType == ActorStateBranch.Stop)
+            if (m_castEntity.FrameState.Frame.BranchType == ActorStateBranch.Stop)
             {
                 SetNextCastEntity();
                 return;
             }
 
-            m_castEntity.FrameState.SetFrameIndexNoAction(m_castEntity, m_castEntity.Frame.NextFrameIndex);
+            m_castEntity.FrameState.SetFrameIndexNoAction(m_castEntity, m_castEntity.FrameState.Frame.NextFrameIndex);
         }
 
-        m_castEntityFrameTicks = m_castEntity.Frame.Ticks;
+        m_castEntityFrameTicks = m_castEntity.FrameState.Frame.Ticks;
         if (m_castEntityFrameTicks == -1)
             m_castEntityFrameTicks = 15;
     }
@@ -202,7 +202,7 @@ public partial class EndGameLayer
                 break;
         }
 
-        m_castEntityFrameTicks = m_castEntity.Frame.Ticks;
+        m_castEntityFrameTicks = m_castEntity.FrameState.Frame.Ticks;
 
         if (!string.IsNullOrEmpty(sound) && playSound)
             m_soundManager.PlayStaticSound(sound);
@@ -218,7 +218,7 @@ public partial class EndGameLayer
             return string.Empty;
 
         string name = m_castEntity.Definition.Name;
-        int frameIndex = m_castEntity.Frame.MasterFrameIndex;
+        int frameIndex = m_castEntity.FrameState.Frame.MasterFrameIndex;
         int frameDiff = frameIndex - frame.MasterFrameIndex;
         if (name.EqualsIgnoreCase("ZombieMan") && frameDiff == 1)
             return "grunt/attack";

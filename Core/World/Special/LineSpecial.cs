@@ -109,7 +109,7 @@ public class LineSpecial
             (defId == WorldStatic.ArachnotronPlasma?.Id || defId == WorldStatic.FatShot?.Id || defId == WorldStatic.RevenantTracer?.Id);
 
         bool contextSuccess = false;
-        LineFlags flags = line.Flags;
+        ref LineFlags flags = ref line.Flags;
         if (context == ActivationContext.HitscanCrossLine || context == ActivationContext.HitscanImpactsWall)
         {
             if ((flags.Activations & LineActivations.Hitscan) == 0)

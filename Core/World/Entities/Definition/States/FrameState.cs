@@ -34,13 +34,13 @@ public struct FrameState
     public int CurrentTick;
     public int FrameIndex;
 
-    public FrameState(EntityDefinition definition, FrameStateOptions options = FrameStateOptions.DestroyOnStop)
+    public FrameState(FrameStateOptions options)
     {
         m_options = options;
         Frame = WorldStatic.Frames[FrameIndex];
     }
 
-    public FrameState(Entity entity, EntityDefinition definition, FrameStateModel frameStateModel)
+    public FrameState(Entity entity, FrameStateModel frameStateModel)
     {
         FrameIndex = frameStateModel.FrameIndex;
         CurrentTick = frameStateModel.Tics;

@@ -39,7 +39,7 @@ public struct LineFlags
         TwoSided = flags.TwoSided;
     }
 
-    public override bool Equals(object? obj)
+    public override readonly bool Equals(object? obj)
     {
         if (obj is not LineFlags lineFlags)
             return false;
@@ -54,7 +54,7 @@ public struct LineFlags
             lineFlags.TwoSided == TwoSided;
     }
 
-    public override int GetHashCode()
+    public override readonly int GetHashCode()
     {
         return base.GetHashCode();
     }

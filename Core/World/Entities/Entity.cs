@@ -12,14 +12,12 @@ using Helion.World.Entities.Definition.Properties;
 using Helion.World.Entities.Definition.States;
 using Helion.World.Entities.Inventories;
 using Helion.World.Entities.Players;
-using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Physics;
 using Helion.World.Sound;
 using System;
 using System.Diagnostics;
 using static Helion.Util.Assertion.Assert;
-using Helion.World.Blockmap;
 using Helion.Graphics.Palettes;
 using System.Runtime.CompilerServices;
 
@@ -43,7 +41,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
 
     public Entity? RenderBlockNext;
     public Entity? RenderBlockPrevious;
-    public Block? RenderBlock;
+    public int RenderBlock = -1;
     public BlockRange BlockRange;
 
     public int BlockmapCount;
@@ -83,7 +81,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public DynamicArray<Sector> IntersectSectors = new();
     public int Id;
     public int ThingId;
-    public Line? BlockingLine;
+    // Index in Blockmap.BlockLines
+    public int BlockingBlockLineIndex;
     public Entity? BlockingEntity;
     public SectorPlane? BlockingSectorPlane;
 
@@ -105,7 +104,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public virtual SoundChannel WeaponSoundChannel => SoundChannel.Default;
     public virtual int ProjectileKickBack => Properties.ProjectileKickBack;
 
-    public bool IsBlocked() => BlockingEntity != null || BlockingLine != null || BlockingSectorPlane != null;
+    public bool IsBlocked() => BlockingEntity != null || BlockingBlockLineIndex != -1 || BlockingSectorPlane != null;
     public readonly DynamicArray<LinkableNode<Entity>> SectorNodes = new();
     public bool IsDisposed;
 
@@ -115,9 +114,8 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public double Radius;
     public bool IsFrozen => FrozenTics > 0;
     public bool IsDead => Health <= 0;
-    public EntityFrame Frame => FrameState.Frame;
     public virtual double ViewZ => 8.0;
-    public bool IsDeathStateFinished => IsDead && Frame.Ticks == -1;
+    public bool IsDeathStateFinished => IsDead && FrameState.Frame.Ticks == -1;
     public virtual bool IsInvulnerable => Flags.Invulnerable;
     public virtual Player? PlayerObj => null;
     public virtual bool IsPlayer => false;
@@ -148,6 +146,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         SubsectorId = 0;
         Properties = null!;
         BlockRange.StartX = Constants.ClearBlock;
+        BlockingBlockLineIndex = -1;
     }
 
     public void Set(int index, int id, int thingId, EntityDefinition definition, in Vec3D position, double angleRadians,
@@ -184,7 +183,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Alpha = (float)Properties.Alpha;
         MonsterMovementSpeed = Properties.MonsterMovementSpeed;
 
-        FrameState = new(definition);
+        FrameState = new(FrameStateOptions.DestroyOnStop);
     }
 
     public void Set(int index, EntityModel entityModel, EntityDefinition definition, IWorld world)
@@ -228,7 +227,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Alpha = (float)Properties.Alpha;
         MonsterMovementSpeed = Properties.MonsterMovementSpeed;
 
-        FrameState = new(this, definition, entityModel.Frame);
+        FrameState = new(this, entityModel.Frame);
 
         if (entityModel.OnGround.HasValue)
             OnGround = entityModel.OnGround.Value;
@@ -363,7 +362,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     /// everything except the entity list (which should be unlinked from
     /// when the entity is fully removed from the world).
     /// </remarks>
-    public unsafe void UnlinkFromWorld(bool unlinkBlockmapBlocks = true)
+    public void UnlinkFromWorld(bool unlinkBlockmapBlocks = true)
     {
         for (int i = 0; i < SectorNodes.Length; i++)
         {
@@ -377,29 +376,29 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         if (unlinkBlockmapBlocks)
             UnlinkBlockMapBlocks();
 
-        if (RenderBlock != null)
+        if (RenderBlock != -1)
         {
-            RenderBlock.RemoveLink(this);
-            RenderBlock = null;
+            World.RenderBlockmap.RemoveRenderLink(this);
+            RenderBlock = -1;
         }
 
         IntersectSectors.Clear();
-        BlockingLine = null;
+        BlockingBlockLineIndex = -1;
         BlockingEntity = null;
         BlockingSectorPlane = null;
     }
 
-    public unsafe void UnlinkBlockMapBlocks()
+    public void UnlinkBlockMapBlocks()
     {
         if (BlockRange.StartX == Constants.ClearBlock)
             return;
 
-        var blocks = World.Blockmap.Blocks.Blocks;
         for (var by = BlockRange.StartY; by <= BlockRange.EndY; by++)
         {
             for (var bx = BlockRange.StartX; bx <= BlockRange.EndX; bx++)
             {
-                var block = blocks[by * World.Blockmap.Blocks.Width + bx];
+                var blockIndex = by * World.Blockmap.Width + bx;
+                ref var block = ref World.Blockmap.Entities[blockIndex];
                 var data = block.EntityIndices;
                 for (int index = block.EntityIndicesLength - 1; index >= 0; index--)
                 {
@@ -870,7 +869,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
             }
 
             // Bounce off plane if it's the only thing blocking
-            if (BlockingSectorPlane != null && BlockingLine == null && BlockingEntity == null)
+            if (BlockingSectorPlane != null && BlockingBlockLineIndex == -1 && BlockingEntity == null)
             {
                 Velocity = velocity;
                 Velocity.Z = -velocity.Z;
@@ -896,9 +895,9 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
             if (bouncePlane)
                 Velocity.Z = -velocity.Z * zFactor;
 
-            if (bounceWall && BlockingLine != null)
+            if (bounceWall && BlockingBlockLineIndex != -1)
             {
-                var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, BlockingLine);
+                var bounceVelocity = MathHelper.BounceVelocity(velocity.XY, World.Blockmap.BlockLines[BlockingBlockLineIndex].Segment);
                 Velocity.X = bounceVelocity.X;
                 Velocity.Y = bounceVelocity.Y;
             }
@@ -908,7 +907,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
     public bool ShouldDieOnCollision()
     {
         if (Flags.MbfBouncer && Flags.Missile)
-            return BlockingEntity != null || BlockingLine != null;
+            return BlockingEntity != null || BlockingBlockLineIndex != -1;
 
         return Flags.Missile;
     }
@@ -965,7 +964,7 @@ public partial class Entity : IDisposable, ITickable, ISoundSource
         Respawn = false;
         HadOnEntity = false;
         ClosetFlags = ClosetFlags.None;
-        BlockingLine = null;
+        BlockingBlockLineIndex = -1;
         BlockingEntity = null;
         BlockingSectorPlane = null;
         Sector = Sector.Default;

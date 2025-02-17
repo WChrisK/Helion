@@ -156,11 +156,11 @@ public class EntityRenderer : IDisposable
         Vec2D nudgeAmount = default;
 
         SpriteDefinition? spriteDef = null;
-        int spriteIndex = entity.Frame.SpriteIndex;
+        int spriteIndex = entity.FrameState.Frame.SpriteIndex;
         if (spriteIndex >= m_spriteDefs.Capacity)
         {
             m_spriteDefs.EnsureCapacity(spriteIndex);
-            spriteDef = m_textureManager.GetSpriteDefinition(entity.Frame.SpriteIndex);
+            spriteDef = m_textureManager.GetSpriteDefinition(entity.FrameState.Frame.SpriteIndex);
             m_spriteDefs.Data[spriteIndex] = spriteDef;
         }
         else
@@ -168,7 +168,7 @@ public class EntityRenderer : IDisposable
             spriteDef = m_spriteDefs.Data[spriteIndex];
             if (spriteDef == null)
             {
-                spriteDef = m_textureManager.GetSpriteDefinition(entity.Frame.SpriteIndex);
+                spriteDef = m_textureManager.GetSpriteDefinition(entity.FrameState.Frame.SpriteIndex);
                 m_spriteDefs.Data[spriteIndex] = spriteDef;
             }
         }
@@ -202,7 +202,7 @@ public class EntityRenderer : IDisposable
         }
 
         int colorMapIndex = entity.Properties.ColormapIndex ?? entity.GetTranslationColorMap();
-        SpriteRotation spriteRotation = spriteDef == null ? m_nullSpriteRotation : GetSpriteRotation(spriteDef, entity.Frame.Frame, rotation, colorMapIndex);
+        SpriteRotation spriteRotation = spriteDef == null ? m_nullSpriteRotation : GetSpriteRotation(spriteDef, entity.FrameState.Frame.Frame, rotation, colorMapIndex);
         GLLegacyTexture texture = (spriteRotation.RenderStore as GLLegacyTexture) ?? m_textureManager.NullTexture;
         Sector sector = entity.Sector.GetRenderSector(m_transferHeightView);
 
@@ -235,7 +235,7 @@ public class EntityRenderer : IDisposable
             (float)(entity.PrevPosition.X - nudgeAmount.X) - (m_prevViewRightNormal.X * texture.Offset.X),
             (float)(entity.PrevPosition.Y - nudgeAmount.Y) - (m_prevViewRightNormal.Y * texture.Offset.X),
             (float)entity.PrevPosition.Z + offsetZ);
-        vertex.LightLevel = entity.Flags.Bright || entity.Frame.Properties.Bright ? 255 :
+        vertex.LightLevel = entity.Flags.Bright || entity.FrameState.Frame.Properties.Bright ? 255 :
             ((sector.TransferFloorLightSector.LightLevel + sector.TransferCeilingLightSector.LightLevel) / 2);
         vertex.Options = VertexOptions.Entity(alpha, fuzz, spriteRotation.FlipU, colorMapIndex);
         vertex.SectorIndex = Renderer.GetColorMapBufferIndex(sector, LightBufferType.Floor);

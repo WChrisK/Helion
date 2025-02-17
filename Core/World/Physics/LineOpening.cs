@@ -58,14 +58,11 @@ public class LineOpening
         CeilingSector = null;
     }
 
-    public void Set(Line line)
+    public void Set(Sector front, Sector back)
     {
-        Assert.Precondition(line.Back != null, "Cannot create LineOpening with one sided line");
+        Assert.Precondition(back != null, "Cannot create LineOpening with one sided line");
 
-        Sector front = line.Front.Sector;
-        Sector back = line.Back!.Sector;
-
-        if (front.Ceiling.Z < back.Ceiling.Z)
+        if (front.Ceiling.Z < back!.Ceiling.Z)
         {
             CeilingZ = front.Ceiling.Z;
             CeilingSector = front;
@@ -89,6 +86,7 @@ public class LineOpening
 
         OpeningHeight = CeilingZ - FloorZ;
     }
+
 
     public void SetTop(TryMoveData tryMove, Entity other, bool missileClipCompat)
     {

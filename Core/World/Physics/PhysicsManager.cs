@@ -17,6 +17,7 @@ using Helion.World.Geometry.Lines;
 using Helion.World.Geometry.Sectors;
 using Helion.World.Geometry.Subsectors;
 using Helion.World.Physics.Blockmap;
+using Helion.World.Special;
 using Helion.World.Special.SectorMovement;
 using Helion.World.Special.Specials;
 using static Helion.Util.Assertion.Assert;
@@ -52,11 +53,8 @@ public sealed class PhysicsManager
     private DataCache m_dataCache;
     private CompactBspTree m_bspTree;
     private BlockMap m_blockmap;
-    private UniformGrid<Block> m_blockmapGrid;
-    private Block[] m_blockmapBlocks;
     private EntityManager m_entityManager;
     private IRandom m_random;
-    private int[] m_checkedBlockLines;
     private bool m_alwaysStickEntitiesToFloor;
     private readonly LineOpening m_lineOpening = new();
     private readonly DynamicArray<Entity> m_crushEntities = new();
@@ -80,12 +78,9 @@ public sealed class PhysicsManager
         m_dataCache = world.DataCache;
         m_bspTree = bspTree;
         m_blockmap = blockmap;
-        m_blockmapGrid = blockmap.Blocks;
-        m_blockmapBlocks = m_blockmapGrid.Blocks;
         m_entityManager = world.EntityManager;
         m_random = random;
         BlockmapTraverser = new BlockmapTraverser(world, m_blockmap);
-        m_checkedBlockLines = new int[m_world.Lines.Count];
         m_sectorMoveLinkClampAction = new(HandleSectorMoveLinkClamp);
         m_canPassTraverseFunc = new(CanPassTraverse);
         m_ignoreClampEntityTraverseAction = new(IgnoreClampEntityTraverse);
@@ -99,14 +94,10 @@ public sealed class PhysicsManager
         m_dataCache = world.DataCache;
         m_bspTree = bspTree;
         m_blockmap = blockmap;
-        m_blockmapGrid = blockmap.Blocks;
-        m_blockmapBlocks = m_blockmapGrid.Blocks;
         m_entityManager = world.EntityManager;
         m_random = random;
         m_alwaysStickEntitiesToFloor = alwaysStickEntitiesToFloor;
         BlockmapTraverser.UpdateTo(world, blockmap);
-        if (world.Lines.Count > m_checkedBlockLines.Length)
-            m_checkedBlockLines = new int[m_world.Lines.Count];
     }
 
     static int SectorEntityMoveOrderCompare(Entity? x, Entity? y)
@@ -142,7 +133,7 @@ public sealed class PhysicsManager
     public void Move(Entity entity)
     {
         entity.BlockingEntity = null;
-        entity.BlockingLine = null;
+        entity.BlockingBlockLineIndex = -1;
         entity.BlockingSectorPlane = null;
         MoveXY(entity);
         MoveZ(entity);
@@ -609,30 +600,23 @@ public sealed class PhysicsManager
         }
     }
 
-    private enum LineBlock
+    private LineBlock LineBlocksEntity(Entity entity, double x, double y, ref BlockLine line, TryMoveData? tryMove)
     {
-        NoBlock,
-        BlockStopChecking,
-        BlockContinue,
-    }
-
-    private unsafe LineBlock LineBlocksEntity(Entity entity, double x, double y, BlockLine* line, TryMoveData? tryMove)
-    {
-        if (Line.BlocksEntity(entity, x, y, line->Segment, line->OneSided, line->Flags, WorldStatic.Mbf21))
+        if (Line.BlocksEntity(entity, x, y, line.Segment, line.OneSided, line.Flags, WorldStatic.Mbf21))
             return LineBlock.BlockStopChecking;
 
-        if (line->OneSided)
+        if (line.OneSided)
             return LineBlock.NoBlock;
 
         LineOpening opening;
         if (tryMove != null)
         {
-            opening = GetLineOpeningWithDropoff(x, y, line);
+            opening = GetLineOpeningWithDropoff(x, y, ref line);
             tryMove.SetIntersectionData(opening);
         }
         else
         {
-            opening = GetLineOpening(line->Line);
+            opening = GetLineOpening(line.FrontSector, line.BackSector!);
         }
 
         if (opening.CanPassOrStepThrough(entity))
@@ -641,17 +625,16 @@ public sealed class PhysicsManager
         return LineBlock.BlockContinue;
     }
 
-    public LineOpening GetLineOpening(Line line)
+    public LineOpening GetLineOpening(Sector front, Sector back)
     {
-        m_lineOpening.Set(line);
+        m_lineOpening.Set(front, back);
         return m_lineOpening;
     }
 
-
-    public unsafe LineOpening GetLineOpeningWithDropoff(double x, double y, BlockLine* line)
+    public LineOpening GetLineOpeningWithDropoff(double x, double y, ref BlockLine line)
     {
-        Sector front = line->FrontSector;
-        Sector back = line->BackSector!;
+        Sector front = line.FrontSector;
+        Sector back = line.BackSector!;
         if (front.Ceiling.Z < back.Ceiling.Z)
         {
             m_lineOpening.CeilingZ = front.Ceiling.Z;
@@ -676,7 +659,7 @@ public sealed class PhysicsManager
 
         m_lineOpening.OpeningHeight = m_lineOpening.CeilingZ - m_lineOpening.FloorZ;
 
-        double dot = (line->Segment.Delta.X * (y - line->Segment.Start.Y)) - (line->Segment.Delta.Y * (x - line->Segment.Start.X));
+        double dot = (line.Segment.Delta.X * (y - line.Segment.Start.Y)) - (line.Segment.Delta.Y * (x - line.Segment.Start.X));
         if (dot <= 0)
             m_lineOpening.DropOffZ = back.Floor.Z;
         else
@@ -962,7 +945,7 @@ public sealed class PhysicsManager
         }
     }
 
-    private unsafe void LinkToSectors(Entity entity, TryMoveData? tryMove)
+    private void LinkToSectors(Entity entity, TryMoveData? tryMove)
     {
         Precondition(entity.SectorNodes.Empty(), "Forgot to unlink entity from blockmap");
         int checkCounter = ++WorldStatic.CheckCounter;
@@ -994,45 +977,47 @@ public sealed class PhysicsManager
         }
         else
         {
-            Box2D box = entity.GetBox2D();
-            var it = m_blockmapGrid.CreateBoxIteration(box);
-            for (int by = it.BlockStart.Y; by <= it.BlockEnd.Y; by++)
+            var minX = entity.Position.X - entity.Radius;
+            var minY = entity.Position.Y - entity.Radius;
+            var maxX = entity.Position.X + entity.Radius;
+            var maxY = entity.Position.Y + entity.Radius;
+            var it = m_blockmap.CreateBoxIteration(minX, minY, maxX, maxY);
+            for (int by = it.BlockStartY; by <= it.BlockEndY; by++)
             {
-                for (int bx = it.BlockStart.X; bx <= it.BlockEnd.X; bx++)
+                for (int bx = it.BlockStartX; bx <= it.BlockEndX; bx++)
                 {
-                    Block block = m_blockmapBlocks[by * it.Width + bx];
-                    for (int i = 0; i < block.BlockLineCount; i++)
+                    ref var block = ref m_blockmap.Lines[by * it.Width + bx];
+                    int count = block.BlockLineIndex + block.BlockLineCount;
+                    for (int i = block.BlockLineIndex; i < count; i++)
                     {
-                        fixed (BlockLine* line = &block.BlockLines[i])
+                        ref var line = ref m_blockmap.BlockLines[i];                        
+                        if (WorldStatic.CheckedLines[line.LineId] == checkCounter)
+                            continue;
+
+                        WorldStatic.CheckedLines[line.LineId] = checkCounter;
+
+                        if (line.Segment.Intersects(minX, minY, maxX, maxY))
                         {
-                            if (m_checkedBlockLines[line->LineId] == checkCounter)
-                                continue;
+                            // Doomism: Ignore for moving sectors if blocked by flags only.
+                            if (Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, line.Segment, line.OneSided, line.Flags, WorldStatic.Mbf21))
+                                goto doneLinkToSectors;
 
-                            m_checkedBlockLines[line->LineId] = checkCounter;
-
-                            if (line->Segment.Intersects(box.Min.X, box.Min.Y, box.Max.X, box.Max.Y))
+                            if (line.FrontSector.CheckCount != checkCounter)
                             {
-                                // Doomism: Ignore for moving sectors if blocked by flags only.
-                                if (Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, line->Segment, line->OneSided, line->Flags, WorldStatic.Mbf21))
-                                    goto doneLinkToSectors;
-
-                                if (line->FrontSector.CheckCount != checkCounter)
-                                {
-                                    Sector sector = line->FrontSector;
-                                    sector.CheckCount = checkCounter;
-                                    entity.IntersectSectors.Add(sector);
-                                    entity.SectorNodes.Add(sector.Link(entity));
-                                }
-
-                                if (line->BackSector != null && line->BackSector!.CheckCount != checkCounter)
-                                {
-                                    Sector sector = line->BackSector!;
-                                    sector.CheckCount = checkCounter;
-                                    entity.IntersectSectors.Add(sector);
-                                    entity.SectorNodes.Add(sector.Link(entity));
-                                }
+                                Sector sector = line.FrontSector;
+                                sector.CheckCount = checkCounter;
+                                entity.IntersectSectors.Add(sector);
+                                entity.SectorNodes.Add(sector.Link(entity));
                             }
-                        }
+
+                            if (line.BackSector != null && line.BackSector!.CheckCount != checkCounter)
+                            {
+                                Sector sector = line.BackSector!;
+                                sector.CheckCount = checkCounter;
+                                entity.IntersectSectors.Add(sector);
+                                entity.SectorNodes.Add(sector.Link(entity));
+                            }
+                        }                        
                     }
                 }
             }
@@ -1083,14 +1068,14 @@ doneLinkToSectors:
 
             if (numMoves > 1)
             {
-                stepDelta.X = stepDelta.X / numMoves;
-                stepDelta.Y = stepDelta.Y / numMoves;
+                stepDelta.X /= numMoves;
+                stepDelta.Y /= numMoves;
             }
         }
 
         bool success = true;
         Vec3D saveVelocity = entity.Velocity;
-        Line? slideBlockLine = null;
+        int slideBlockLineId = -1;
         Entity? slideBlockEntity = null;
 
         for (int movesLeft = numMoves; movesLeft > 0; movesLeft--)
@@ -1111,23 +1096,27 @@ doneLinkToSectors:
                 continue;
             }
 
-            if (entity.BlockingLine != null && Line.CanMoveOutOf(entity, nextX, nextY, entity.BlockingLine.Segment, entity.BlockingLine.Back == null))
+            if (entity.BlockingBlockLineIndex != -1 && entity.PlayerObj != null && !entity.PlayerObj.IsVooDooDoll)
             {
-                TryMoveData.BlockedLineClearsVelocity = false;
-                continue;
+                ref var line = ref m_world.Blockmap.BlockLines[entity.BlockingBlockLineIndex];
+                if (Line.CanMoveOutOf(entity, nextX, nextY, line.Segment, line.BackSector == null))
+                {
+                    TryMoveData.BlockedLineClearsVelocity = false;
+                    continue;
+                }
             }
 
             if (entity.Flags.SlidesOnWalls && slidesLeft > 0)
             {
                 // BlockingLine and BlockingEntity will get cleared on HandleSlide(IsPositionValid) calls.
                 // Carry them over so other functions after TryMoveXY can use them for verification.
-                var blockingLine = entity.BlockingLine;
+                var blockingLineId = entity.BlockingBlockLineIndex;
                 var blockingEntity = entity.BlockingEntity;
                 HandleSlide(entity, ref stepDelta, ref movesLeft, TryMoveData);
-                entity.BlockingLine = blockingLine;
+                entity.BlockingBlockLineIndex = blockingLineId;
                 entity.BlockingEntity = blockingEntity;
-                if (slideBlockLine == null && blockingLine != null)
-                    slideBlockLine = blockingLine;
+                if (slideBlockLineId == -1 && blockingLineId != -1)
+                    slideBlockLineId = blockingLineId;
                 if (slideBlockEntity == null && blockingEntity != null)
                     slideBlockEntity = blockingEntity;
                 slidesLeft--;
@@ -1145,8 +1134,8 @@ doneLinkToSectors:
         {
             if (slideBlockEntity != null && entity.BlockingEntity == null)
                 entity.BlockingEntity = slideBlockEntity;
-            if (slideBlockLine != null && entity.BlockingLine == null)
-                entity.BlockingLine = slideBlockLine;
+            if (slideBlockLineId != -1 && entity.BlockingBlockLineIndex == -1)
+                entity.BlockingBlockLineIndex = slideBlockLineId;
             m_world.HandleEntityHit(entity, saveVelocity, TryMoveData);
         }
 
@@ -1157,7 +1146,7 @@ doneLinkToSectors:
     private const int PositionValidFlags1 = EntityFlags.SpecialFlag | EntityFlags.SolidFlag | EntityFlags.ShootableFlag;
     private const int PositionValidFlags2 = EntityFlags.TouchyFlag;
 
-    public unsafe bool IsPositionValid(Entity entity, double x, double y, TryMoveData tryMove)
+    public bool IsPositionValid(Entity entity, double x, double y, TryMoveData tryMove)
     {
         if (!WorldStatic.InfinitelyTallThings && (entity.Flags.Flags1 & EntityFlags.FloatFlag) == 0 && !entity.IsPlayer)
         {
@@ -1173,6 +1162,7 @@ doneLinkToSectors:
         tryMove.Subsector = null;
         tryMove.IntersectSectors.Length = 0;
         tryMove.IntersectEntities2D.Length = 0;
+        int blockLineIndex = -1;
 
         if (entity.HighestFloorObject is Entity highFloorEntity)
         {
@@ -1186,7 +1176,7 @@ doneLinkToSectors:
             tryMove.LowestCeilingZ = tryMove.Subsector.Sector.Ceiling.Z;
         }
 
-        entity.BlockingLine = null;
+        entity.BlockingBlockLineIndex = -1;
         entity.BlockingEntity = null;
         
         int checkCounter = ++WorldStatic.CheckCounter;
@@ -1199,21 +1189,22 @@ doneLinkToSectors:
         var boxMaxX = x + entity.Radius;
         var boxMinY = y - entity.Radius;
         var boxMaxY = y + entity.Radius;
-        int blockStartX = Math.Max(0, (int)((boxMinX - m_blockmapGrid.Bounds.Min.X) / m_blockmapGrid.Dimension));
-        int blockStartY = Math.Max(0, (int)((boxMinY - m_blockmapGrid.Bounds.Min.Y) / m_blockmapGrid.Dimension));
-        int blockEndX = Math.Min((int)((boxMaxX - m_blockmapGrid.Bounds.Min.X) / m_blockmapGrid.Dimension), m_blockmapGrid.Width - 1);
-        int blockEndY = Math.Min((int)((boxMaxY - m_blockmapGrid.Bounds.Min.Y) / m_blockmapGrid.Dimension), m_blockmapGrid.Height - 1);
+        int blockStartX = Math.Max(0, (int)((boxMinX - m_blockmap.Bounds.Min.X) / m_blockmap.Dimension));
+        int blockStartY = Math.Max(0, (int)((boxMinY - m_blockmap.Bounds.Min.Y) / m_blockmap.Dimension));
+        int blockEndX = Math.Min((int)((boxMaxX - m_blockmap.Bounds.Min.X) / m_blockmap.Dimension), m_blockmap.Width - 1);
+        int blockEndY = Math.Min((int)((boxMaxY - m_blockmap.Bounds.Min.Y) / m_blockmap.Dimension), m_blockmap.Height - 1);
         int intersectSectorLength = 0;
 
         for (int by = blockStartY; by <= blockEndY; by++)
         {
             for (int bx = blockStartX; bx <= blockEndX; bx++)
             {
-                Block block = m_blockmapBlocks[by * m_blockmapGrid.Width + bx];
-                var entityIndices = block.EntityIndices;
+                var index = by * m_blockmap.Width + bx;
                 if (checkEntities)
                 {
-                    for (int i = block.EntityIndicesLength - 1; i >= 0; i--)
+                    ref var blockEntities = ref m_blockmap.Entities[index];
+                    var entityIndices = blockEntities.EntityIndices;
+                    for (int i = blockEntities.EntityIndicesLength - 1; i >= 0; i--)
                     {
                         nextEntity = m_dataCache.Entities[entityIndices[i]];
                         if (nextEntity.BlockmapCount == checkCounter)
@@ -1239,8 +1230,8 @@ doneLinkToSectors:
                         // This flag can be modified by dehacked
                         if (overlapsZ && canPickup && nextEntity.Flags.Special)
                         {
-                            // Set the next node - this pickup can be removed from the list
-                            m_world.PerformItemPickup(entity, nextEntity);
+                            if (entity.PlayerObj != null)
+                                m_world.PerformItemPickup(entity, nextEntity);
                             continue;
                         }
 
@@ -1254,45 +1245,43 @@ doneLinkToSectors:
                     }
                 }
 
+                ref var block = ref m_blockmap.Lines[index];
                 tryMove.IntersectSectors.EnsureCapacity(intersectSectorLength + block.BlockLineCount * 2);
 
-                for (int i = 0; i < block.BlockLineCount; i++)
+                int count = block.BlockLineIndex + block.BlockLineCount;
+                for (int i = block.BlockLineIndex; i < count; i++)
                 {
-                    fixed (BlockLine* blockLine = &block.BlockLines[i])
+                    ref var blockLine = ref m_blockmap.BlockLines[i];
+                    if (WorldStatic.CheckedLines[blockLine.LineId] == checkCounter)
+                        continue;
+
+                    WorldStatic.CheckedLines[blockLine.LineId] = checkCounter;
+                    if (blockLine.Segment.Intersects(boxMinX, boxMinY, boxMaxX, boxMaxY))
                     {
-                        if (m_checkedBlockLines[blockLine->LineId] == checkCounter)
-                            continue;
-
-                        m_checkedBlockLines[blockLine->LineId] = checkCounter;
-                        if (blockLine->Segment.Intersects(boxMinX, boxMinY, boxMaxX, boxMaxY))
+                        var blockType = LineBlocksEntity(entity, x, y, ref blockLine, tryMove);
+                        if (blockType != LineBlock.NoBlock)
                         {
-                            LineBlock blockType = LineBlocksEntity(entity, x, y, blockLine, tryMove);
-
-                            Line line = blockLine->Line;
-                            if (blockType != LineBlock.NoBlock)
-                            {
-                                entity.BlockingLine = line;
-                                tryMove.BlockingLine = line;
-                                tryMove.Success = false;
-                                if (!entity.Flags.NoClip && line.HasSpecial)
-                                    tryMove.ImpactSpecialLines.Add(line);
-                                if (blockType == LineBlock.BlockStopChecking)
-                                    goto doneIsPositionValid;
-                            }
-
-                            if (!entity.Flags.NoClip && line.HasSpecial)
-                            {
-                                if (blockType == LineBlock.NoBlock)
-                                    tryMove.IntersectSpecialLines.Add(line);
-                                else
-                                    tryMove.ImpactSpecialLines.Add(line);
-                            }
-
-                            tryMove.IntersectSectors.Data[intersectSectorLength++] = blockLine->FrontSector;
-                            if (blockLine->BackSector != null && blockLine->BackSector != blockLine->FrontSector)
-                                tryMove.IntersectSectors.Data[intersectSectorLength++] = blockLine->BackSector!;
+                            entity.BlockingBlockLineIndex = i;
+                            blockLineIndex = i;
+                            tryMove.Success = false;
+                            if (!entity.Flags.NoClip && blockLine.HasSpecial)
+                                tryMove.ImpactSpecialLines.Add(blockLine.LineId);
+                            if (blockType == LineBlock.BlockStopChecking)
+                                goto doneIsPositionValid;
                         }
-                    }
+
+                        if (!entity.Flags.NoClip && blockLine.HasSpecial)
+                        {
+                            if (blockType == LineBlock.NoBlock)
+                                tryMove.IntersectSpecialLines.Add(blockLine.LineId);
+                            else
+                                tryMove.ImpactSpecialLines.Add(blockLine.LineId);
+                        }
+
+                        tryMove.IntersectSectors.Data[intersectSectorLength++] = blockLine.FrontSector;
+                        if (blockLine.BackSector != null && blockLine.BackSector != blockLine.FrontSector)
+                            tryMove.IntersectSectors.Data[intersectSectorLength++] = blockLine.BackSector!;
+                    }                    
                 }
             }
         }
@@ -1301,12 +1290,16 @@ doneLinkToSectors:
     doneIsPositionValid:
         tryMove.IntersectSectors.Length = intersectSectorLength;
 
-        if (entity.BlockingLine != null && Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, entity.BlockingLine.Segment, 
-            entity.BlockingLine.Back == null, entity.BlockingLine.Flags, WorldStatic.Mbf21))
+        if (blockLineIndex != -1)
         {
-            tryMove.Subsector = null;
-            tryMove.Success = false;
-            return false;
+            ref var blockLine = ref m_blockmap.BlockLines[blockLineIndex];
+            if (Line.BlocksEntity(entity, entity.Position.X, entity.Position.Y, blockLine.Segment,
+                blockLine.OneSided, blockLine.Flags, WorldStatic.Mbf21))
+            {
+                tryMove.Subsector = null;
+                tryMove.Success = false;
+                return false;
+            }
         }
 
         if (tryMove.LowestCeilingZ - tryMove.HighestFloorZ < entity.Height || entity.BlockingEntity != null)
@@ -1375,17 +1368,18 @@ doneLinkToSectors:
             if (entity.Flags.Teleported)
                 break;
 
-            var line = tryMove.IntersectSpecialLines[i];
-            bool fromFront = line.Segment.PerpDot(prevX, prevY) <= 0;
-            if (fromFront != (line.Segment.PerpDot(entity.Position.X, entity.Position.Y) <= 0))
+            var lineId = tryMove.IntersectSpecialLines[i];
+            ref var lineSeg = ref m_world.StructLines.Data[lineId].Segment;
+            bool fromFront = lineSeg.PerpDot(prevX, prevY) <= 0;
+            if (fromFront != (lineSeg.PerpDot(entity.Position.X, entity.Position.Y) <= 0))
             {
-                if (line.Special.IsTeleport() && !fromFront)
+                if (!fromFront && m_world.Lines[lineId].Special.IsTeleport())
                     continue;
 
-                if (!m_world.CanActivate(entity, line, ActivationContext.CrossLine))
+                if (!m_world.CanActivate(entity, m_world.Lines[lineId], ActivationContext.CrossLine))
                     continue;
 
-                m_world.ActivateSpecialLine(entity, line, ActivationContext.CrossLine, fromFront);
+                m_world.ActivateSpecialLine(entity, m_world.Lines[lineId], ActivationContext.CrossLine, fromFront);
             }
         }
     }
@@ -1396,7 +1390,7 @@ doneLinkToSectors:
             MoveCloseToBlockingLine(entity, stepDelta, moveInfo, out Vec2D residualStep, tryMove) &&
             !entity.Flags.Teleported)
         {
-            ReorientToSlideAlong(entity, moveInfo.BlockingLine!, residualStep, ref stepDelta, ref movesLeft);
+            ReorientToSlideAlong(entity, m_world.Blockmap.BlockLines[moveInfo.BlockLineIndex].Segment, residualStep, ref stepDelta, ref movesLeft);
             return;
         }
 
@@ -1414,35 +1408,37 @@ doneLinkToSectors:
         movesLeft = 0;
     }
 
-    private unsafe void CheckCornerTracerIntersection(Seg2D cornerTracer, Entity entity, ref MoveInfo moveInfo)
+    private void CheckCornerTracerIntersection(in Seg2D cornerTracer, Entity entity, ref MoveInfo moveInfo)
     {
         bool hit = false;
         double hitTime = double.MaxValue;
-        Line? blockingLine = null;
+        int blockLineIndex = -1;
         
-        BlockmapSegIterator<Block> it = m_blockmap.Iterate(cornerTracer);
-        var block = it.Next();
-        while (block != null)
+        var it = new BlockmapSegIterator(m_blockmap, cornerTracer);
+        while (true)
         {
-            for (int i = 0; i < block.BlockLineCount; i++)
+            var index = it.NextIndex();
+            if (index == -1)
+                break;
+
+            ref var block = ref m_blockmap.Lines[index];
+            int count = block.BlockLineIndex + block.BlockLineCount;
+            for (int i = block.BlockLineIndex; i < count; i++)
             {
-                fixed (BlockLine* line = &block.BlockLines[i])
+                ref var line = ref m_blockmap.BlockLines[i];             
+                if (cornerTracer.Intersection(line.Segment, out double time) && time > 0 && time < 1 &&
+                    LineBlocksEntity(entity, entity.Position.X, entity.Position.Y, ref line, null) != LineBlock.NoBlock &&
+                    time < hitTime)
                 {
-                    if (cornerTracer.Intersection(line->Segment, out double time) && time > 0 && time < 1 &&
-                        LineBlocksEntity(entity, entity.Position.X, entity.Position.Y, line, null) != LineBlock.NoBlock &&
-                        time < hitTime)
-                    {
-                        hit = true;
-                        hitTime = time;
-                        blockingLine = line->Line;
-                    }
-                }
+                    hit = true;
+                    hitTime = time;
+                    blockLineIndex = i;
+                }                
             }
-            block = it.Next();
         }
 
         if (hit && hitTime < moveInfo.LineIntersectionTime)
-            moveInfo = MoveInfo.From(blockingLine!, hitTime);
+            moveInfo = MoveInfo.From(blockLineIndex, hitTime);
     }
 
     private bool FindClosestBlockingLine(Entity entity, Vec2D stepDelta, out MoveInfo moveInfo)
@@ -1512,9 +1508,9 @@ doneLinkToSectors:
             }
         }
 
-        Seg2D first = new Seg2D(corners[0], new Vec2D(corners[0].X + stepDelta.X, corners[0].Y + stepDelta.Y));
-        Seg2D second = new Seg2D(corners[1], new Vec2D(corners[1].X + stepDelta.X, corners[1].Y + stepDelta.Y));
-        Seg2D third = new Seg2D(corners[2], new Vec2D(corners[2].X + stepDelta.X, corners[2].Y + stepDelta.Y));
+        var first = new Seg2D(corners[0], new Vec2D(corners[0].X + stepDelta.X, corners[0].Y + stepDelta.Y));
+        var second = new Seg2D(corners[1], new Vec2D(corners[1].X + stepDelta.X, corners[1].Y + stepDelta.Y));
+        var third = new Seg2D(corners[2], new Vec2D(corners[2].X + stepDelta.X, corners[2].Y + stepDelta.Y));
 
         CheckCornerTracerIntersection(first, entity, ref moveInfo);
         CheckCornerTracerIntersection(second, entity, ref moveInfo);
@@ -1554,14 +1550,14 @@ doneLinkToSectors:
         return false;
     }
 
-    private static void ReorientToSlideAlong(Entity entity, Line blockingLine, Vec2D residualStep, ref Vec2D stepDelta,
+    private static void ReorientToSlideAlong(Entity entity, in Seg2D blockingLineSeg, Vec2D residualStep, ref Vec2D stepDelta,
         ref int movesLeft)
     {
         // Our slide direction depends on if we're going along with the
         // line or against the line. If the dot product is negative, it
         // means we are facing away from the line and should slide in
         // the opposite direction from the way the line is pointing.
-        Vec2D unitDirection = blockingLine.Segment.Delta.Unit();
+        Vec2D unitDirection = blockingLineSeg.Delta.Unit();
         if (stepDelta.Dot(unitDirection) < 0)
             unitDirection = -unitDirection;
 

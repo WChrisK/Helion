@@ -47,7 +47,6 @@ using Helion.Maps.Specials;
 using Helion.World.Entities.Definition.States;
 using Helion.World.Special.Specials;
 using Helion.World.Static;
-using Helion.Geometry.Grids;
 using Helion.Render.OpenGL.Renderers.Legacy.World.Primitives;
 using static Helion.Dehacked.DehackedDefinition;
 using Helion.Resources.Definitions.MusInfo;
@@ -237,7 +236,6 @@ public abstract partial class WorldBase : IWorld
         SpecialManager = CreateSpecialManager(reuse);
         BspSegLines = CreateBspSegLines(reuse && sameAsPreviousMap);
 
-        WorldStatic.FlushIntersectionReferences();
         IsFastMonsters = skillDef.IsFastMonsters(config);
 
         m_defaultDamageAction = DefaultDamage;
@@ -343,7 +341,7 @@ public abstract partial class WorldBase : IWorld
         return LastWorldSoundManager;
     }
 
-    private unsafe BlockMap CreateBlockMap()
+    private BlockMap CreateBlockMap()
     {
         if (SameAsPreviousMap && LastBlockMap != null)
         {
@@ -529,6 +527,9 @@ public abstract partial class WorldBase : IWorld
         WorldStatic.BFGBall = EntityManager.DefinitionComposer.GetByNameOrDefault("BFGBall");
         WorldStatic.PlasmaBall = EntityManager.DefinitionComposer.GetByNameOrDefault("PlasmaBall");
         WorldStatic.WeaponBfg = EntityManager.DefinitionComposer.GetByNameOrDefault(BFG900Class);
+
+        if (WorldStatic.CheckedLines.Length < Lines.Count)
+            WorldStatic.CheckedLines = new int[Lines.Count];
     }
 
     private void VanillaSectorSound_OnChanged(object? sender, bool enabled) =>
@@ -1214,30 +1215,31 @@ public abstract partial class WorldBase : IWorld
 
         for (int i = 0; i < intersections.Length; i++)
         {
-            BlockmapIntersect bi = intersections[i];
-            if (bi.Line == null)
+            ref var bi = ref intersections.Data[i];
+            if (bi.GetIndex(out var lineIndex) != IntersectType.Line)
                 continue;
 
-            OnTryEntityUseLine(entity, bi.Line);
+            var line = Lines[Blockmap.BlockLines[lineIndex].LineId];
+            OnTryEntityUseLine(entity, line);
 
-            if (bi.Line.Segment.OnRight(start))
+            if (line.Segment.OnRight(start))
             {
-                if (bi.Line.HasSpecial)
-                    activateSuccess = ActivateSpecialLine(entity, bi.Line, ActivationContext.UseLine, true) || activateSuccess;
+                if (line.HasSpecial)
+                    activateSuccess = ActivateSpecialLine(entity, line, ActivationContext.UseLine, true) || activateSuccess;
 
-                if (activateSuccess && !bi.Line.Flags.PassThrough)
+                if (activateSuccess && !line.Flags.PassThrough)
                     break;
 
-                if (bi.Line.Back == null)
+                if (line.Back == null)
                 {
                     hitBlockLine = true;
                     break;
                 }
             }
 
-            if (bi.Line.Back != null)
+            if (line.Back != null)
             {
-                LineOpening opening = PhysicsManager.GetLineOpening(bi.Line);
+                LineOpening opening = PhysicsManager.GetLineOpening(line.Front.Sector, line.Back.Sector!);
                 if (opening.OpeningHeight <= 0)
                 {
                     hitBlockLine = true;
@@ -1275,19 +1277,20 @@ public abstract partial class WorldBase : IWorld
 
         for (int i = 0; i < intersections.Length; i++)
         {
-            BlockmapIntersect bi = intersections[i];
-            if (bi.Line == null)
+            ref var bi = ref intersections.Data[i];
+            if (bi.GetIndex(out var lineIndex) != IntersectType.Line)
                 continue;
 
-            bool specialActivate = bi.Line.HasSpecial && bi.Line.Segment.OnRight(start);
+            var line = Lines[Blockmap.BlockLines[lineIndex].LineId];
+            bool specialActivate = line.HasSpecial && line.Segment.OnRight(start);
             if (specialActivate)
                 shouldUse = true;
 
-            if (bi.Line.Back == null)
+            if (line.Back == null)
                 continue;
 
             // This is mostly for doors. They can be reversed so ignore it if it's in motion.
-            if (specialActivate && SideHasActiveMove(bi.Line.Back.Sector))
+            if (specialActivate && SideHasActiveMove(line.Back.Sector))
             {
                 shouldUse = false;
                 break;
@@ -1461,11 +1464,17 @@ public abstract partial class WorldBase : IWorld
 
         if (shooter.PlayerObj != null && (options & HitScanOptions.DrawRail) != 0)
         {
-            Vec3D railEnd = bi != null && bi.Value.Line != null ? intersect : end;
+            Vec3D railEnd = bi != null && bi.Value.GetIndex(out _) == IntersectType.Line ? intersect : end;
             shooter.PlayerObj.Tracers.AddTracer(PrimitiveRenderType.Rail, (start, railEnd), Gametick, (0.2f, 0.2f, 1), 35);
         }
 
-        return bi?.Entity;
+        if (bi == null)
+            return null;
+
+        if (bi.Value.GetIndex(out int index) == IntersectType.Entity)
+            return DataCache.Entities[index];
+
+        return null;
     }
 
     public virtual BlockmapIntersect? FireHitScan(Entity shooter, Vec3D start, Vec3D end, double angle, double pitch, double distance, int damage,
@@ -1486,22 +1495,26 @@ public abstract partial class WorldBase : IWorld
         for (int i = 0; i < length; i++)
         {
             ref BlockmapIntersect bi = ref data[i];
-            if (bi.Line != null)
+            var isLine = bi.GetIndex(out var index) == IntersectType.Line;
+            if (isLine)
             {
-                if (damage != Constants.HitscanTestDamage && bi.Line.HasSpecial && CanActivate(shooter, bi.Line, ActivationContext.HitscanImpactsWall))
+                ref var line = ref Blockmap.BlockLines[index];
+                if (damage != Constants.HitscanTestDamage && line.HasSpecial && 
+                    CanActivate(shooter, Lines[line.LineId], ActivationContext.HitscanImpactsWall))
                 {
-                    var args = new EntityActivateSpecial(ActivationContext.HitscanImpactsWall, shooter, bi.Line, true);
+                    var args = new EntityActivateSpecial(ActivationContext.HitscanImpactsWall, shooter, Lines[line.LineId], true);
                     EntityActivatedSpecial(args);
                 }
 
-                intersect.X = bi.Intersection.X;
-                intersect.Y = bi.Intersection.Y;
+                var point = line.Segment.FromTime(bi.SegTime);
+                intersect.X = point.X;
+                intersect.Y = point.Y;
                 intersect.Z = start.Z + (Math.Tan(pitch) * bi.SegTime * segLength);
 
-                if (bi.Line.Back == null)
+                if (line.BackSector == null)
                 {
-                    floorZ = bi.Line.Front.Sector.ToFloorZ(intersect);
-                    ceilingZ = bi.Line.Front.Sector.ToCeilingZ(intersect);
+                    floorZ = line.FrontSector.ToFloorZ(intersect);
+                    ceilingZ = line.FrontSector.ToCeilingZ(intersect);
 
                     if (intersect.Z > floorZ && intersect.Z < ceilingZ)
                     {
@@ -1509,19 +1522,18 @@ public abstract partial class WorldBase : IWorld
                         break;
                     }
 
-                    if (IsSkyClipOneSided(bi.Line.Front.Sector, floorZ, ceilingZ, intersect))
+                    if (IsSkyClipOneSided(line.FrontSector, floorZ, ceilingZ, intersect))
                         break;
 
-                    GetSectorPlaneIntersection(start, end, bi.Line.Front.Sector, floorZ, ceilingZ, ref intersect);
-                    hitSector = bi.Line.Front.Sector;
+                    GetSectorPlaneIntersection(start, end, line.FrontSector, floorZ, ceilingZ, ref intersect);
+                    hitSector = line.FrontSector;
                     returnValue = bi;
                     break;
                 }
 
-                GetOrderedSectors(bi.Line, start, out Sector front, out Sector back);
+                GetOrderedSectors(line, start, out Sector front, out Sector back);
 
-
-                if (bi.Line.Front.Sector != bi.Line.Back.Sector)
+                if (line.FrontSector != line.BackSector)
                 {
                     if (IsSkyClipTwoSided(front, back, intersect))
                         break;
@@ -1544,8 +1556,8 @@ public abstract partial class WorldBase : IWorld
                     break;
                 }
 
-                var opening = PhysicsManager.GetLineOpening(bi.Line);
-                if ((floorZ != double.MinValue && opening.FloorZ > intersect.Z && intersect.Z > floorZ) ||
+                var opening = PhysicsManager.GetLineOpening(line.FrontSector, line.BackSector!);
+                if ((floorZ != double.MinValue && opening.FloorZ > intersect.Z && intersect.Z > floorZ) || 
                     (ceilingZ != double.MaxValue && opening.CeilingZ < intersect.Z && intersect.Z < ceilingZ))
                 {
                     returnValue = bi;
@@ -1554,25 +1566,30 @@ public abstract partial class WorldBase : IWorld
                 continue;
             }
 
-            if (bi.Entity != null && shooter != bi.Entity && bi.Entity.BoxIntersects(start, end, ref intersect))
+            if (!isLine && shooter.Index != index)
             {
-                returnValue = bi;
-                if (damage != Constants.HitscanTestDamage)
+                var entity = DataCache.Entities[index];
+                if (entity.BoxIntersects(start, end, ref intersect))
                 {
-                    DamageEntity(bi.Entity, shooter, damage, DamageType.AlwaysApply, Thrust.Horizontal);
-                    CreateBloodOrPulletPuff(bi.Entity, intersect, angle, distance, damage);
+                    returnValue = bi;
+                    if (damage != Constants.HitscanTestDamage)
+                    {
+                        DamageEntity(entity, shooter, damage, DamageType.AlwaysApply, Thrust.Horizontal);
+                        CreateBloodOrPulletPuff(entity, intersect, angle, distance, damage);
+                    }
+                    if (!passThrough)
+                        break;
                 }
-                if (!passThrough)
-                    break;
             }
         }
 
         if (returnValue != null && damage > 0)
         {
             // Only move closer on a line hit
-            if (returnValue.Value.Entity == null && hitSector == null)
+            bool isLine = returnValue.Value.GetIndex(out var index) == IntersectType.Line;
+            if (isLine && hitSector == null)
                 MoveIntersectCloser(start, ref intersect, angle, returnValue.Value.SegTime * segLength);
-            CreateBloodOrPulletPuff(returnValue.Value.Entity, intersect, angle, distance, damage);
+            CreateBloodOrPulletPuff(isLine ? null : DataCache.Entities[index], intersect, angle, distance, damage);
         }
 
         return returnValue;
@@ -1716,7 +1733,7 @@ public abstract partial class WorldBase : IWorld
     {
         // Vanilla determined pickups by the sprite name
         // E.g. batman doom has an enemy that drops a shotgun with the blue key sprite
-        if (!dehacked.PickupLookup.TryGetValue(item.Frame.Sprite, out string? def))
+        if (!dehacked.PickupLookup.TryGetValue(item.FrameState.Frame.Sprite, out string? def))
         {
             definition = null;
             return false;
@@ -1803,7 +1820,7 @@ public abstract partial class WorldBase : IWorld
         if (tryMove != null && (entity.Flags.Missile || entity.IsPlayer))
         {
             for (int i = 0; i < tryMove.ImpactSpecialLines.Length; i++)
-                ActivateSpecialLine(entity, tryMove.ImpactSpecialLines[i], ActivationContext.EntityImpactsWall, true);
+                ActivateSpecialLine(entity, Lines[tryMove.ImpactSpecialLines[i]], ActivationContext.EntityImpactsWall, true);
 
             if (entity.PlayerObj != null && !entity.PlayerObj.IsVooDooDoll && Config.Game.BumpUse)
                 PlayerBumpUse(entity);
@@ -1818,11 +1835,15 @@ public abstract partial class WorldBase : IWorld
             }
 
             bool skyClip = false;
-            if (entity.BlockingLine != null && entity.BlockingLine.Back != null)
+            if (entity.BlockingBlockLineIndex != -1)
             {
-                GetOrderedSectors(entity.BlockingLine, entity.Position, out Sector front, out Sector back);
-                if (IsSkyClipTwoSided(front, back, entity.Position))
-                    skyClip = true;
+                ref var line = ref Blockmap.BlockLines[entity.BlockingBlockLineIndex];
+                if (line.BackSector != null)
+                {
+                    GetOrderedSectors(line, entity.Position, out Sector front, out Sector back);
+                    if (IsSkyClipTwoSided(front, back, entity.Position))
+                        skyClip = true;
+                }
             }
 
             if (entity.BlockingSectorPlane != null && ArchiveCollection.TextureManager.IsSkyTexture(entity.BlockingSectorPlane.TextureHandle))
@@ -2390,7 +2411,7 @@ public abstract partial class WorldBase : IWorld
 
         // Doom had the blood states hardcoded. Supercharged bulletride seems to function differing in gz vs dsda.
         // The changed the frame for blood that dsda will ignore because of hardcoded states, but work in gz.
-        if (HasDehacked && entity != null && entity.Frame.VanillaIndex != (int)ThingState.BLOOD1)
+        if (HasDehacked && entity != null && entity.FrameState.Frame.VanillaIndex != (int)ThingState.BLOOD1)
             return;
 
         int offset = 0;
@@ -2489,15 +2510,16 @@ public abstract partial class WorldBase : IWorld
         {
             ref BlockmapIntersect bi = ref data[i];
 
-            if (bi.Line != null)
+            if (bi.GetIndex(out int index) == IntersectType.Line)
             {
-                if (bi.Line.Back == null)
+                ref var line = ref Blockmap.BlockLines[index];
+                if (line.BackSector == null)
                     return TraversalPitchStatus.Blocked;
 
-                if (bi.Line.Front.Sector == bi.Line.Back.Sector)
+                if (line.FrontSector == line.BackSector)
                     continue;
 
-                var opening = PhysicsManager.GetLineOpening(bi.Line);
+                var opening = PhysicsManager.GetLineOpening(line.FrontSector, line.BackSector!);
                 if (opening.FloorZ < opening.CeilingZ)
                 {
                     double sectorPitch = start.Pitch(opening.FloorZ, bi.SegTime * segLength);
@@ -2516,13 +2538,14 @@ public abstract partial class WorldBase : IWorld
                     return TraversalPitchStatus.Blocked;
                 }
             }
-            else if (bi.Entity != null && startEntity != bi.Entity)
+            else if (startEntity.Index != index)
             {
-                double thingTopPitch = start.Pitch(bi.Entity.Position.Z + bi.Entity.Height, bi.SegTime * segLength);
+                var currentEntity = DataCache.Entities[index];
+                double thingTopPitch = start.Pitch(currentEntity.Position.Z + currentEntity.Height, bi.SegTime * segLength);
                 if (thingTopPitch < bottomPitch)
                     continue;
 
-                double thingBottomPitch = start.Pitch(bi.Entity.Position.Z, bi.SegTime * segLength);
+                double thingBottomPitch = start.Pitch(currentEntity.Position.Z, bi.SegTime * segLength);
                 if (thingBottomPitch > topPitch)
                     continue;
 
@@ -2537,7 +2560,7 @@ public abstract partial class WorldBase : IWorld
                     bottomPitch = thingBottomPitch;
 
                 pitch = (bottomPitch + topPitch) / 2.0;
-                entity = bi.Entity;
+                entity = currentEntity;
                 return TraversalPitchStatus.PitchSet;
             }
         }
@@ -2586,17 +2609,17 @@ public abstract partial class WorldBase : IWorld
         }
     }
 
-    private static void GetOrderedSectors(Line line, in Vec3D start, out Sector front, out Sector back)
+    private static void GetOrderedSectors(in BlockLine line, in Vec3D start, out Sector front, out Sector back)
     {
         if (line.Segment.OnRight(start))
         {
-            front = line.Front.Sector;
-            back = line.Back!.Sector;
+            front = line.FrontSector;
+            back = line.BackSector!;
         }
         else
         {
-            front = line.Back!.Sector;
-            back = line.Front.Sector;
+            front = line.BackSector!;
+            back = line.FrontSector;
         }
     }
 

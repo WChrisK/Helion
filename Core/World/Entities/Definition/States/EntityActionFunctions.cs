@@ -1340,14 +1340,14 @@ public static class EntityActionFunctions
 
     private static void A_GiveInventory(Entity entity)
     {
-        if (!entity.World.GetPickupPlayer(entity, out var player) || entity.Frame.Args.Values.Count == 0)
+        if (!entity.World.GetPickupPlayer(entity, out var player) || entity.FrameState.Frame.Args.Values.Count == 0)
             return;
 
         int amount = 1;
-        if (entity.Frame.Args.Values.Count > 1)
-            amount = entity.Frame.Args.GetInt(1);
+        if (entity.FrameState.Frame.Args.Values.Count > 1)
+            amount = entity.FrameState.Frame.Args.GetInt(1);
 
-        var def = WorldStatic.EntityManager.DefinitionComposer.GetByName(entity.Frame.Args.GetString(0));
+        var def = WorldStatic.EntityManager.DefinitionComposer.GetByName(entity.FrameState.Frame.Args.GetString(0));
         if (def == null)
             return;
 
@@ -2143,10 +2143,10 @@ public static class EntityActionFunctions
 
     private static void A_SelectWeapon(Entity entity)
     {
-        if (!entity.World.GetPickupPlayer(entity, out var player) || entity.Frame.Args.Values.Count == 0)
+        if (!entity.World.GetPickupPlayer(entity, out var player) || entity.FrameState.Frame.Args.Values.Count == 0)
             return;
 
-        var weapon = player.Inventory.Weapons.GetWeapon(entity.Frame.Args.GetString(0));
+        var weapon = player.Inventory.Weapons.GetWeapon(entity.FrameState.Frame.Args.GetString(0));
         if (weapon == null)
             return;
 
@@ -2793,7 +2793,7 @@ public static class EntityActionFunctions
         if (!entity.World.GetPickupPlayer(entity, out var player))
             return;
 
-        int healAmount = entity.Frame.Args.GetInt(0);
+        int healAmount = entity.FrameState.Frame.Args.GetInt(0);
         if (healAmount > 0 && player.Health < healAmount)
             player.Health = healAmount;
     }
@@ -2806,8 +2806,8 @@ public static class EntityActionFunctions
     private static void A_RandomJump(Entity entity)
     {
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
-        if (WorldStatic.World.Random.NextByte() < entity.Frame.DehackedMisc2 &&
-            entityFrameTable.VanillaFrameMap.TryGetValue(entity.Frame.DehackedMisc1, out EntityFrame? newFrame))
+        if (WorldStatic.World.Random.NextByte() < entity.FrameState.Frame.DehackedMisc2 &&
+            entityFrameTable.VanillaFrameMap.TryGetValue(entity.FrameState.Frame.DehackedMisc1, out EntityFrame? newFrame))
         {
             entity.FrameState.SetState(entity, newFrame);
         }
@@ -2815,9 +2815,9 @@ public static class EntityActionFunctions
 
     private static void A_PlaySound(Entity entity)
     {
-        int soundIndex = entity.Frame.DehackedMisc1;
+        int soundIndex = entity.FrameState.Frame.DehackedMisc1;
 
-        Attenuation attenuation = entity.Frame.DehackedMisc2 > 0 ? Attenuation.None : Attenuation.Default;
+        Attenuation attenuation = entity.FrameState.Frame.DehackedMisc2 > 0 ? Attenuation.None : Attenuation.Default;
         PlayDehackedSound(entity, soundIndex, attenuation);
     }
 
@@ -2828,11 +2828,11 @@ public static class EntityActionFunctions
 
     private static void A_Spawn(Entity entity)
     {
-        if (!GetDehackedActorDefinition(entity, entity.Frame.DehackedMisc1, out var def))
+        if (!GetDehackedActorDefinition(entity, entity.FrameState.Frame.DehackedMisc1, out var def))
             return;
 
         Vec3D pos = entity.Position;
-        pos.Z += entity.Frame.DehackedMisc2;
+        pos.Z += entity.FrameState.Frame.DehackedMisc2;
         var spawnEntity = WorldStatic.EntityManager.Create(def, pos, 0, 0, 0);
         if (spawnEntity == null)
             return;
@@ -2842,12 +2842,12 @@ public static class EntityActionFunctions
 
     private static void A_Face(Entity entity)
     {
-        entity.AngleRadians = MathHelper.ToRadians(entity.Frame.DehackedMisc1);
+        entity.AngleRadians = MathHelper.ToRadians(entity.FrameState.Frame.DehackedMisc1);
     }
 
     private static void A_Turn(Entity entity)
     {
-        entity.AngleRadians += MathHelper.ToRadians(entity.Frame.DehackedMisc1);
+        entity.AngleRadians += MathHelper.ToRadians(entity.FrameState.Frame.DehackedMisc1);
     }
 
     private static void A_Scratch(Entity entity)
@@ -2859,8 +2859,8 @@ public static class EntityActionFunctions
         A_FaceTarget(entity);
         if (entity.InMeleeRange(target))
         {
-            PlayDehackedSound(entity, entity.Frame.DehackedMisc2, Attenuation.Default);
-            WorldStatic.World.DamageEntity(target, entity, entity.Frame.DehackedMisc1, DamageType.AlwaysApply, Thrust.Horizontal);
+            PlayDehackedSound(entity, entity.FrameState.Frame.DehackedMisc2, Attenuation.Default);
+            WorldStatic.World.DamageEntity(target, entity, entity.FrameState.Frame.DehackedMisc1, DamageType.AlwaysApply, Thrust.Horizontal);
         }
     }
 
@@ -2869,8 +2869,8 @@ public static class EntityActionFunctions
     private static void A_Mushroom(Entity entity)
     {
         int count = entity.Properties.Damage.Value;
-        double misc1 = entity.Frame.DehackedMisc1 > 0 ? MathHelper.FromFixed(entity.Frame.DehackedMisc1) : 4;
-        double misc2 = entity.Frame.DehackedMisc2 > 0 ? MathHelper.FromFixed(entity.Frame.DehackedMisc2) : 0.5;
+        double misc1 = entity.FrameState.Frame.DehackedMisc1 > 0 ? MathHelper.FromFixed(entity.FrameState.Frame.DehackedMisc1) : 4;
+        double misc2 = entity.FrameState.Frame.DehackedMisc2 > 0 ? MathHelper.FromFixed(entity.FrameState.Frame.DehackedMisc2) : 0.5;
 
         Vec3D velocity = new(misc2, misc2, misc2);
         Vec3D oldPos = entity.Position;
@@ -2916,7 +2916,7 @@ public static class EntityActionFunctions
     public static void A_LineEffect(Entity entity)
     {
         SpecialArgs specialArgs = new();
-        if (!CreateLineEffectSpecial(entity.Frame, DummyLineSpecial, out var flags, ref specialArgs))
+        if (!CreateLineEffectSpecial(entity.FrameState.Frame, DummyLineSpecial, out var flags, ref specialArgs))
             return;
 
         // MBF used the first line in the map - this is a little too janky so instead create a dummy inaccessible one...
@@ -3092,16 +3092,16 @@ public static class EntityActionFunctions
 
     private static void A_SpawnObject(Entity entity)
     {
-        if (!GetDehackedActorDefinition(entity, entity.Frame.DehackedArgs1, out var def))
+        if (!GetDehackedActorDefinition(entity, entity.FrameState.Frame.DehackedArgs1, out var def))
             return;
 
-        double angle = entity.AngleRadians + MathHelper.ToRadians(MathHelper.FromFixed(entity.Frame.DehackedArgs2));
-        double forwadDist = MathHelper.FromFixed(entity.Frame.DehackedArgs3);
-        double sideDist = MathHelper.FromFixed(entity.Frame.DehackedArgs4);
-        double forwardVel = MathHelper.FromFixed(entity.Frame.DehackedArgs6);
-        double sideVel = MathHelper.FromFixed(entity.Frame.DehackedArgs7);
-        double zOffset = MathHelper.FromFixed(entity.Frame.DehackedArgs5);
-        double zVelocity = MathHelper.FromFixed(entity.Frame.DehackedArgs8);
+        double angle = entity.AngleRadians + MathHelper.ToRadians(MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs2));
+        double forwadDist = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs3);
+        double sideDist = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs4);
+        double forwardVel = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs6);
+        double sideVel = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs7);
+        double zOffset = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs5);
+        double zVelocity = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs8);
 
         Vec2D forwardUnit = Vec2D.UnitCircle(angle);
         Vec2D sideUnit = Vec2D.UnitCircle(angle + MathHelper.QuarterPi);
@@ -3153,13 +3153,13 @@ public static class EntityActionFunctions
     private static void A_MonsterProjectile(Entity entity)
     {
         var target = entity.Target();
-        if (target == null || !GetDehackedActorDefinition(entity, entity.Frame.DehackedArgs1, out var projectileDef))
+        if (target == null || !GetDehackedActorDefinition(entity, entity.FrameState.Frame.DehackedArgs1, out var projectileDef))
             return;
 
-        double angle = MathHelper.ToRadians(MathHelper.FromFixed(entity.Frame.DehackedArgs2));
-        double pitchOffset = GetDehackedProjectilePitch(entity.Frame.DehackedArgs3);
-        double offsetXY = MathHelper.FromFixed(entity.Frame.DehackedArgs4);
-        double zOffset = MathHelper.FromFixed(entity.Frame.DehackedArgs5);
+        double angle = MathHelper.ToRadians(MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs2));
+        double pitchOffset = GetDehackedProjectilePitch(entity.FrameState.Frame.DehackedArgs3);
+        double offsetXY = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs4);
+        double zOffset = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs5);
 
         A_FaceTarget(entity);
         var projectile = FireProjectile(entity, target, projectileDef, angle, pitchOffset, offsetXY, zOffset);
@@ -3172,11 +3172,11 @@ public static class EntityActionFunctions
         if (entity.Target() == null)
             return;
 
-        double spreadAngle = MathHelper.ToRadians(MathHelper.FromFixed(entity.Frame.DehackedArgs1));
-        double spreadPitch = MathHelper.ToRadians(MathHelper.FromFixed(entity.Frame.DehackedArgs2));
-        int bullets = entity.Frame.DehackedArgs3;
-        int damage = entity.Frame.DehackedArgs4;
-        int mod = Math.Clamp(entity.Frame.DehackedArgs5, 0, int.MaxValue);
+        double spreadAngle = MathHelper.ToRadians(MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs1));
+        double spreadPitch = MathHelper.ToRadians(MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs2));
+        int bullets = entity.FrameState.Frame.DehackedArgs3;
+        int damage = entity.FrameState.Frame.DehackedArgs4;
+        int mod = Math.Clamp(entity.FrameState.Frame.DehackedArgs5, 0, int.MaxValue);
 
         A_FaceTarget(entity);
         entity.PlayAttackSound();
@@ -3197,10 +3197,10 @@ public static class EntityActionFunctions
         if (target == null)
             return;
 
-        int damage = entity.Frame.DehackedArgs1;
-        int mod = Math.Clamp(entity.Frame.DehackedArgs2, 1, int.MaxValue);
-        int sound = entity.Frame.DehackedArgs3;
-        double range = entity.Frame.DehackedArgs4 == 0 ? entity.Properties.MeleeRange : MathHelper.FromFixed(entity.Frame.DehackedArgs4);
+        int damage = entity.FrameState.Frame.DehackedArgs1;
+        int mod = Math.Clamp(entity.FrameState.Frame.DehackedArgs2, 1, int.MaxValue);
+        int sound = entity.FrameState.Frame.DehackedArgs3;
+        double range = entity.FrameState.Frame.DehackedArgs4 == 0 ? entity.Properties.MeleeRange : MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs4);
 
         if (entity.InMeleeRange(target, range))
         {
@@ -3214,9 +3214,9 @@ public static class EntityActionFunctions
 
     private static void A_RadiusDamage(Entity entity)
     {
-        int maxDamage = entity.Frame.DehackedArgs1;
+        int maxDamage = entity.FrameState.Frame.DehackedArgs1;
         Entity? attackSource = entity.Owner() ?? entity.Target();
-        WorldStatic.World.RadiusExplosion(entity, attackSource ?? entity, entity.Frame.DehackedArgs2, maxDamage);
+        WorldStatic.World.RadiusExplosion(entity, attackSource ?? entity, entity.FrameState.Frame.DehackedArgs2, maxDamage);
     }
 
     private static void A_NoiseAlert(Entity entity)
@@ -3230,8 +3230,8 @@ public static class EntityActionFunctions
 
     public static void A_HealChase(Entity entity)
     {
-        int state = entity.Frame.DehackedArgs1;
-        int sound = entity.Frame.DehackedArgs2;
+        int state = entity.FrameState.Frame.DehackedArgs1;
+        int sound = entity.FrameState.Frame.DehackedArgs2;
 
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (!entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
@@ -3247,8 +3247,8 @@ public static class EntityActionFunctions
 
     public static void A_SeekTracer(Entity entity)
     {
-        double threshold = MathHelper.ToRadians(MathHelper.FromFixed(entity.Frame.DehackedArgs1));
-        double maxTurnAngle = MathHelper.ToRadians(MathHelper.FromFixed(entity.Frame.DehackedArgs2));
+        double threshold = MathHelper.ToRadians(MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs1));
+        double maxTurnAngle = MathHelper.ToRadians(MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs2));
 
         WorldStatic.World.TracerSeek(entity, threshold, maxTurnAngle, SeekTracerVelocityZ);
     }
@@ -3265,8 +3265,8 @@ public static class EntityActionFunctions
         if (entity.Tracer() != null)
             return;
 
-        double fov = MathHelper.ToRadians(MathHelper.FromFixed(entity.Frame.DehackedArgs1));
-        int blocks = entity.Frame.DehackedArgs2 == 0 ? 10 : entity.Frame.DehackedArgs2;
+        double fov = MathHelper.ToRadians(MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs1));
+        int blocks = entity.FrameState.Frame.DehackedArgs2 == 0 ? 10 : entity.FrameState.Frame.DehackedArgs2;
         WorldStatic.World.SetNewTracerTarget(entity, fov, blocks * 128);
     }
 
@@ -3277,8 +3277,8 @@ public static class EntityActionFunctions
 
     private static void A_JumpIfHealthBelow(Entity entity)
     {
-        int state = entity.Frame.DehackedArgs1;
-        int health = entity.Frame.DehackedArgs2;
+        int state = entity.FrameState.Frame.DehackedArgs1;
+        int health = entity.FrameState.Frame.DehackedArgs2;
 
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (entity.Health < health && entityFrameTable.VanillaFrameMap.TryGetValue(state, out EntityFrame? newFrame))
@@ -3291,8 +3291,8 @@ public static class EntityActionFunctions
         if (target == null)
             return;
 
-        int state = entity.Frame.DehackedArgs1;
-        double fov = MathHelper.ToRadians(MathHelper.FromFixed(entity.Frame.DehackedArgs2));
+        int state = entity.FrameState.Frame.DehackedArgs1;
+        double fov = MathHelper.ToRadians(MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs2));
         JumpToStateIfInSight(entity, target, state, fov);
     }
 
@@ -3302,8 +3302,8 @@ public static class EntityActionFunctions
         if (target == null)
             return;
 
-        int state = entity.Frame.DehackedArgs1;
-        double distance = MathHelper.FromFixed(entity.Frame.DehackedArgs2);
+        int state = entity.FrameState.Frame.DehackedArgs1;
+        double distance = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs2);
 
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (distance > entity.Position.ApproximateDistance2D(target.Position) &&
@@ -3317,8 +3317,8 @@ public static class EntityActionFunctions
         if (tracer == null)
             return;
 
-        int state = entity.Frame.DehackedArgs1;
-        double fov = MathHelper.FromFixed(entity.Frame.DehackedArgs2);
+        int state = entity.FrameState.Frame.DehackedArgs1;
+        double fov = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs2);
         JumpToStateIfInSight(entity, tracer, state, fov);
     }
 
@@ -3328,8 +3328,8 @@ public static class EntityActionFunctions
         if (tracer == null)
             return;
 
-        int state = entity.Frame.DehackedArgs1;
-        double distance = MathHelper.FromFixed(entity.Frame.DehackedArgs2);
+        int state = entity.FrameState.Frame.DehackedArgs1;
+        double distance = MathHelper.FromFixed(entity.FrameState.Frame.DehackedArgs2);
 
         var entityFrameTable = WorldStatic.World.ArchiveCollection.Definitions.EntityFrameTable;
         if (distance > entity.Position.ApproximateDistance2D(tracer.Position) &&
@@ -3339,9 +3339,9 @@ public static class EntityActionFunctions
 
     private static void A_JumpIfFlagsSet(Entity entity)
     {
-        int state = entity.Frame.DehackedArgs1;
-        uint flags = (uint)entity.Frame.DehackedArgs2;
-        uint flags2 = (uint)entity.Frame.DehackedArgs3;
+        int state = entity.FrameState.Frame.DehackedArgs1;
+        uint flags = (uint)entity.FrameState.Frame.DehackedArgs2;
+        uint flags2 = (uint)entity.FrameState.Frame.DehackedArgs3;
 
         if (flags != 0 && !DehackedApplier.CheckEntityFlags(entity, flags))
             return;
@@ -3355,8 +3355,8 @@ public static class EntityActionFunctions
 
     private static void A_AddFlags(Entity entity)
     {
-        uint flags1 = (uint)entity.Frame.DehackedArgs1;
-        uint flags2 = (uint)entity.Frame.DehackedArgs2;
+        uint flags1 = (uint)entity.FrameState.Frame.DehackedArgs1;
+        uint flags2 = (uint)entity.FrameState.Frame.DehackedArgs2;
 
         DehackedApplier.SetEntityFlags(entity.Properties, ref entity.Flags, flags1, false);
         DehackedApplier.SetEntityFlagsMbf21(entity.Properties, ref entity.Flags, flags2, false);
@@ -3364,8 +3364,8 @@ public static class EntityActionFunctions
 
     private static void A_RemoveFlags(Entity entity)
     {
-        uint flags1 = ~(uint)entity.Frame.DehackedArgs1;
-        uint flags2 = ~(uint)entity.Frame.DehackedArgs2;
+        uint flags1 = ~(uint)entity.FrameState.Frame.DehackedArgs1;
+        uint flags2 = ~(uint)entity.FrameState.Frame.DehackedArgs2;
 
         DehackedApplier.SetEntityFlags(entity.Properties, ref entity.Flags, flags1, true);
         DehackedApplier.SetEntityFlagsMbf21(entity.Properties, ref entity.Flags, flags2, true);
